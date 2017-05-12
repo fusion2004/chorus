@@ -1,8 +1,9 @@
 StreamManager = require('../lib/stream_manager');
 
 module.exports = (robot) ->
-  robot.respond /play stream/i, (res) ->
-    streamManager = new StreamManager()
+  robot.respond /start party (.*)/i, (res) ->
+    round = res.match[1]
+    streamManager = new StreamManager(round)
 
     # streamManager.on 'startSong', (song) ->
     #   res.send 'Playing song \'' + song.name + '\''
