@@ -28,22 +28,38 @@ function lastAccessed(brain) {
   return data;
 }
 
+let currentStream = null;
+
 module.exports = function(robot) {
   robot.respond(/start party (.*)/i, function(res) {
     let [, round] = res.match;
-    let streamManager = new StreamManager(round);
 
-    streamManager.on('playing', function(song) {
+    if (currentStream && !currentStream.stopped) {
+      res.send('There is currently a listening party streaming. We can only stream one at a time.');
+      return;
+    }
+    currentStream = new StreamManager(round);
+
+    currentStream.on('playing', function(song) {
       res.send(`Playing "${song.title}" by ${song.artist}...`);
     });
 
-    streamManager.on('finish', function() {
+    currentStream.on('finish', function() {
       res.send('Finished playing...');
     });
 
-    res.send(`Starting stream... ${streamManager.streamUrl()}`);
+    res.send(`Starting stream... ${currentStream.streamUrl()}`);
 
-    return streamManager.start();
+    currentStream.start();
+  });
+
+  robot.respond(/stop party/i, function(res) {
+    if (!currentStream || currentStream.stopped) {
+      res.send('There is no listening party to stop!');
+      return;
+    }
+
+    currentStream.stop();
   });
 
   robot.respond(/debug me/i, function(res) {
