@@ -44,6 +44,10 @@ module.exports = function(robot) {
       res.send(`Playing "${song.title}" by ${song.artist}...`);
     });
 
+    currentStream.on('compoMetadataFetching', function() {
+      res.send(`Gathering round ${round} metadata...`);
+    });
+
     currentStream.on('finish', function() {
       res.send('Finished playing...');
     });
