@@ -62,6 +62,15 @@ module.exports = function(robot) {
     currentStream.stop();
   });
 
+  robot.respond(/skip song/i, function(res) {
+    if (!currentStream || currentStream.stopped) {
+      res.send('There is no listening party, currently!');
+      return;
+    }
+
+    currentStream.skipSong();
+  });
+
   robot.respond(/debug me/i, function(res) {
     let { user } = res.envelope;
     let userAccess = lastAccessed(robot.brain)[user.id];
