@@ -31,14 +31,14 @@ function lastAccessed(brain) {
 module.exports = function(robot) {
   robot.respond(/start party (.*)/i, function(res) {
     let msg;
-    let round = res.match[1];
+    let [, round] = res.match;
     let streamManager = new StreamManager(round);
 
     streamManager.on('finish', function() {
       return res.send('Finished playing...');
     });
 
-    msg = 'Starting stream... ' + streamManager.streamUrl();
+    msg = `Starting stream... ${streamManager.streamUrl()}`;
     res.send(msg);
     res.send('Playing song...');
 
