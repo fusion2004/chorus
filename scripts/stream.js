@@ -5,7 +5,10 @@
 //   "<module name>": "<module version>"
 //
 // Configuration:
-//   LIST_OF_ENV_VARS_TO_SET
+//   HUBOT_STREAM_HOST
+//   HUBOT_STREAM_PORT
+//   HUBOT_STREAM_MOUNT
+//   HUBOT_STREAM_SOURCE_PASSWORD
 //
 // Commands:
 //   hubot start party <Round ID> - Starts a listening party for a compo round
