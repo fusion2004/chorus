@@ -18,8 +18,18 @@
 
 const StreamManager = require('../lib/stream_manager');
 
+function lastAccessed(brain) {
+  let data = brain.get('lastAccessed');
+  if (!data) {
+    data = {};
+    brain.set('lastAccessed', data);
+  }
+
+  return data;
+}
+
 module.exports = function(robot) {
-  return robot.respond(/start party (.*)/i, function(res) {
+  robot.respond(/start party (.*)/i, function(res) {
     let msg;
     let round = res.match[1];
     let streamManager = new StreamManager(round);
@@ -33,5 +43,17 @@ module.exports = function(robot) {
     res.send('Playing song...');
 
     return streamManager.start();
+  });
+
+  robot.respond(/debug me/i, function(res) {
+    let { user } = res.envelope;
+    let userAccess = lastAccessed(robot.brain)[user.id];
+    if (!userAccess) {
+      userAccess = lastAccessed(robot.brain)[user.id] = {};
+    }
+    res.send(`you are user id "${user.id}", known as "${user.name}"`);
+    res.send(`you last ran this command on ${userAccess.time}`);
+    console.log(robot.brain.data);
+    userAccess.time = new Date().toString();
   });
 };
