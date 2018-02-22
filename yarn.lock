@@ -750,9 +750,9 @@ node-icu-charset-detector@~0.2.0:
   dependencies:
     nan "^2.3.3"
 
-nodeshout@fusion2004/nodeshout#loosen-dependencies:
+nodeshout@dgurkaynak/nodeshout#master:
   version "0.1.1"
-  resolved "https://codeload.github.com/fusion2004/nodeshout/tar.gz/ffe214a754437c618b19dadb8f8032105edb5898"
+  resolved "https://codeload.github.com/dgurkaynak/nodeshout/tar.gz/1b90cb29b98116056b5db1282e67ed880bf723a1"
   dependencies:
     ffi "^2.0.0"
     ref "^1.2.0"
