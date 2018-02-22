@@ -30,17 +30,18 @@ function lastAccessed(brain) {
 
 module.exports = function(robot) {
   robot.respond(/start party (.*)/i, function(res) {
-    let msg;
     let [, round] = res.match;
     let streamManager = new StreamManager(round);
 
-    streamManager.on('finish', function() {
-      return res.send('Finished playing...');
+    streamManager.on('playing', function(song) {
+      res.send(`Playing "${song.title}" by ${song.artist}...`);
     });
 
-    msg = `Starting stream... ${streamManager.streamUrl()}`;
-    res.send(msg);
-    res.send('Playing song...');
+    streamManager.on('finish', function() {
+      res.send('Finished playing...');
+    });
+
+    res.send(`Starting stream... ${streamManager.streamUrl()}`);
 
     return streamManager.start();
   });
