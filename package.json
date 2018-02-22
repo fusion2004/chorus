@@ -23,6 +23,6 @@
     "nodeshout": "fusion2004/nodeshout#loosen-dependencies"
   },
   "engines": {
-    "node": "7.10.0"
+    "node": "8.9.4"
   }
 }
