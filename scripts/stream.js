@@ -34,8 +34,15 @@ function lastAccessed(brain) {
 let currentStream = null;
 
 module.exports = function(robot) {
+  let discord = robot.adapter.client;
+
+  discord.user.setActivity(null).catch(function(err) {
+    console.log(err);
+  });
+
   robot.respond(/start party (.*)/i, function(res) {
     let [, round] = res.match;
+    let channel = discord.channels.get(res.envelope.room);
 
     if (currentStream && !currentStream.stopped) {
       res.send('There is currently a listening party streaming. We can only stream one at a time.');
@@ -56,9 +63,11 @@ module.exports = function(robot) {
     });
 
     currentStream.on('finish', function() {
+      discord.user.setActivity('nothing...');
       res.send('**Finished playing...**');
     });
 
+    discord.user.setActivity(`in #${channel.name}`);
     res.send(`**Starting stream... ${currentStream.streamUrl()}**`);
 
     currentStream.start();
@@ -90,7 +99,25 @@ module.exports = function(robot) {
     }
     res.send(`you are user id "${user.id}", known as "${user.name}"`);
     res.send(`you last ran this command on ${userAccess.time}`);
-    console.log(robot.brain.data);
+    console.log(res.envelope.room);
+    console.log('FIND ME MARK');
+    let channel = discord.channels.get(res.envelope.room);
+
+    console.log(discord.user.presence);
+    discord.user.setActivity(`in #${channel.name}`);
+    console.log(discord.user.presence);
+    // console.log(robot.brain.data);
     userAccess.time = new Date().toString();
+  });
+
+  robot.respond(/admin activity (.*)/i, function(res) {
+    let [, activityName] = res.match;
+
+    discord.user.setActivity(activityName).then(function(user) {
+      res.send(`Updated activity to '${user.localPresence.game.name}'`);
+    }).catch(function(err) {
+      res.send('Error occurred!');
+      console.log(err);
+    });
   });
 };
