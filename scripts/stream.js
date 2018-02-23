@@ -43,19 +43,23 @@ module.exports = function(robot) {
     }
     currentStream = new StreamManager(round);
 
+    currentStream.on('intro', function() {
+      res.send('**Playing stream intro before we get this party started...**');
+    });
+
     currentStream.on('playing', function(song) {
-      res.send(`Playing "${song.title}" by ${song.artist}...`);
+      res.send(`**Playing "${song.title}" by ${song.artist}...**`);
     });
 
     currentStream.on('compoMetadataFetching', function() {
-      res.send(`Gathering round ${round} metadata...`);
+      res.send(`*Gathering round ${round} metadata...*`);
     });
 
     currentStream.on('finish', function() {
-      res.send('Finished playing...');
+      res.send('**Finished playing...**');
     });
 
-    res.send(`Starting stream... ${currentStream.streamUrl()}`);
+    res.send(`**Starting stream... ${currentStream.streamUrl()}**`);
 
     currentStream.start();
   });
