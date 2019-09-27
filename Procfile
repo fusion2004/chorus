@@ -1,1 +1,1 @@
-saucebot: bin/hubot -a discord
+web: bin/hubot -a discord
