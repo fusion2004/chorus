@@ -7,7 +7,7 @@
   "dependencies": {
     "bluebird": "^3.5.1",
     "cheerio": "^0.22.0",
-    "hubot": "^2.19.0",
+    "hubot": "^3.3.2",
     "hubot-diagnostics": "1.0.0",
     "hubot-discord": "thetimpanist/hubot-discord#master",
     "hubot-google-images": "^0.2.7",
