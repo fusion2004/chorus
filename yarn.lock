@@ -671,7 +671,8 @@ hubot-diagnostics@1.0.0:
 
 hubot-discord@thetimpanist/hubot-discord#master:
   version "2.1.0"
-  resolved "https://codeload.github.com/thetimpanist/hubot-discord/tar.gz/9a473a1b07d4523844a4e3240ae7fe1d20ca4054"
+  uid "2027a05523c6fbb5849017411256d1a18ba7ca17"
+  resolved "https://codeload.github.com/thetimpanist/hubot-discord/tar.gz/2027a05523c6fbb5849017411256d1a18ba7ca17"
   dependencies:
     discord.js "^11.2.1"
     parent-require "^1.0.0"
