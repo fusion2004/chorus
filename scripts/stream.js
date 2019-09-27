@@ -61,6 +61,9 @@ module.exports = function(robot) {
     currentStream.on('compoMetadataFetching', function() {
       res.send(`*Gathering round ${round} metadata...*`);
     });
+    currentStream.on('fetchingSongs', function() {
+      res.send(`*Downloading ${round} songs...*`);
+    });
 
     currentStream.on('finish', function() {
       discord.user.setActivity('nothing...');
