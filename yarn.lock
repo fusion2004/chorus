@@ -674,9 +674,10 @@ hubot-google-translate@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/hubot-google-translate/-/hubot-google-translate-0.2.1.tgz#3f496c7f2c20994d594b4b75183898e2b627bb7e"
 
-hubot-help@^0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/hubot-help/-/hubot-help-0.2.2.tgz#cea17e782ce776b743f65393935b3430c2e8197c"
+hubot-help@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/hubot-help/-/hubot-help-1.0.1.tgz#0a678e551d67c4317e222ff294b9583b8322fce7"
+  integrity sha512-1gL7ywROwQG6Grom68Bhi8O7YHn/qEkg3tGgap+tFejZGxVnFyJ/LcStBScW/zUj4yf0GlDaExR/vsaTjzBRsA==
 
 hubot-heroku-keepalive@^1.0.3:
   version "1.0.3"
