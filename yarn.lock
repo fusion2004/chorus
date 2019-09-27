@@ -697,9 +697,10 @@ hubot-redis-brain@1.0.0:
   dependencies:
     redis "^2.7.1"
 
-hubot-rules@^0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/hubot-rules/-/hubot-rules-0.1.2.tgz#8ef312d8bcf4ba66811310dab69f528d3463f4c5"
+hubot-rules@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/hubot-rules/-/hubot-rules-1.0.0.tgz#35a5d0acd27a3fa873e796ba29f0928f2eb8398c"
+  integrity sha512-IXeTYp6aK25Hgio8ezYr9vruLt1dICL9+kImaXefbfanSjNiNDvltNZfwANqeBx4Zm92A6yi36XxbWR5ZS5kNg==
 
 hubot-scripts@^2.17.2:
   version "2.17.2"
