@@ -21,7 +21,8 @@
     "hubot-scripts": "^2.17.2",
     "hubot-shipit": "^0.2.1",
     "node-fetch": "^2.6.0",
-    "nodeshout": "^0.1.3"
+    "nodeshout": "^0.1.3",
+    "request": "^2.88.0"
   },
   "engines": {
     "node": "10"
@@ -32,5 +33,8 @@
   "volta": {
     "node": "10.16.3",
     "yarn": "1.17.3"
+  },
+  "devDependencies": {
+    "eslint": "^6.4.0"
   }
 }
