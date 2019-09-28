@@ -64,15 +64,20 @@ module.exports = function(robot) {
     currentStream.on('fetchingSongs', function() {
       res.send(`*Downloading ${round} songs...*`);
     });
+    currentStream.on('transcodingSongs', function() {
+      res.send(`*Transcoding ${round} songs for streaming...*`);
+    });
 
     currentStream.on('finish', function() {
       discord.user.setActivity('nothing...');
       res.send('**Finished playing...**');
     });
 
-    discord.user.setActivity(`in #${channel.name}`);
-    res.send(`**Starting stream... ${currentStream.streamUrl()}**`);
+    currentStream.on('startingStream', function() {
+      res.send(`**Starting stream... ${currentStream.streamUrl()}**`);
+    });
 
+    discord.user.setActivity(`in #${channel.name}`);
     currentStream.start();
   });
 
