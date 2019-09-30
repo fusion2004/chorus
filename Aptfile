@@ -1,1 +1,2 @@
-libshout3 libshout3-dev lame libsox-fmt-mp3 libsox-fmt-all sox
+libshout3 libshout3-dev lame libsox-fmt-mp3 libsox-fmt-all
+sox
