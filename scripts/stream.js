@@ -67,6 +67,9 @@ module.exports = function(robot) {
     currentStream.on('transcodingSongs', function() {
       res.send(`*Transcoding ${round} songs for streaming...*`);
     });
+    currentStream.on('generatingAnnouncer', function() {
+      res.send('*Clearing throat, performing vocal exercises...*');
+    });
 
     currentStream.on('finish', function() {
       discord.user.setActivity('nothing...');
