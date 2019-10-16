@@ -5,7 +5,7 @@
   "author": "Mark Oleson <fusion2004@gmail.com>",
   "description": "A simple helpful robot",
   "dependencies": {
-    "bluebird": "^3.5.5",
+    "bluebird": "^3.7.1",
     "cheerio": "^0.22.0",
     "hubot": "^3.3.2",
     "hubot-diagnostics": "1.0.0",
