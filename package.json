@@ -8,6 +8,7 @@
     "aws-sdk": "^2.538.0",
     "bluebird": "^3.5.5",
     "cheerio": "^0.22.0",
+    "colors": "^1.4.0",
     "hubot": "^3.3.2",
     "hubot-diagnostics": "1.0.0",
     "hubot-discord": "thetimpanist/hubot-discord#master",
@@ -23,9 +24,9 @@
     "hubot-shipit": "^0.2.1",
     "lame": "fusion2004/node-lame#master",
     "music-metadata": "^4.8.0",
+    "needle": "^2.5.0",
     "node-fetch": "^2.6.0",
     "nodeshout": "^0.1.3",
-    "request": "^2.88.0",
     "sox.js": "^2.1.0",
     "streamifier": "^0.1.1"
   },
