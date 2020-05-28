@@ -6,7 +6,7 @@
   "description": "A simple helpful robot",
   "dependencies": {
     "aws-sdk": "^2.538.0",
-    "bluebird": "^3.5.5",
+    "bluebird": "^3.7.2",
     "bottleneck": "^2.19.5",
     "cheerio": "^0.22.0",
     "colors": "^1.4.0",
