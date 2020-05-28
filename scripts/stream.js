@@ -20,6 +20,17 @@
 //   <github username of the original script author>
 
 const StreamManager = require('../lib/stream_manager');
+const colors = require('colors');
+
+// importing colors extends the String prototype so we can call these directly
+// on strings: 'something went wrong'.error
+colors.setTheme({
+  info: 'blue',
+  help: 'cyan',
+  warn: 'yellow',
+  success: 'green',
+  error: 'red'
+});
 
 function lastAccessed(brain) {
   let data = brain.get('lastAccessed');
@@ -66,6 +77,9 @@ module.exports = function(robot) {
     });
     currentStream.on('transcodingSongs', function() {
       res.send(`*Transcoding ${round} songs for streaming...*`);
+    });
+    currentStream.on('generatingAnnouncer', function() {
+      res.send('*Clearing throat, performing vocal exercises...*');
     });
 
     currentStream.on('finish', function() {
