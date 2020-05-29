@@ -1078,11 +1078,6 @@ http-signature@~1.2.0:
     jsprim "^1.2.2"
     sshpk "^1.7.0"
 
-hubot-diagnostics@1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/hubot-diagnostics/-/hubot-diagnostics-1.0.0.tgz#3a20de525901b83924b523b1244dcb726a8def69"
-  integrity sha512-4kuR04lULoDDra/Z7B/rgMQMZW531Ve5hwhd8xNOKAl8e1cb5bZNqVpGFYF174eYcN54+RZuWQFHsntjvczyag==
-
 hubot-discord@thetimpanist/hubot-discord#master:
   version "2.1.0"
   resolved "https://codeload.github.com/thetimpanist/hubot-discord/tar.gz/2027a05523c6fbb5849017411256d1a18ba7ca17"
@@ -1090,16 +1085,6 @@ hubot-discord@thetimpanist/hubot-discord#master:
     discord.js "^11.2.1"
     parent-require "^1.0.0"
     request "^2.79.0"
-
-hubot-google-images@^0.2.7:
-  version "0.2.7"
-  resolved "https://registry.yarnpkg.com/hubot-google-images/-/hubot-google-images-0.2.7.tgz#a8a1f9094d76830bf1931770888fab0dc0c11a4d"
-  integrity sha1-qKH5CU12gwvxkxdwiI+rDcDBGk0=
-
-hubot-google-translate@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/hubot-google-translate/-/hubot-google-translate-0.2.1.tgz#3f496c7f2c20994d594b4b75183898e2b627bb7e"
-  integrity sha1-P0lsfywgmU1ZS0t1GDiY4rYnu34=
 
 hubot-help@^1.0.1:
   version "1.0.1"
@@ -1110,11 +1095,6 @@ hubot-heroku-keepalive@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/hubot-heroku-keepalive/-/hubot-heroku-keepalive-1.0.3.tgz#2950e28095ee4a6ace2b76f90e2a91ba91e6813c"
   integrity sha1-KVDigJXuSmrOK3b5DiqRupHmgTw=
-
-hubot-maps@0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/hubot-maps/-/hubot-maps-0.0.3.tgz#c8fc5b0348754e62616d5b99b2bf3904c5ee583c"
-  integrity sha1-yPxbA0h1TmJhbVuZsr85BMXuWDw=
 
 hubot-pugme@^0.1.1:
   version "0.1.1"
