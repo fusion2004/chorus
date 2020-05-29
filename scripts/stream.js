@@ -19,8 +19,10 @@
 // Author:
 //   <github username of the original script author>
 
-const StreamManager = require('../lib/stream_manager');
 const colors = require('colors');
+
+const StreamManager = require('../lib/stream_manager');
+const fetchEnv = require('../utils/fetch-env');
 
 // importing colors extends the String prototype so we can call these directly
 // on strings: 'something went wrong'.error
@@ -42,6 +44,12 @@ function lastAccessed(brain) {
   return data;
 }
 
+let adminIds = fetchEnv('HUBOT_COMPO_ADMIN_IDS').split(',');
+
+function isAdmin(id) {
+  return adminIds.includes(id);
+}
+
 let currentStream = null;
 
 module.exports = function(robot) {
@@ -53,7 +61,13 @@ module.exports = function(robot) {
 
   robot.respond(/start party (.*)/i, function(res) {
     let [, round] = res.match;
-    let channel = discord.channels.get(res.envelope.room);
+    let { room, user } = res.envelope;
+    let channel = discord.channels.get(room);
+
+    if (!isAdmin(user.id)) {
+      res.send('You are not allowed to do that.');
+      return;
+    }
 
     if (currentStream && !currentStream.stopped) {
       res.send('There is currently a listening party streaming. We can only stream one at a time.');
@@ -96,6 +110,11 @@ module.exports = function(robot) {
   });
 
   robot.respond(/stop party/i, function(res) {
+    if (!isAdmin(res.envelope.user.id)) {
+      res.send('You are not allowed to do that.');
+      return;
+    }
+
     if (!currentStream || currentStream.stopped) {
       res.send('There is no listening party to stop!');
       return;
@@ -105,6 +124,11 @@ module.exports = function(robot) {
   });
 
   robot.respond(/skip song/i, function(res) {
+    if (!isAdmin(res.envelope.user.id)) {
+      res.send('You are not allowed to do that.');
+      return;
+    }
+
     if (!currentStream || currentStream.stopped) {
       res.send('There is no listening party, currently!');
       return;
@@ -119,14 +143,14 @@ module.exports = function(robot) {
     if (!userAccess) {
       userAccess = lastAccessed(robot.brain)[user.id] = {};
     }
-    res.send(`you are user id "${user.id}", known as "${user.name}"`);
+    res.send(`you are user id "${user.id}" (type: ${typeof user.id}), known as "${user.name}"`);
     res.send(`you last ran this command on ${userAccess.time}`);
     console.log(res.envelope.room);
     console.log('FIND ME MARK');
     let channel = discord.channels.get(res.envelope.room);
 
     console.log(discord.user.presence);
-    discord.user.setActivity(`in #${channel.name}`);
+    // discord.user.setActivity(`in #${channel.name}`);
     console.log(discord.user.presence);
     // console.log(robot.brain.data);
     userAccess.time = new Date().toString();
@@ -134,6 +158,11 @@ module.exports = function(robot) {
 
   robot.respond(/admin activity (.*)/i, function(res) {
     let [, activityName] = res.match;
+
+    if (!isAdmin(res.envelope.user.id)) {
+      res.send('You are not allowed to do that.');
+      return;
+    }
 
     discord.user.setActivity(activityName).then(function(user) {
       res.send(`Updated activity to '${user.localPresence.game.name}'`);
