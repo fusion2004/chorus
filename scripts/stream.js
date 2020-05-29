@@ -24,6 +24,7 @@
 
 const colors = require('colors');
 
+const { store, streamUpdater } = require('../lib/chorus-store');
 const StreamManager = require('../lib/stream_manager');
 const fetchEnv = require('../utils/fetch-env');
 
@@ -53,8 +54,6 @@ function isAdmin(id) {
   return adminIds.includes(id);
 }
 
-let currentStream = null;
-
 module.exports = function(robot) {
   let discord = robot.adapter.client;
 
@@ -72,44 +71,47 @@ module.exports = function(robot) {
       return;
     }
 
+    let currentStream = store.state.context.stream.manager;
     if (currentStream && !currentStream.stopped) {
       res.send('There is currently a listening party streaming. We can only stream one at a time.');
       return;
     }
-    currentStream = new StreamManager(round);
 
-    currentStream.on('intro', function() {
+    let streamManager = new StreamManager(round);
+    store.send(streamUpdater.update({ manager: streamManager, channel }));
+
+    streamManager.on('intro', function() {
       res.send('**Playing stream intro before we get this party started...**');
     });
 
-    currentStream.on('playing', function(song) {
+    streamManager.on('playing', function(song) {
       res.send(`**Playing "${song.title}" by ${song.artist}...**`);
     });
 
-    currentStream.on('compoMetadataFetching', function() {
+    streamManager.on('compoMetadataFetching', function() {
       res.send(`*Gathering round ${round} metadata...*`);
     });
-    currentStream.on('fetchingSongs', function() {
+    streamManager.on('fetchingSongs', function() {
       res.send(`*Downloading ${round} songs...*`);
     });
-    currentStream.on('transcodingSongs', function() {
+    streamManager.on('transcodingSongs', function() {
       res.send(`*Transcoding ${round} songs for streaming...*`);
     });
-    currentStream.on('generatingAnnouncer', function() {
+    streamManager.on('generatingAnnouncer', function() {
       res.send('*Clearing throat, performing vocal exercises...*');
     });
 
-    currentStream.on('finish', function() {
+    streamManager.on('finish', function() {
       discord.user.setActivity('nothing...');
       res.send('**Finished playing...**');
     });
 
-    currentStream.on('startingStream', function() {
-      res.send(`**Starting stream... ${currentStream.streamUrl()}**`);
+    streamManager.on('startingStream', function() {
+      res.send(`**Starting stream... ${streamManager.streamUrl()}**`);
     });
 
     discord.user.setActivity(`in #${channel.name}`);
-    currentStream.start();
+    streamManager.start();
   });
 
   robot.respond(/stop party/i, function(res) {
@@ -118,6 +120,7 @@ module.exports = function(robot) {
       return;
     }
 
+    let currentStream = store.state.context.stream.manager;
     if (!currentStream || currentStream.stopped) {
       res.send('There is no listening party to stop!');
       return;
@@ -132,6 +135,7 @@ module.exports = function(robot) {
       return;
     }
 
+    let currentStream = store.state.context.stream.manager;
     if (!currentStream || currentStream.stopped) {
       res.send('There is no listening party, currently!');
       return;
