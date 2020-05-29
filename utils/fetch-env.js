@@ -3,7 +3,7 @@
 let fetchEnv = function(envName) {
   let value = process.env[envName];
 
-  if (process.env.hasOwnProperty(envName) && value) {
+  if (Object.prototype.hasOwnProperty.call(process.env, envName) && value) {
     return value;
   } else {
     throw new Error(`environment variable '${envName}' not found`);
