@@ -39,8 +39,8 @@
     "start": "bin/hubot -a discord"
   },
   "volta": {
-    "node": "10.16.3",
-    "yarn": "1.17.3"
+    "node": "10.20.1",
+    "yarn": "1.22.4"
   },
   "devDependencies": {
     "eslint": "^6.4.0"
