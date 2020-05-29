@@ -5,10 +5,10 @@
   "author": "Mark Oleson <fusion2004@gmail.com>",
   "description": "A simple helpful robot",
   "dependencies": {
-    "aws-sdk": "^2.538.0",
-    "bluebird": "^3.5.5",
+    "aws-sdk": "^2.686.0",
+    "bluebird": "^3.7.2",
     "bottleneck": "^2.19.5",
-    "cheerio": "^0.22.0",
+    "cheerio": "^1.0.0-rc.3",
     "colors": "^1.4.0",
     "hubot": "^3.3.2",
     "hubot-diagnostics": "1.0.0",
@@ -24,7 +24,7 @@
     "hubot-scripts": "^2.17.2",
     "hubot-shipit": "^0.2.1",
     "lame": "fusion2004/node-lame#master",
-    "music-metadata": "^4.8.0",
+    "music-metadata": "^6.4.0",
     "needle": "^2.5.0",
     "node-fetch": "^2.6.0",
     "nodeshout": "^0.1.3",
@@ -39,10 +39,10 @@
     "start": "bin/hubot -a discord"
   },
   "volta": {
-    "node": "10.20.1",
+    "node": "10.19.0",
     "yarn": "1.22.4"
   },
   "devDependencies": {
-    "eslint": "^6.4.0"
+    "eslint": "^7.1.0"
   }
 }
