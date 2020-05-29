@@ -1,5 +1,5 @@
 // Description:
-//   <description of the scripts functionality>
+//   Manages listening parties for Compoverse compo rounds (discord messages and shoutcast streams)
 //
 // Dependencies:
 //   "<module name>": "<module version>"
@@ -9,15 +9,18 @@
 //   HUBOT_STREAM_PORT
 //   HUBOT_STREAM_MOUNT
 //   HUBOT_STREAM_SOURCE_PASSWORD
+//   HUBOT_COMPO_ADMIN_IDS
 //
 // Commands:
 //   hubot start party <Round ID> - Starts a listening party for a compo round
+//   hubot skip song - Skips the currently playing song and starts the next song
+//   hubot stop party - Stops the currently listening party
 //
 // Notes:
 //   <optional notes required for the script>
 //
 // Author:
-//   <github username of the original script author>
+//   fusion2004
 
 const colors = require('colors');
 
