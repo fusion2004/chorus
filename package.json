@@ -4,6 +4,7 @@
   "private": true,
   "author": "Mark Oleson <fusion2004@gmail.com>",
   "description": "Your Party Rock Commander",
+  "main": "index.js",
   "dependencies": {
     "@xstate/immer": "^0.1.0",
     "aws-sdk": "^2.686.0",
@@ -11,6 +12,8 @@
     "bottleneck": "^2.19.5",
     "cheerio": "^1.0.0-rc.3",
     "colors": "^1.4.0",
+    "discord.js": "11.6.4",
+    "discord.js-commando": "^0.10.0",
     "immer": "^6.0.9",
     "lame": "fusion2004/node-lame#master",
     "music-metadata": "^6.4.0",
@@ -25,8 +28,8 @@
     "node": "10"
   },
   "scripts": {
-    "lint:js": "eslint .",
-    "start": "bin/hubot -a discord"
+    "lint": "eslint .",
+    "start": "node ."
   },
   "volta": {
     "node": "10.19.0",

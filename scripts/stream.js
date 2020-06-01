@@ -154,7 +154,7 @@ module.exports = function(robot) {
     res.send(`you last ran this command on ${userAccess.time}`);
     console.log(res.envelope.room);
     console.log('FIND ME MARK');
-    let channel = discord.channels.get(res.envelope.room);
+    // let channel = discord.channels.get(res.envelope.room);
 
     console.log(discord.user.presence);
     // discord.user.setActivity(`in #${channel.name}`);
