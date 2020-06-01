@@ -1,7 +1,18 @@
-const { CommandoClient } = require('discord.js-commando');
 const path = require('path');
+const colors = require('colors');
+const { CommandoClient } = require('discord.js-commando');
 
 const fetchEnv = require('./utils/fetch-env');
+
+// importing colors extends the String prototype so we can call these directly
+// on strings: 'something went wrong'.error
+colors.setTheme({
+  info: 'blue',
+  help: 'cyan',
+  warn: 'yellow',
+  success: 'green',
+  error: 'red'
+});
 
 let client = new CommandoClient({
   commandPrefix: '!',
