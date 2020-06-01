@@ -31,7 +31,7 @@ client.registry
 
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}! (${client.user.id})`);
-  client.user.setActivity('with Commando');
+  // client.user.setActivity('with Commando');
 });
 
 client.on('error', console.error);
@@ -44,6 +44,12 @@ client.dispatcher.addInhibitor((message) => {
       return ['not-allowed', message.reply('you\'re not allowed to run compoverse commands')];
     }
   }
+
+  // TODO: Experiment with enabled an owner-only dev mode when running locally
+  // Maybe this should use NODE_ENV?
+  // if (!client.isOwner(message.author) && process.env.DEV_MODE == 'true') {
+  //   return ['dev-mode', message.reply('I\'m currently in development mode and not currently accepting commands')];
+  // }
 });
 
 client.login(fetchEnv('HUBOT_DISCORD_TOKEN'));
