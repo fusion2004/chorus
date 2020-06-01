@@ -1,7 +1,15 @@
 const { Command } = require('discord.js-commando');
+const { RichEmbed } = require('discord.js');
 
 const { store, streamUpdater } = require('../../lib/chorus-store');
 const StreamManager = require('../../lib/stream_manager');
+
+function formatDuration(durationInSeconds) {
+  let minutes = Math.floor(durationInSeconds / 60);
+  let seconds = `${Math.floor(durationInSeconds % 60)}`;
+
+  return `${minutes}:${seconds.padStart(2, '0')}`;
+}
 
 module.exports = class StartPartyCommand extends Command {
   constructor(client) {
@@ -38,7 +46,13 @@ module.exports = class StartPartyCommand extends Command {
     });
 
     streamManager.on('playing', function(song) {
-      message.say(`**Playing "${song.title}" by ${song.artist}...**`);
+      const embed = new RichEmbed()
+        .setColor('#39aa6e')
+        .setTitle(`:smile: Now playing: ${song.title}`)
+        .setAuthor(song.artist)
+        .addField('Length', formatDuration(song.metadata.format.duration));
+
+      message.embed(embed);
     });
 
     streamManager.on('compoMetadataFetching', function() {
