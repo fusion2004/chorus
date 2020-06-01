@@ -37,6 +37,10 @@ client.once('ready', () => {
 client.on('error', console.error);
 
 client.dispatcher.addInhibitor((message) => {
+  if (!message.command && !message.command.group) {
+    return false;
+  }
+
   // Only let ThaSauce & Compo Admins run compoverse commands
   if (message.command.group.id === 'compoverse') {
     let authorized = memberHasOneOfTheseRoles(message.member, [roleIds.thasauceAdmin, roleIds.compoAdmin]);
