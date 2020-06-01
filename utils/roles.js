@@ -1,7 +1,6 @@
 const roleIds = {
   thasauceAdmin: '415977325839122442',
-  compoAdmin: '415977435897528323',
-  blep: '1234'
+  compoAdmin: '415977435897528323'
 };
 
 function memberHasOneOfTheseRoles(member, roleIds) {
