@@ -1,1 +1,1 @@
-web: bin/hubot -a discord
+web: yarn start
