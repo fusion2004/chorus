@@ -37,7 +37,7 @@ client.once('ready', () => {
 client.on('error', console.error);
 
 client.dispatcher.addInhibitor((message) => {
-  if (!message.command && !message.command.group) {
+  if (!message.command || !message.command.group) {
     return false;
   }
 
