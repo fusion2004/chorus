@@ -9,7 +9,8 @@ module.exports = class StartPartyCommand extends Command {
       aliases: [],
       group: 'compoverse',
       memberName: 'startparty',
-      description: 'Starts a listening party for a Compo round'
+      description: 'Starts a listening party for a Compo round',
+      guildOnly: true
     });
   }
 
