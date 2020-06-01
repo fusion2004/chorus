@@ -1,7 +1,5 @@
 const { Command } = require('discord.js-commando');
 
-const { roleIds, memberHasOneOfTheseRoles } = require('../../utils/roles');
-
 module.exports = class StartPartyCommand extends Command {
   constructor(client) {
     super(client, {
@@ -15,11 +13,6 @@ module.exports = class StartPartyCommand extends Command {
   }
 
   async run(message) {
-    let authorized = memberHasOneOfTheseRoles(message.member, [roleIds.thasauceAdmin, roleIds.compoAdmin]);
-    if (!authorized) {
-      return;
-    }
-
     message.say('lets goooo');
   }
 };

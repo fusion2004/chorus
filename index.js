@@ -3,6 +3,7 @@ const colors = require('colors');
 const { CommandoClient } = require('discord.js-commando');
 
 const fetchEnv = require('./utils/fetch-env');
+const { roleIds, memberHasOneOfTheseRoles } = require('./utils/roles');
 
 // importing colors extends the String prototype so we can call these directly
 // on strings: 'something went wrong'.error
@@ -34,5 +35,15 @@ client.once('ready', () => {
 });
 
 client.on('error', console.error);
+
+client.dispatcher.addInhibitor((message) => {
+  // Only let ThaSauce & Compo Admins run compoverse commands
+  if (message.command.group.id === 'compoverse') {
+    let authorized = memberHasOneOfTheseRoles(message.member, [roleIds.thasauceAdmin, roleIds.compoAdmin]);
+    if (!authorized) {
+      return ['not-allowed', message.reply('you\'re not allowed to run compoverse commands')];
+    }
+  }
+});
 
 client.login(fetchEnv('HUBOT_DISCORD_TOKEN'));
