@@ -41,6 +41,11 @@ client.once('ready', () => {
 
 client.on('error', console.error);
 
+client.on('commandError', (command, error) => {
+  console.error(`Error running command: ${command.name}`);
+  console.error(error);
+});
+
 // maybeh?
 // process.on('unhandledRejection', err => {
 //   console.warn(`Uncaught Promise Error: \n${err.stack}`)

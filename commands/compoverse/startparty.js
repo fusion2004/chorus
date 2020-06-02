@@ -78,6 +78,8 @@ module.exports = class StartPartyCommand extends Command {
     });
 
     this.client.user.setActivity(`in #${message.channel.name}`);
-    streamManager.start();
+    await streamManager.start().catch((error) => {
+      throw error;
+    });
   }
 };
