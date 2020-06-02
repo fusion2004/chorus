@@ -1,6 +1,8 @@
 const path = require('path');
 const colors = require('colors');
 const { CommandoClient } = require('discord.js-commando');
+// const KeyvProvider = require('commando-provider-keyv');
+// const Keyv = require('keyv');
 
 const fetchEnv = require('./utils/fetch-env');
 const { roleIds, memberHasOneOfTheseRoles } = require('./utils/roles');
@@ -20,6 +22,9 @@ let client = new CommandoClient({
   owner: '92330214046072832'
 });
 
+// If we need to store settings or data in redis, here's how to set that up.
+// client.setProvider(new KeyvProvider(new Keyv(fetchEnv('REDIS_URL'))));
+
 client.registry
   .registerDefaultTypes()
   .registerGroups([
@@ -35,6 +40,11 @@ client.once('ready', () => {
 });
 
 client.on('error', console.error);
+
+// maybeh?
+// process.on('unhandledRejection', err => {
+//   console.warn(`Uncaught Promise Error: \n${err.stack}`)
+// });
 
 client.dispatcher.addInhibitor((message) => {
   if (!message.command || !message.command.group) {
