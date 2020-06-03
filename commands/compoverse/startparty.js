@@ -48,8 +48,9 @@ module.exports = class StartPartyCommand extends Command {
     streamManager.on('playing', function(song) {
       const embed = new RichEmbed()
         .setColor('#39aa6e')
-        .setTitle(`:smile: Now playing: ${song.title}`)
-        .setAuthor(song.artist)
+        .setTitle(song.title)
+        .setAuthor('now playing')
+        .addField('Artist', song.artist)
         .addField('Length', formatDuration(song.metadata.format.duration));
 
       message.embed(embed);
