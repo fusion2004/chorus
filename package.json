@@ -16,7 +16,7 @@
     "discord.js-commando": "^0.10.0",
     "immer": "^6.0.9",
     "lame": "fusion2004/node-lame#master",
-    "music-metadata": "^6.4.0",
+    "music-metadata": "^7.4.0",
     "needle": "^2.5.0",
     "node-fetch": "^2.6.0",
     "nodeshout": "^0.1.3",
