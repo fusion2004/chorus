@@ -1,5 +1,5 @@
 const { Command } = require('discord.js-commando');
-const { RichEmbed } = require('discord.js');
+const { MessageEmbed } = require('discord.js');
 
 const { store, streamUpdater } = require('../../lib/chorus-store');
 const StreamManager = require('../../lib/stream_manager');
@@ -46,7 +46,7 @@ module.exports = class StartPartyCommand extends Command {
     });
 
     streamManager.on('playing', function(song) {
-      const embed = new RichEmbed()
+      const embed = new MessageEmbed()
         .setColor('#39aa6e')
         .setTitle(song.title)
         .setAuthor('now playing')
