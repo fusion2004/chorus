@@ -4,7 +4,7 @@ const roleIds = {
 };
 
 function memberHasOneOfTheseRoles(member, roleIds) {
-  return roleIds.some((roleId) => member.roles.has(roleId));
+  return roleIds.some((roleId) => member.roles.cache.has(roleId));
 }
 
 module.exports = {
