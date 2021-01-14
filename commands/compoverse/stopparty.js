@@ -2,7 +2,7 @@ const { Command } = require('discord.js-commando');
 
 const { store } = require('../../lib/chorus-store');
 
-module.exports = class StartPartyCommand extends Command {
+module.exports = class StopPartyCommand extends Command {
   constructor(client) {
     super(client, {
       name: 'stopparty',

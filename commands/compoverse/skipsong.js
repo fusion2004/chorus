@@ -2,7 +2,7 @@ const { Command } = require('discord.js-commando');
 
 const { store } = require('../../lib/chorus-store');
 
-module.exports = class StartPartyCommand extends Command {
+module.exports = class SkipSongCommand extends Command {
   constructor(client) {
     super(client, {
       name: 'skipsong',
