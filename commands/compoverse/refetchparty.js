@@ -2,14 +2,14 @@ const { Command } = require('discord.js-commando');
 
 const { store } = require('../../lib/chorus-store');
 
-module.exports = class SkipSongCommand extends Command {
+module.exports = class RefetchPartyCommand extends Command {
   constructor(client) {
     super(client, {
-      name: 'skipsong',
-      aliases: ['skip'],
+      name: 'refetchparty',
+      aliases: ['refetch'],
       group: 'compoverse',
-      memberName: 'skipsong',
-      description: 'Skips the currently playing song and starts the next song in a listening party',
+      memberName: 'refetchparty',
+      description: 'Refetches the round for the current listening party (to load new entries)',
       guildOnly: true
     });
   }
@@ -21,6 +21,7 @@ module.exports = class SkipSongCommand extends Command {
       return;
     }
 
-    currentStream.skipSong();
+    await currentStream.refetch();
+    message.reply(`${currentStream.roundId} refetched!`);
   }
 };

@@ -1,6 +1,6 @@
 # Compiling and installing vendor libraries
 
-```
+```shell
 docker run -it --name thasauce-build heroku/heroku:18-build bash
 
 mkdir /app
