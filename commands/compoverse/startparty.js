@@ -71,8 +71,8 @@ module.exports = class StartPartyCommand extends Command {
     });
 
     streamManager.on('finish', () => {
-      this.client.user.setActivity('nothing...');
-      message.say('**Finished playing...**');
+      this.client.user.setActivity('the stars...', { type: 'WATCHING'});
+      message.say('**The stream is concluded. See you next time!**');
     });
 
     streamManager.on('startingStream', function() {
