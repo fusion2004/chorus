@@ -37,6 +37,7 @@ module.exports = class StartPartyCommand extends Command {
       return;
     }
 
+    round = round.toUpperCase();
     let streamManager = new StreamManager(round);
     // TODO: this likely should be updated to message, not channel
     store.send(streamUpdater.update({ manager: streamManager, channel: message.channel }));
