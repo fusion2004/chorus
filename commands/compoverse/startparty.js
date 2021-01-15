@@ -37,6 +37,7 @@ module.exports = class StartPartyCommand extends Command {
       return;
     }
 
+    round = round.toUpperCase();
     let streamManager = new StreamManager(round);
     // TODO: this likely should be updated to message, not channel
     store.send(streamUpdater.update({ manager: streamManager, channel: message.channel }));
@@ -70,8 +71,8 @@ module.exports = class StartPartyCommand extends Command {
     });
 
     streamManager.on('finish', () => {
-      this.client.user.setActivity('nothing...');
-      message.say('**Finished playing...**');
+      this.client.user.setActivity('the stars...', { type: 'WATCHING'});
+      message.say('**The stream is concluded. See you next time!**');
     });
 
     streamManager.on('startingStream', function() {
