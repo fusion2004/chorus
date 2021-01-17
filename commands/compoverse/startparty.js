@@ -25,12 +25,18 @@ module.exports = class StartPartyCommand extends Command {
           key: 'round',
           prompt: 'What round would you like to start a party for?',
           type: 'string'
+        },
+        {
+          key: 'initialSongIndex',
+          prompt: 'What\'s the index of the song we should start on?',
+          type: 'integer',
+          default: 0
         }
       ]
     });
   }
 
-  async run(message, { round }) {
+  async run(message, { round, initialSongIndex }) {
     let currentStream = store.state.context.stream.manager;
     if (currentStream && !currentStream.stopped) {
       message.reply('there is currently a listening party streaming. We can only stream one at a time.');
@@ -38,7 +44,7 @@ module.exports = class StartPartyCommand extends Command {
     }
 
     round = round.toUpperCase();
-    let streamManager = new StreamManager(round);
+    let streamManager = new StreamManager(round, initialSongIndex);
     // TODO: this likely should be updated to message, not channel
     store.send(streamUpdater.update({ manager: streamManager, channel: message.channel }));
 
@@ -46,12 +52,15 @@ module.exports = class StartPartyCommand extends Command {
       message.say('**Playing stream intro before we get this party started...**');
     });
 
-    streamManager.on('playing', function(song) {
+    streamManager.on('playing', function(current) {
+      let { song } = current;
       let length = formatDuration(song.metadata.format.duration);
+      let position = current.index + 1;
+
       const embed = new MessageEmbed()
         .setColor('#39aa6e')
         .setTitle(song.title)
-        // .setAuthor('now playing')
+        .setDescription(`Entry ${position} of ${current.total}`)
         .addField('Artist', song.artist)
         .addField('Length', length);
 
@@ -83,6 +92,7 @@ module.exports = class StartPartyCommand extends Command {
 
     this.client.user.setActivity(`in #${message.channel.name}`);
     await streamManager.start().catch((error) => {
+      streamManager.stop();
       throw error;
     });
   }
