@@ -21,15 +21,15 @@ module.exports = class PlaylistCommand extends Command {
       return;
     }
 
-    let { currentSong, songs } = currentStream.roundManager;
+    let { current, songs } = currentStream.roundManager;
 
     let msg = '';
     songs.forEach((song, index) => {
-      if (currentSong && currentSong.id === song.id) {
+      if (current && current.song.id === song.id) {
         msg = msg.concat('**');
       }
       msg = msg.concat(`${index + 1}. ${song.title}`);
-      if (currentSong && currentSong.id === song.id) {
+      if (current && current.song.id === song.id) {
         msg = msg.concat('**');
       }
       msg = msg.concat('\n');
