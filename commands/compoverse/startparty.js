@@ -55,10 +55,12 @@ module.exports = class StartPartyCommand extends Command {
     streamManager.on('playing', function(current) {
       let { song } = current;
       let length = formatDuration(song.metadata.format.duration);
+      let position = current.index + 1;
+
       const embed = new MessageEmbed()
         .setColor('#39aa6e')
         .setTitle(song.title)
-        // .setAuthor('now playing')
+        .setDescription(`Entry ${position} of ${current.total}`)
         .addField('Artist', song.artist)
         .addField('Length', length);
 
