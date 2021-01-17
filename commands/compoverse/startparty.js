@@ -47,13 +47,15 @@ module.exports = class StartPartyCommand extends Command {
     });
 
     streamManager.on('playing', function(song) {
+      let length = formatDuration(song.metadata.format.duration);
       const embed = new MessageEmbed()
         .setColor('#39aa6e')
         .setTitle(song.title)
-        .setAuthor('now playing')
+        // .setAuthor('now playing')
         .addField('Artist', song.artist)
-        .addField('Length', formatDuration(song.metadata.format.duration));
+        .addField('Length', length);
 
+      message.say(`Now Playing: ${song.title} by ${song.artist} [${length}]`);
       message.embed(embed);
     });
 
