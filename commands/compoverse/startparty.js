@@ -81,7 +81,7 @@ module.exports = class StartPartyCommand extends Command {
       message.say(`*Transcoding ${round} songs for streaming...*`);
     });
     streamManager.on('generatingAnnouncer', function() {
-      message.say('*Clearing throat, performing vocal exercises...*');
+      message.say('<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises...*');
     });
 
     streamManager.on('finish', () => {
