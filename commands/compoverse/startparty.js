@@ -60,7 +60,10 @@ module.exports = class StartPartyCommand extends Command {
       const embed = new MessageEmbed()
         .setColor('#39aa6e')
         .setTitle(song.safeTitle)
-        .setDescription(`Entry ${position} of ${current.total}`)
+        .setDescription(
+          `${round} listening party, entry ${position} of ${current.total}.
+          [Tune in to the stream here!](${streamManager.streamUrl()})`
+        )
         .addField('Artist', song.safeArtist)
         .addField('Length', length);
 
