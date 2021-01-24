@@ -60,7 +60,10 @@ client.dispatcher.addInhibitor((message) => {
   if (message.command.group.id === 'compoverse') {
     let authorized = memberHasOneOfTheseRoles(message.member, [roleIds.thasauceAdmin, roleIds.compoAdmin]);
     if (!authorized) {
-      return ['not-allowed', message.reply('you\'re not allowed to run compoverse commands')];
+      return {
+        reason: 'not-allowed',
+        response: message.reply('you\'re not allowed to run compoverse commands')
+      };
     }
   }
 

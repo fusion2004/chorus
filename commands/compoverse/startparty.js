@@ -59,12 +59,12 @@ module.exports = class StartPartyCommand extends Command {
 
       const embed = new MessageEmbed()
         .setColor('#39aa6e')
-        .setTitle(song.title)
+        .setTitle(song.safeTitle)
         .setDescription(`Entry ${position} of ${current.total}`)
-        .addField('Artist', song.artist)
+        .addField('Artist', song.safeArtist)
         .addField('Length', length);
 
-      message.say(`Now Playing: ${song.title} by ${song.artist} [${length}]`);
+      message.say(`Now Playing: ${song.safeTitle} by ${song.safeArtist} [${length}]`);
       message.embed(embed);
     });
 

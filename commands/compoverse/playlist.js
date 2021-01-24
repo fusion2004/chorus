@@ -28,7 +28,7 @@ module.exports = class PlaylistCommand extends Command {
       if (current && current.song.id === song.id) {
         msg = msg.concat('**');
       }
-      msg = msg.concat(`${index + 1}. ${song.title}`);
+      msg = msg.concat(`${index + 1}. ${song.safeTitle}`);
       if (current && current.song.id === song.id) {
         msg = msg.concat('**');
       }
