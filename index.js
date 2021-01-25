@@ -1,21 +1,11 @@
 const path = require('path');
-const colors = require('colors');
 const { CommandoClient } = require('discord.js-commando');
 // const KeyvProvider = require('commando-provider-keyv');
 // const Keyv = require('keyv');
 
 const fetchEnv = require('./utils/fetch-env');
+const { log, setDebugChannel } = require('./lib/logger');
 const { roleIds, memberHasOneOfTheseRoles } = require('./utils/roles');
-
-// importing colors extends the String prototype so we can call these directly
-// on strings: 'something went wrong'.error
-colors.setTheme({
-  info: 'blue',
-  help: 'cyan',
-  warn: 'yellow',
-  success: 'green',
-  error: 'red'
-});
 
 let client = new CommandoClient({
   commandPrefix: '!',
@@ -34,9 +24,11 @@ client.registry
   .registerDefaultCommands()
   .registerCommandsIn(path.join(__dirname, 'commands'));
 
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}! (${client.user.id})`);
-  // client.user.setActivity('with Commando');
+client.once('ready', async () => {
+  let debugChannel = await client.channels.fetch(fetchEnv('DEBUG_CHANNEL_ID'));
+  setDebugChannel(debugChannel);
+  log('Booted up!');
+  log(`Logged in as ${client.user.tag}! (${client.user.id})`);
 });
 
 client.on('error', console.error);
@@ -72,6 +64,20 @@ client.dispatcher.addInhibitor((message) => {
   // if (!client.isOwner(message.author) && process.env.DEV_MODE == 'true') {
   //   return ['dev-mode', message.reply('I\'m currently in development mode and not currently accepting commands')];
   // }
+});
+
+process.on('SIGINT', function() {
+  console.log('Shutting down...');
+
+  // Integrate this with the logger machine/server in lib/logger.js
+  client.channels.fetch(fetchEnv('DEBUG_CHANNEL_ID')).then((debugChannel) => {
+    return debugChannel.send('```Shutting down...```');
+  }).then(() => {
+    process.exit();
+  }).catch((e) => {
+    console.log('There was an error sending the shut down message: ', e);
+    process.exit();
+  });
 });
 
 client.login(fetchEnv('HUBOT_DISCORD_TOKEN'));
