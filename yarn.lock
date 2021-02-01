@@ -388,13 +388,14 @@ delayed-stream@~1.0.0:
   resolved "https://registry.yarnpkg.com/delayed-stream/-/delayed-stream-1.0.0.tgz#df3ae199acadfb7d440aaae0b29e2272b24ec619"
   integrity sha1-3zrhmayt+31ECqrgsp4icrJOxhk=
 
-discord.js-commando@^0.11.1:
-  version "0.11.1"
-  resolved "https://registry.yarnpkg.com/discord.js-commando/-/discord.js-commando-0.11.1.tgz#1778ff0a044d13fa2091c48c44986d1d46728078"
-  integrity sha512-wjx29ur6Z94mmTvCvPT0YJYjt4v6PzHj4FtVWJdMYWzm15MuWNgdU3sqRrGK0bXAFfv1H8faDBUdNGrxRPQnmA==
+discord.js-commando@^0.12.0:
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/discord.js-commando/-/discord.js-commando-0.12.0.tgz#e09eb681408f5a07684858f1468080f65361ea57"
+  integrity sha512-AY4nAG8ltp0ZNZ7ggUZ0rg/d0tTO4t5Mq5OruJylo0AyWaAR5fMj2Mt+eApyURQ1PHdlpmj7GhqrMGEsnIXvUg==
   dependencies:
     common-tags "^1.8.0"
     emoji-regex "^9.2.0"
+    is-promise "^4.0.0"
     require-all "^3.0.0"
 
 discord.js@12.5.1:
@@ -813,6 +814,11 @@ is-glob@^4.0.0, is-glob@^4.0.1:
   integrity sha512-5G0tKtBTFImOqDnLB2hG6Bp2qcKEFduo4tZu9MT/H6NQv/ghhy30o55ufafxJ/LdH79LLs2Kfrn85TLKyA7BUg==
   dependencies:
     is-extglob "^2.1.1"
+
+is-promise@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/is-promise/-/is-promise-4.0.0.tgz#42ff9f84206c1991d26debf520dd5c01042dd2f3"
+  integrity sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ==
 
 is-typedarray@^1.0.0:
   version "1.0.0"
