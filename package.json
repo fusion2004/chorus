@@ -6,7 +6,7 @@
   "description": "Your Party Rock Commander",
   "main": "index.js",
   "dependencies": {
-    "@xstate/immer": "^0.1.0",
+    "@xstate/immer": "^0.2.0",
     "aws-sdk": "^2.831.0",
     "bluebird": "^3.7.2",
     "bottleneck": "^2.19.5",

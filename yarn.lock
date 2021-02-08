@@ -76,10 +76,10 @@
     "@types/node" "*"
     safe-buffer "*"
 
-"@xstate/immer@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@xstate/immer/-/immer-0.1.0.tgz#34123ff18c13553ae4ecc2498994180829d432b1"
-  integrity sha512-jiZf/ms4uZDUUz5UXqGUPEOXb/4VUjnawVsOIDPbXeiOKXhcTplNcJAyYWwxcXoo8to/VgKZm7nn8EBLhTJuAQ==
+"@xstate/immer@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@xstate/immer/-/immer-0.2.0.tgz#4f128947c3cbb3e68357b886485a36852d4e06b3"
+  integrity sha512-ZKwAwS84kfmN108lEtVHw8jztKDiFeaQsTxkOlOghpK1Lr7+13G8HhZZXyN1/pVkplloUUOPMH5EXVtitZDr8w==
 
 abort-controller@^3.0.0:
   version "3.0.0"
