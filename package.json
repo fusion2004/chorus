@@ -19,7 +19,7 @@
     "erlpack": "^0.1.3",
     "immer": "^8.0.1",
     "lame": "fusion2004/node-lame#master",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "music-metadata": "^7.6.4",
     "needle": "^2.5.0",
     "node-fetch": "^2.6.0",
