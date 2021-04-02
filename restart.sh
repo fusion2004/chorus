@@ -1,10 +1,11 @@
 #!/bin/sh
 
-# Set up the Heroku scheduler to run this command every hour. See example setup at https://goo.gl/nMCSH3
+# Set up the Heroku scheduler to run this command every hour.
+# From https://gist.github.com/mattheworiordan/f052b7693aacd025f025537418fa5708
 #
 # Requires env vars to be set in Heroku with `heroku config:set`:
 #  - HEROKU_APP_NAME:  this is just the app name in Heroku, i.e. `heroku apps` will list all apps you have access to
-#  - HEROKU_CLI_USER:  Once Heroku CLI is authenticated (https://goo.gl/Qypr4x), check `cat .netrc` (or `_netrc` on Windows),
+#  - HEROKU_CLI_USER:  Once Heroku CLI is authenticated (https://devcenter.heroku.com/articles/authentication), check `cat .netrc` (or `_netrc` on Windows),
 #                      look for `login` under `machine api.heroku.com`
 #  - HEROKU_CLI_TOKEN: As above, but use the `password` field
 #
