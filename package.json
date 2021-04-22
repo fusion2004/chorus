@@ -20,7 +20,7 @@
     "immer": "^8.0.1",
     "lame": "fusion2004/node-lame#master",
     "lodash": "^4.17.20",
-    "music-metadata": "^7.6.4",
+    "music-metadata": "^7.8.4",
     "needle": "^2.5.0",
     "node-fetch": "^2.6.0",
     "nodeshout-napi": "^1.1.1",
