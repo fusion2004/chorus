@@ -28,7 +28,7 @@
     "streamifier": "^0.1.1",
     "utf-8-validate": "^5.0.4",
     "xmlbuilder": "^15.1.1",
-    "xstate": "^4.16.0",
+    "xstate": "^4.20.2",
     "zippa": "^0.3.1",
     "zlib-sync": "^0.1.7"
   },
