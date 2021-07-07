@@ -1411,10 +1411,10 @@ xmlbuilder@~9.0.1:
   resolved "https://registry.yarnpkg.com/xmlbuilder/-/xmlbuilder-9.0.7.tgz#132ee63d2ec5565c557e20f4c22df9aca686b10d"
   integrity sha1-Ey7mPS7FVlxVfiD0wi35rKaGsQ0=
 
-xstate@^4.16.0:
-  version "4.16.0"
-  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.16.0.tgz#e434d0558c0f9a7e9212802834992a6c2f47bca6"
-  integrity sha512-2k/49QYLdzG6Ye1JQWYFuPdU6dnRqHXcuFLxuORiuel04GjApSPct7wp2SOz9RAlNME5EkzclRKw1fHm5yejuA==
+xstate@^4.22.0:
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.22.0.tgz#5d6c2a762cb94c3170ee826d26194b7561d70aae"
+  integrity sha512-WBQS/XxmjCH6789fx5JXjct2pWA0ZI0a1Kx8PJMurzgytkJH3vC2+QganHWzK38vG9PyXHefyVG54UN5q6YVSw==
 
 yallist@^4.0.0:
   version "4.0.0"
