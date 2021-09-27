@@ -10,7 +10,7 @@
     "aws-sdk": "^2.831.0",
     "bluebird": "^3.7.2",
     "bottleneck": "^2.19.5",
-    "bufferutil": "^4.0.3",
+    "bufferutil": "^4.0.4",
     "chalk": "^4.1.0",
     "cheerio": "^1.0.0-rc.3",
     "commando-provider-keyv": "^2.1.0",
