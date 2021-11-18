@@ -15,13 +15,14 @@ module.exports = class RefetchPartyCommand extends Command {
   }
 
   async run(message) {
-    let currentStream = partyService.state.context.stream.manager;
-    if (!currentStream || currentStream.stopped) {
+    if (partyService.state.matches('idle')) {
       message.reply('there is no listening party, currently!');
+      return;
+    } else if (!partyService.state.matches('partying.processing.idle')) {
+      message.reply('there is already a fetch or refetch running!');
       return;
     }
 
-    await currentStream.refetch();
-    message.reply(`${currentStream.roundId} refetched!`);
+    partyService.send('REFETCH');
   }
 };

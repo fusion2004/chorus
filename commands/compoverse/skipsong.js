@@ -15,12 +15,14 @@ module.exports = class SkipSongCommand extends Command {
   }
 
   async run(message) {
-    let currentStream = partyService.state.context.stream.manager;
-    if (!currentStream || currentStream.stopped) {
+    if (partyService.state.matches('idle')) {
       message.reply('there is no listening party, currently!');
+      return;
+    } else if (partyService.state.matches('partying.streaming.idle')) {
+      message.reply("the listening party isn't skippable yet!");
       return;
     }
 
-    currentStream.skipSong();
+    partyService.send('SKIP_SONG');
   }
 };
