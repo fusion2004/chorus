@@ -15,23 +15,28 @@ module.exports = class PlaylistCommand extends Command {
   }
 
   async run(message) {
-    let currentStream = partyService.state.context.stream.manager;
-    if (!currentStream || currentStream.stopped) {
+    let { currentSong, nextSongId, songs } = partyService.state.context;
+    if (partyService.state.matches('idle')) {
       message.reply('there is no listening party, currently!');
+      return;
+    } else if (!songs || songs.length === 0) {
+      message.reply("there aren't any songs fetched in the listening party, yet!");
       return;
     }
 
-    let { current, songs } = currentStream.roundManager;
-
     let msg = '';
     songs.forEach((song, index) => {
-      if (current && current.song.id === song.id) {
-        msg = msg.concat('**');
+      if (currentSong && currentSong.id === song.id) {
+        msg = msg.concat(':arrow_forward: ');
       }
-      msg = msg.concat(`${index + 1}. ${song.safeTitle}`);
-      if (current && current.song.id === song.id) {
-        msg = msg.concat('**');
+      if (nextSongId && nextSongId === song.id) {
+        msg = msg.concat(':track_next: ');
       }
+      msg = msg.concat(`${index + 1}. ${song.safeTitle} [`);
+      if (song.formattedDuration) {
+        msg = msg.concat(`length: ${song.formattedDuration}, `);
+      }
+      msg = msg.concat(`state: ${song.service.state.value}]`);
       msg = msg.concat('\n');
     });
 
