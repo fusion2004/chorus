@@ -15,12 +15,11 @@ module.exports = class StopPartyCommand extends Command {
   }
 
   async run(message) {
-    let currentStream = partyService.state.context.stream.manager;
-    if (!currentStream || currentStream.stopped) {
+    if (partyService.state.matches('idle')) {
       message.reply('there is no listening party to stop!');
       return;
     }
 
-    currentStream.stop();
+    partyService.send('STOP');
   }
 };
