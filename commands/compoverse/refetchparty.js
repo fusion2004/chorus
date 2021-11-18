@@ -1,6 +1,6 @@
 const { Command } = require('discord.js-commando');
 
-const { store } = require('../../lib/chorus-store');
+const { partyService } = require('../../lib/party');
 
 module.exports = class RefetchPartyCommand extends Command {
   constructor(client) {
@@ -10,12 +10,12 @@ module.exports = class RefetchPartyCommand extends Command {
       group: 'compoverse',
       memberName: 'refetchparty',
       description: 'Refetches the round for the current listening party (to load new entries)',
-      guildOnly: true
+      guildOnly: true,
     });
   }
 
   async run(message) {
-    let currentStream = store.state.context.stream.manager;
+    let currentStream = partyService.state.context.stream.manager;
     if (!currentStream || currentStream.stopped) {
       message.reply('there is no listening party, currently!');
       return;
