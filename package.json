@@ -17,6 +17,7 @@
     "discord.js-commando": "^0.11.1",
     "erlpack": "^0.1.3",
     "ffmpeg-static": "^4.4.0",
+    "got": "^11.8.2",
     "immer": "^9.0.6",
     "lodash": "^4.17.21",
     "music-metadata": "^7.11.4",
