@@ -20,6 +20,6 @@ module.exports = class StopPartyCommand extends Command {
       return;
     }
 
-    partyService.send('STOP');
+    partyService.send('STOP', { immediate: true });
   }
 };
