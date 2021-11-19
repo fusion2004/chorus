@@ -1,6 +1,6 @@
 const { Command } = require('discord.js-commando');
 
-const { store } = require('../../lib/chorus-store');
+const { partyService } = require('../../lib/party');
 
 module.exports = class StopPartyCommand extends Command {
   constructor(client) {
@@ -10,17 +10,16 @@ module.exports = class StopPartyCommand extends Command {
       group: 'compoverse',
       memberName: 'stopparty',
       description: 'Stops any current listening parties',
-      guildOnly: true
+      guildOnly: true,
     });
   }
 
   async run(message) {
-    let currentStream = store.state.context.stream.manager;
-    if (!currentStream || currentStream.stopped) {
+    if (partyService.state.matches('idle')) {
       message.reply('there is no listening party to stop!');
       return;
     }
 
-    currentStream.stop();
+    partyService.send('STOP', { immediate: true });
   }
 };
