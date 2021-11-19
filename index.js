@@ -66,13 +66,15 @@ client.dispatcher.addInhibitor((message) => {
 });
 
 process.on('SIGINT', function () {
-  console.log('Shutting down...');
+  console.log(`Shutting down in ${process.env.NODE_ENV} environment...`);
 
   // Integrate this with the logger machine/server in lib/logger.js
   client.channels
     .fetch(fetchEnv('DEBUG_CHANNEL_ID'))
     .then((debugChannel) => {
-      return debugChannel.send('```Shutting down...```');
+      return debugChannel.send(
+        `\`\`\`Shutting down in ${process.env.NODE_ENV} environment...\`\`\``
+      );
     })
     .then(() => {
       process.exit();
