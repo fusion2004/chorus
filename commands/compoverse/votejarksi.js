@@ -8,7 +8,7 @@ module.exports = class VoteJarskiCommand extends Command {
       group: 'compoverse',
       memberName: 'votejarski',
       description: 'Remember to vote Jarski',
-      guildOnly: true
+      guildOnly: true,
     });
   }
 

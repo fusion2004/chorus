@@ -1,6 +1,6 @@
 const roleIds = {
   thasauceAdmin: '415977325839122442',
-  compoAdmin: '415977435897528323'
+  compoAdmin: '415977435897528323',
 };
 
 function memberHasOneOfTheseRoles(member, roleIds) {
@@ -9,5 +9,5 @@ function memberHasOneOfTheseRoles(member, roleIds) {
 
 module.exports = {
   roleIds,
-  memberHasOneOfTheseRoles
+  memberHasOneOfTheseRoles,
 };
