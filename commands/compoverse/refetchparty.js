@@ -23,6 +23,6 @@ module.exports = class RefetchPartyCommand extends Command {
       return;
     }
 
-    partyService.send('REFETCH');
+    partyService.send('REFETCH', { channel: message.channel });
   }
 };
