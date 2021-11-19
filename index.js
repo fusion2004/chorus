@@ -1,7 +1,8 @@
+// Setup process.env with the config from .env
+require('dotenv').config();
+
 const path = require('path');
 const { CommandoClient } = require('discord.js-commando');
-// const KeyvProvider = require('commando-provider-keyv');
-// const Keyv = require('keyv');
 
 const fetchEnv = require('./utils/fetch-env');
 const { log, setDebugChannel } = require('./lib/logger');
@@ -11,9 +12,6 @@ let client = new CommandoClient({
   commandPrefix: '!',
   owner: '92330214046072832',
 });
-
-// If we need to store settings or data in redis, here's how to set that up.
-// client.setProvider(new KeyvProvider(new Keyv(fetchEnv('REDIS_URL'))));
 
 client.registry
   .registerDefaultTypes()
@@ -25,7 +23,7 @@ client.registry
 client.once('ready', async () => {
   let debugChannel = await client.channels.fetch(fetchEnv('DEBUG_CHANNEL_ID'));
   setDebugChannel(debugChannel);
-  log('Booted up!');
+  log(`Booted up in ${process.env.NODE_ENV} environment!`);
   log(`Logged in as ${client.user.tag}! (${client.user.id})`);
 });
 
