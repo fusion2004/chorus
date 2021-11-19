@@ -9,7 +9,7 @@ const { roleIds, memberHasOneOfTheseRoles } = require('./utils/roles');
 
 let client = new CommandoClient({
   commandPrefix: '!',
-  owner: '92330214046072832'
+  owner: '92330214046072832',
 });
 
 // If we need to store settings or data in redis, here's how to set that up.
@@ -17,9 +17,7 @@ let client = new CommandoClient({
 
 client.registry
   .registerDefaultTypes()
-  .registerGroups([
-    ['compoverse', 'Compoverse']
-  ])
+  .registerGroups([['compoverse', 'Compoverse']])
   .registerDefaultGroups()
   .registerDefaultCommands()
   .registerCommandsIn(path.join(__dirname, 'commands'));
@@ -50,11 +48,14 @@ client.dispatcher.addInhibitor((message) => {
 
   // Only let ThaSauce & Compo Admins run compoverse commands
   if (message.command.group.id === 'compoverse') {
-    let authorized = memberHasOneOfTheseRoles(message.member, [roleIds.thasauceAdmin, roleIds.compoAdmin]);
+    let authorized = memberHasOneOfTheseRoles(message.member, [
+      roleIds.thasauceAdmin,
+      roleIds.compoAdmin,
+    ]);
     if (!authorized) {
       return {
         reason: 'not-allowed',
-        response: message.reply('you\'re not allowed to run compoverse commands')
+        response: message.reply("you're not allowed to run compoverse commands"),
       };
     }
   }
@@ -66,18 +67,22 @@ client.dispatcher.addInhibitor((message) => {
   // }
 });
 
-process.on('SIGINT', function() {
+process.on('SIGINT', function () {
   console.log('Shutting down...');
 
   // Integrate this with the logger machine/server in lib/logger.js
-  client.channels.fetch(fetchEnv('DEBUG_CHANNEL_ID')).then((debugChannel) => {
-    return debugChannel.send('```Shutting down...```');
-  }).then(() => {
-    process.exit();
-  }).catch((e) => {
-    console.log('There was an error sending the shut down message: ', e);
-    process.exit();
-  });
+  client.channels
+    .fetch(fetchEnv('DEBUG_CHANNEL_ID'))
+    .then((debugChannel) => {
+      return debugChannel.send('```Shutting down...```');
+    })
+    .then(() => {
+      process.exit();
+    })
+    .catch((e) => {
+      console.log('There was an error sending the shut down message: ', e);
+      process.exit();
+    });
 });
 
 client.login(fetchEnv('HUBOT_DISCORD_TOKEN'));
