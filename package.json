@@ -7,7 +7,7 @@
   "main": "index.js",
   "dependencies": {
     "@xstate/immer": "^0.2.0",
-    "aws-sdk": "^2.1030.0",
+    "aws-sdk": "^2.1134.0",
     "bluebird": "^3.7.2",
     "bottleneck": "^2.19.5",
     "bufferutil": "^4.0.5",
