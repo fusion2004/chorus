@@ -414,13 +414,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bufferutil@npm:^4.0.5":
-  version: 4.0.5
-  resolution: "bufferutil@npm:4.0.5"
+"bufferutil@npm:^4.0.7":
+  version: 4.0.7
+  resolution: "bufferutil@npm:4.0.7"
   dependencies:
     node-gyp: latest
     node-gyp-build: ^4.3.0
-  checksum: 37d5bef7cb38d29f9377b8891ff8a57f53ae6057313d77a8aa2a7417df37a72f16987100796cb2f1e1862f3eb80057705f3c052615ec076a0dcc7aa6c83b68c9
+  checksum: f75aa87e3d1b99b87a95f60a855e63f70af07b57fb8443e75a2ddfef2e47788d130fdd46e3a78fd7e0c10176082b26dfbed970c5b8632e1cc299cafa0e93ce45
   languageName: node
   linkType: hard
 
@@ -553,7 +553,7 @@ __metadata:
     aws-sdk: ^2.1030.0
     bluebird: ^3.7.2
     bottleneck: ^2.19.5
-    bufferutil: ^4.0.5
+    bufferutil: ^4.0.7
     chalk: ^4.1.2
     cheerio: ^1.0.0-rc.10
     discord.js: 12.5.1
