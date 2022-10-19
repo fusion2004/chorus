@@ -10,7 +10,7 @@
     "aws-sdk": "^2.1030.0",
     "bluebird": "^3.7.2",
     "bottleneck": "^2.19.5",
-    "bufferutil": "^4.0.5",
+    "bufferutil": "^4.0.7",
     "chalk": "^4.1.2",
     "cheerio": "^1.0.0-rc.10",
     "discord.js": "12.5.1",
