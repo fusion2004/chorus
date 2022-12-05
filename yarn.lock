@@ -573,7 +573,7 @@ __metadata:
     streamifier: ^0.1.1
     utf-8-validate: ^5.0.7
     xmlbuilder: ^15.1.1
-    xstate: ^4.26.0
+    xstate: ^4.35.0
     zippa: ^0.3.1
     zlib-sync: ^0.1.7
   languageName: unknown
@@ -3307,10 +3307,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xstate@npm:^4.26.0":
-  version: 4.26.0
-  resolution: "xstate@npm:4.26.0"
-  checksum: f27eedcd785b21a77bd040d035533d97bac803cf1a59962dcd839b52a3f628c40766c027a2d6c1ff7c3c4148151eb61c6c006009084c1d861ab311f60813918d
+"xstate@npm:^4.35.0":
+  version: 4.35.0
+  resolution: "xstate@npm:4.35.0"
+  checksum: 7bf1a3874eb11cdbbd22ceb5743e3abb62db416b1f7769522c2911f49dd3e9f6ad681f18c7800351bfb3f09c586a5bcfb06b773b6befb5f128d05447a6e1a328
   languageName: node
   linkType: hard
 
