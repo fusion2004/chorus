@@ -30,7 +30,7 @@ export class StartPartyCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction
   ): Promise<void> {
-    if (partyService.state.matches('partying')) {
+    if (partyService.getSnapshot().matches('partying')) {
       await interaction.reply({
         content: 'there is currently a listening party streaming. We can only stream one at a time.',
         ephemeral: true,

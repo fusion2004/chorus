@@ -18,7 +18,7 @@ export class SkipSongCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction
   ): Promise<void> {
-    if (partyService.state.matches('idle')) {
+    if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({
         content: 'there is no listening party, currently!',
         ephemeral: true,
@@ -26,7 +26,7 @@ export class SkipSongCommand extends Command {
       return;
     }
 
-    if (partyService.state.matches('partying.streaming.idle')) {
+    if (partyService.getSnapshot().matches({ partying: { streaming: 'idle' } })) {
       await interaction.reply({
         content: "the listening party isn't skippable yet!",
         ephemeral: true,

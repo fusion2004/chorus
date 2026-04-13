@@ -18,7 +18,7 @@ export class RefetchPartyCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction
   ): Promise<void> {
-    if (partyService.state.matches('idle')) {
+    if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({
         content: 'there is no listening party, currently!',
         ephemeral: true,
@@ -26,7 +26,7 @@ export class RefetchPartyCommand extends Command {
       return;
     }
 
-    if (!partyService.state.matches('partying.processing.idle')) {
+    if (!partyService.getSnapshot().matches({ partying: { processing: 'idle' } })) {
       await interaction.reply({
         content: 'there is already a fetch or refetch running!',
         ephemeral: true,

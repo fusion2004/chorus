@@ -18,9 +18,9 @@ export class PlaylistCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction
   ): Promise<void> {
-    const { currentSong, nextSongId, songs } = partyService.state.context;
+    const { currentSong, nextSongId, songs } = partyService.getSnapshot().context;
 
-    if (partyService.state.matches('idle')) {
+    if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({
         content: 'there is no listening party, currently!',
         ephemeral: true,
@@ -48,7 +48,7 @@ export class PlaylistCommand extends Command {
       if (song.formattedDuration) {
         msg = msg.concat(`length: ${song.formattedDuration}, `);
       }
-      msg = msg.concat(`state: ${song.service.state.value}]`);
+      msg = msg.concat(`state: ${String(song.service.getSnapshot().value)}]`);
       msg = msg.concat('\n');
     });
 

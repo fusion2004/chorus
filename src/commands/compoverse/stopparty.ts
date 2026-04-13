@@ -16,7 +16,7 @@ export class StopPartyCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction
   ): Promise<void> {
-    if (partyService.state.matches('idle')) {
+    if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({
         content: 'there is no listening party to stop!',
         ephemeral: true,

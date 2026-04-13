@@ -1,21 +1,20 @@
-const { createMachine, interpret, send } = require('xstate');
-const { assign } = require('@xstate/immer');
-const fs = require('fs');
-const path = require('path');
-const { pipeline } = require('stream/promises');
-const mm = require('music-metadata');
+import fs from 'fs';
+import path from 'path';
+import mm from 'music-metadata';
 const nodeshout = require('nodeshout-napi');
-const { EmbedBuilder } = require('discord.js');
 
-const CompoThaSauceFetcher = require('./compo-thasauce-fetcher');
-const { metadataUpdater } = require('./machines');
-const Song = require('./song');
-const RoundFetcher = require('./round-fetcher');
-const RoundTranscoder = require('./round-transcoder');
-const RoundAnnouncer = require('./round-announcer');
-const { announcerFinal, transcodeFinal } = require('../utils/symbols');
-const fetchEnv = require('../utils/fetch-env');
-const RoundExtraAnnouncer = require('./round-extra-announcer');
+import { createMachine, createActor, assign, raise, fromPromise, fromCallback } from 'xstate';
+import type { TextChannel, Message } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
+
+import CompoThaSauceFetcher from './compo-thasauce-fetcher';
+import { Song } from './song';
+import { RoundFetcher } from './round-fetcher';
+import { RoundTranscoder } from './round-transcoder';
+import RoundAnnouncer from './round-announcer';
+import RoundExtraAnnouncer from './round-extra-announcer';
+import { announcerFinal, transcodeFinal } from '../utils/symbols';
+import { fetchEnv } from '../utils/fetch-env';
 
 const { ShoutStream } = nodeshout;
 
@@ -28,151 +27,111 @@ const STREAM = {
   password: fetchEnv('HUBOT_STREAM_SOURCE_PASSWORD'),
 };
 
-function streamUrl() {
+function streamUrl(): string {
   return `http://${STREAM.host}:${STREAM.port}/${STREAM.mount}.m3u`;
 }
 
-function splitAtIndex(str, index) {
+function splitAtIndex(str: string, index: number): [string, string] {
   return [str.substring(0, index), str.substring(index)];
 }
 
-function roundTitle(prefix, id) {
+function roundTitle(prefix: string | null, id: string): string | null {
   switch (prefix) {
-    case 'OHC':
-      return `One Hour Compo Round ${id}`;
-    case '2HTS':
-      return `Two Hour Track Sundays Round ${id}`;
-    case '90MC':
-      return `Ninety Minute Compo Round ${id}`;
-    default:
-      return null;
+    case 'OHC': return `One Hour Compo Round ${id}`;
+    case '2HTS': return `Two Hour Track Sundays Round ${id}`;
+    case '90MC': return `Ninety Minute Compo Round ${id}`;
+    default: return null;
   }
 }
 
-function makeRoundDirectories(dirs) {
-  let directories = [
-    dirs.parent,
-    dirs.download,
-    dirs.transcode,
-    dirs.announcer,
-    dirs.extraAnnouncer,
-  ];
-  directories.forEach((dir) => {
-    makeDirectoryIfItDoesntExist(dir);
-  });
+function makeRoundDirectories(dirs: RoundDirs): void {
+  [dirs.parent, dirs.download, dirs.transcode, dirs.announcer, dirs.extraAnnouncer].forEach(
+    (dir) => { if (!fs.existsSync(dir)) fs.mkdirSync(dir); }
+  );
 }
 
-function makeDirectoryIfItDoesntExist(dir) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-  }
-}
-
-function roundPrefixAndId(fullId) {
-  let prefix, id;
-
-  // Try to match 3-character compos first
-  [prefix, id] = splitAtIndex(fullId, 3);
-  if (['OHC'].includes(prefix)) {
-    return { prefix, id };
-  }
-
-  // If no match, try to match 4-character compos
+function roundPrefixAndId(fullId: string): { prefix: string | null; id: string } {
+  let [prefix, id] = splitAtIndex(fullId, 3);
+  if (['OHC'].includes(prefix)) return { prefix, id };
   [prefix, id] = splitAtIndex(fullId, 4);
-  if (['2HTS', '90MC'].includes(prefix)) {
-    return { prefix, id };
-  }
-
+  if (['2HTS', '90MC'].includes(prefix)) return { prefix, id };
   return { prefix: null, id };
 }
 
-async function parseMetadata(songs) {
-  let promises = songs.map(async (song) => {
-    let metadata = await mm.parseFile(song.path(transcodeFinal));
-    song.service.send(metadataUpdater.update(metadata));
-  });
-
-  await Promise.all(promises);
+async function parseMetadata(songs: Song[]): Promise<void> {
+  await Promise.all(
+    songs.map(async (song) => {
+      const metadata = await mm.parseFile(song.path(transcodeFinal));
+      song.service.send({ type: 'UPDATE_METADATA', metadata });
+    })
+  );
 }
 
-async function playIntro(_shout, abortController) {
-  let fileStream = fs.createReadStream('./audio/intro01.mp3', { highWaterMark: 65536 });
-  let shoutStream = new ShoutStream(_shout);
-
+async function playIntro(shout: any, abortController: AbortController): Promise<void> {
+  const { pipeline } = await import('stream/promises');
+  const fileStream = fs.createReadStream('./audio/intro01.mp3', { highWaterMark: 65536 });
+  const shoutStream = new ShoutStream(shout);
   try {
     await pipeline(fileStream, shoutStream, { signal: abortController.signal });
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      return;
-    }
+  } catch (error: any) {
+    if (error.name === 'AbortError') return;
     throw error;
   }
 }
 
-async function playCurrentSong(_shout, currentSong, abortController) {
-  let fileStream = fs.createReadStream(currentSong.path(announcerFinal), {
-    highWaterMark: 65536,
-  });
-  let shoutStream = new ShoutStream(_shout);
-
+async function playCurrentSong(shout: any, currentSong: Song, abortController: AbortController): Promise<void> {
+  const { pipeline } = await import('stream/promises');
+  let fileStream = fs.createReadStream(currentSong.path(announcerFinal), { highWaterMark: 65536 });
+  let shoutStream = new ShoutStream(shout);
   try {
     await pipeline(fileStream, shoutStream, { signal: abortController.signal });
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      return;
-    }
+  } catch (error: any) {
+    if (error.name === 'AbortError') return;
     throw error;
   }
 
-  fileStream = fs.createReadStream(currentSong.path(transcodeFinal), {
-    highWaterMark: 65536,
-  });
-  shoutStream = new ShoutStream(_shout);
-
+  fileStream = fs.createReadStream(currentSong.path(transcodeFinal), { highWaterMark: 65536 });
+  shoutStream = new ShoutStream(shout);
   try {
     await pipeline(fileStream, shoutStream, { signal: abortController.signal });
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      return;
-    }
+  } catch (error: any) {
+    if (error.name === 'AbortError') return;
     throw error;
   }
 }
 
-async function playOutro(_shout, announcer, abortController) {
-  let fileStream = fs.createReadStream(announcer.path, { highWaterMark: 65536 });
-  let shoutStream = new ShoutStream(_shout);
-
+async function playOutro(shout: any, announcer: ExtraAnnouncer, abortController: AbortController): Promise<void> {
+  const { pipeline } = await import('stream/promises');
+  const fileStream = fs.createReadStream(announcer.path, { highWaterMark: 65536 });
+  const shoutStream = new ShoutStream(shout);
   try {
     await pipeline(fileStream, shoutStream, { signal: abortController.signal });
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      return;
-    }
+  } catch (error: any) {
+    if (error.name === 'AbortError') return;
     throw error;
   }
 }
 
-function startFetchMessage(channel, round) {
+function startFetchMessage(channel: TextChannel, round: string): void {
   channel.send(`*Gathering round ${round} metadata...*`);
 }
 
-function fetchErrorMessage(channel) {
+function fetchErrorMessage(channel: TextChannel): Promise<Message> {
   return channel.send(`There was an error fetching the round.`);
 }
 
-async function startIntroMessage(channel) {
+async function startIntroMessage(channel: TextChannel): Promise<void> {
   await channel.send(`**Starting stream... ${streamUrl()}**`);
   await channel.send('**Playing stream intro before we get this party started...**');
 }
 
 async function playCurrentSongMessage({ channel, currentSong, songs, round }: {
-  channel: any;
-  currentSong: any;
-  songs: any[];
+  channel: TextChannel;
+  currentSong: Song;
+  songs: Song[];
   round: string;
-}) {
-  const index = songs.findIndex((song: any) => song.id === currentSong.id);
+}): Promise<void> {
+  const index = songs.findIndex((song) => song.id === currentSong.id);
   const position = index + 1;
 
   const embed = new EmbedBuilder()
@@ -193,254 +152,309 @@ async function playCurrentSongMessage({ channel, currentSong, songs, round }: {
   });
 }
 
-function stopPartyMessage(channel) {
+function stopPartyMessage(channel: TextChannel): Promise<Message> {
   return channel.send(`Stopping the listening party...`);
 }
 
-function partyConcludedMessage(channel) {
+function partyConcludedMessage(channel: TextChannel): Promise<Message> {
   return channel.send('**The stream is concluded. See you next time!**');
 }
 
-let fetchingMessageMachine = createMachine({
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface RoundDirs {
+  parent: string;
+  download: string;
+  transcode: string;
+  announcer: string;
+  extraAnnouncer: string;
+}
+
+interface RoundInfo {
+  fullId: string;
+  id: string;
+  prefix: string | null;
+  title: string;
+  dirs: RoundDirs;
+}
+
+interface ExtraAnnouncer {
+  id: string;
+  path: string;
+}
+
+interface PartyContext {
+  channels?: { processing: TextChannel; party: TextChannel };
+  round?: RoundInfo;
+  fetcher?: CompoThaSauceFetcher;
+  downloader?: RoundFetcher;
+  transcoder?: RoundTranscoder;
+  announcer?: RoundAnnouncer;
+  extraAnnouncer?: RoundExtraAnnouncer;
+  fetchedSongs?: any[];
+  songs?: Song[];
+  _shout?: any;
+  abortController?: AbortController;
+  currentSong?: Song | null;
+  nextSongId?: string | null;
+  outroAnnouncer?: ExtraAnnouncer;
+}
+
+type PartyEvent =
+  | { type: 'START'; channel: TextChannel; round: string }
+  | { type: 'STOP'; immediate?: boolean }
+  | { type: 'SKIP_SONG' }
+  | { type: 'REFETCH'; channel: TextChannel }
+  | { type: 'START_STREAM' }
+  | { type: 'PLAY_STREAM'; _shout: any }
+  | { type: 'ERROR_OPENING_STREAM'; errorCode: number };
+
+// ─── Message Sub-Machines ────────────────────────────────────────────────────
+
+interface MessageMachineInput {
+  channel: TextChannel;
+  round: string;
+  songs: Song[];
+}
+
+interface MessageMachineContext extends MessageMachineInput {
+  total: number;
+  completed: number;
+  message: Message | null;
+}
+
+const fetchingMessageMachine = createMachine({
+  types: {} as { input: MessageMachineInput; context: MessageMachineContext },
   id: 'fetchingMessage',
   initial: 'sendInitialMessage',
+  context: ({ input }) => ({
+    channel: input.channel,
+    round: input.round,
+    songs: input.songs,
+    total: input.songs.length,
+    completed: 0,
+    message: null,
+  }),
   states: {
     sendInitialMessage: {
-      entry: assign((context) => {
-        context.total = context.songs.length;
-      }),
       invoke: {
-        src: (context) => context.channel.send(`*Downloading ${context.round} songs...*`),
+        src: fromPromise(({ input }: { input: MessageMachineContext }) =>
+          input.channel.send(`*Downloading ${input.round} songs...*`)
+        ),
+        input: ({ context }) => context,
         onDone: {
           target: 'waiting',
-          actions: assign((context, event) => {
-            context.message = event.data;
-          }),
+          actions: assign(({ event }) => ({ message: event.output })),
         },
-        onError: {
-          target: 'done',
-        },
+        onError: { target: 'done' },
       },
     },
     waiting: {
-      after: {
-        1500: { target: 'choose' },
-      },
+      after: { 1500: { target: 'choose' } },
     },
     choose: {
-      entry: assign((context) => {
-        let downloading = context.songs.filter(
+      entry: assign(({ context }) => {
+        const downloading = context.songs.filter(
           (song) =>
-            song.service.state.matches('fetched') || song.service.state.matches('downloading')
+            song.service.getSnapshot().matches('fetched') ||
+            song.service.getSnapshot().matches('downloading')
         );
-        context.completed = context.total - downloading.length;
+        return { completed: context.total - downloading.length };
       }),
       always: [
-        { target: 'finalizeMessage', cond: (context) => context.completed === context.total },
+        { target: 'finalizeMessage', guard: ({ context }) => context.completed === context.total },
         { target: 'updateMessage' },
       ],
     },
     updateMessage: {
       invoke: {
-        src: (context) => {
-          return context.message.edit(
-            `*Downloading ${context.round} songs... ${context.completed}/${context.total}*`
-          );
-        },
-        onDone: {
-          target: 'waiting',
-        },
-        onError: {
-          target: 'waiting',
-        },
+        src: fromPromise(({ input }: { input: MessageMachineContext }) =>
+          input.message!.edit(
+            `*Downloading ${input.round} songs... ${input.completed}/${input.total}*`
+          )
+        ),
+        input: ({ context }) => context,
+        onDone: { target: 'waiting' },
+        onError: { target: 'waiting' },
       },
     },
     finalizeMessage: {
       invoke: {
-        src: (context) => {
-          return context.message.edit(`*Downloading ${context.round} songs... done!*`);
-        },
-        onDone: {
-          target: 'done',
-        },
+        src: fromPromise(({ input }: { input: MessageMachineContext }) =>
+          input.message!.edit(`*Downloading ${input.round} songs... done!*`)
+        ),
+        input: ({ context }) => context,
+        onDone: { target: 'done' },
       },
     },
-    done: {
-      type: 'final',
-    },
+    done: { type: 'final' as const },
   },
 });
 
-let transcodingMessageMachine = createMachine({
+const transcodingMessageMachine = createMachine({
+  types: {} as { input: MessageMachineInput; context: MessageMachineContext },
   id: 'transcodingMessage',
   initial: 'sendInitialMessage',
+  context: ({ input }) => ({
+    channel: input.channel,
+    round: input.round,
+    songs: input.songs,
+    total: input.songs.length,
+    completed: 0,
+    message: null,
+  }),
   states: {
     sendInitialMessage: {
-      entry: assign((context) => {
-        context.total = context.songs.length;
-      }),
       invoke: {
-        src: (context) =>
-          context.channel.send(`*Transcoding ${context.round} songs for streaming...*`),
+        src: fromPromise(({ input }: { input: MessageMachineContext }) =>
+          input.channel.send(`*Transcoding ${input.round} songs for streaming...*`)
+        ),
+        input: ({ context }) => context,
         onDone: {
           target: 'waiting',
-          actions: assign((context, event) => {
-            context.message = event.data;
-          }),
+          actions: assign(({ event }) => ({ message: event.output })),
         },
-        onError: {
-          target: 'done',
-        },
+        onError: { target: 'done' },
       },
     },
     waiting: {
-      after: {
-        1500: { target: 'choose' },
-      },
+      after: { 1500: { target: 'choose' } },
     },
     choose: {
-      entry: assign((context) => {
-        let transcoding = context.songs.filter(
+      entry: assign(({ context }) => {
+        const transcoding = context.songs.filter(
           (song) =>
-            song.service.state.matches('downloaded') || song.service.state.matches('transcoding')
+            song.service.getSnapshot().matches('downloaded') ||
+            song.service.getSnapshot().matches('transcoding')
         );
-        context.completed = context.total - transcoding.length;
+        return { completed: context.total - transcoding.length };
       }),
       always: [
-        { target: 'finalizeMessage', cond: (context) => context.completed === context.total },
+        { target: 'finalizeMessage', guard: ({ context }) => context.completed === context.total },
         { target: 'updateMessage' },
       ],
     },
     updateMessage: {
       invoke: {
-        src: (context) => {
-          return context.message.edit(
-            `*Transcoding ${context.round} songs for streaming... ${context.completed}/${context.total}*`
-          );
-        },
-        onDone: {
-          target: 'waiting',
-        },
-        onError: {
-          target: 'waiting',
-        },
+        src: fromPromise(({ input }: { input: MessageMachineContext }) =>
+          input.message!.edit(
+            `*Transcoding ${input.round} songs for streaming... ${input.completed}/${input.total}*`
+          )
+        ),
+        input: ({ context }) => context,
+        onDone: { target: 'waiting' },
+        onError: { target: 'waiting' },
       },
     },
     finalizeMessage: {
       invoke: {
-        src: (context) => {
-          return context.message.edit(
-            `*Transcoding ${context.round} songs for streaming... done!*`
-          );
-        },
-        onDone: {
-          target: 'done',
-        },
+        src: fromPromise(({ input }: { input: MessageMachineContext }) =>
+          input.message!.edit(`*Transcoding ${input.round} songs for streaming... done!*`)
+        ),
+        input: ({ context }) => context,
+        onDone: { target: 'done' },
       },
     },
-    done: {
-      type: 'final',
-    },
+    done: { type: 'final' as const },
   },
 });
 
-let announcerMessageMachine = createMachine({
+const announcerMessageMachine = createMachine({
+  types: {} as { input: MessageMachineInput; context: MessageMachineContext },
   id: 'announcerGeneratingMessage',
   initial: 'sendInitialMessage',
+  context: ({ input }) => ({
+    channel: input.channel,
+    round: input.round,
+    songs: input.songs,
+    total: input.songs.length,
+    completed: 0,
+    message: null,
+  }),
   states: {
     sendInitialMessage: {
-      entry: assign((context) => {
-        context.total = context.songs.length;
-      }),
       invoke: {
-        src: (context) =>
-          context.channel.send(
+        src: fromPromise(({ input }: { input: MessageMachineContext }) =>
+          input.channel.send(
             '<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises...*'
-          ),
+          )
+        ),
+        input: ({ context }) => context,
         onDone: {
           target: 'waiting',
-          actions: assign((context, event) => {
-            context.message = event.data;
-          }),
+          actions: assign(({ event }) => ({ message: event.output })),
         },
-        onError: {
-          target: 'done',
-        },
+        onError: { target: 'done' },
       },
     },
     waiting: {
-      after: {
-        1500: { target: 'choose' },
-      },
+      after: { 1500: { target: 'choose' } },
     },
     choose: {
-      entry: assign((context) => {
-        let transcoding = context.songs.filter(
+      entry: assign(({ context }) => {
+        const transcoding = context.songs.filter(
           (song) =>
-            song.service.state.matches('transcoded') ||
-            song.service.state.matches('announcerProcessing')
+            song.service.getSnapshot().matches('transcoded') ||
+            song.service.getSnapshot().matches('announcerProcessing')
         );
-        context.completed = context.total - transcoding.length;
+        return { completed: context.total - transcoding.length };
       }),
       always: [
-        { target: 'finalizeMessage', cond: (context) => context.completed === context.total },
+        { target: 'finalizeMessage', guard: ({ context }) => context.completed === context.total },
         { target: 'updateMessage' },
       ],
     },
     updateMessage: {
       invoke: {
-        src: (context) => {
-          return context.message.edit(
-            `<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises... ${context.completed}/${context.total}*`
-          );
-        },
-        onDone: {
-          target: 'waiting',
-        },
-        onError: {
-          target: 'waiting',
-        },
+        src: fromPromise(({ input }: { input: MessageMachineContext }) =>
+          input.message!.edit(
+            `<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises... ${input.completed}/${input.total}*`
+          )
+        ),
+        input: ({ context }) => context,
+        onDone: { target: 'waiting' },
+        onError: { target: 'waiting' },
       },
     },
     finalizeMessage: {
       invoke: {
-        src: (context) => {
-          return context.message.edit(
-            `<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises... done!*`
-          );
-        },
-        onDone: {
-          target: 'done',
-        },
+        src: fromPromise(({ input }: { input: MessageMachineContext }) =>
+          input.message!.edit(
+            '<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises... done!*'
+          )
+        ),
+        input: ({ context }) => context,
+        onDone: { target: 'done' },
       },
     },
-    done: {
-      type: 'final',
-    },
+    done: { type: 'final' as const },
   },
 });
 
-let machine = createMachine(
+// ─── Main Party Machine ──────────────────────────────────────────────────────
+
+const machine = createMachine(
   {
+    types: {} as { context: PartyContext; events: PartyEvent },
     id: 'party',
     initial: 'idle',
     context: {},
     states: {
       idle: {
-        entry: assign((context) => {
-          context.channels = undefined;
-          context.round = undefined;
-          context.fetcher = undefined;
-          context.downloader = undefined;
-          context.announcer = undefined;
-          context.fetchedSongs = undefined;
-          context.songs = undefined;
-          context._shout = undefined;
-          context.abortController = undefined;
-          context.currentSong = undefined;
-          context.nextSongId = undefined;
-          context.outroAnnouncer = undefined;
-        }),
+        entry: assign(() => ({
+          channels: undefined,
+          round: undefined,
+          fetcher: undefined,
+          downloader: undefined,
+          announcer: undefined,
+          fetchedSongs: undefined,
+          songs: undefined,
+          _shout: undefined,
+          abortController: undefined,
+          currentSong: undefined,
+          nextSongId: undefined,
+          outroAnnouncer: undefined,
+        })),
         on: {
           START: {
             target: 'partying',
@@ -449,145 +463,133 @@ let machine = createMachine(
         },
       },
       partying: {
-        entry: assign((context) => {
-          context.fetcher = new CompoThaSauceFetcher(context.round.fullId);
-          context.downloader = new RoundFetcher();
-          context.transcoder = new RoundTranscoder();
-          context.announcer = new RoundAnnouncer(context.round.title);
-          context.extraAnnouncer = new RoundExtraAnnouncer(context.round.title);
-        }),
+        entry: assign(({ context }) => ({
+          fetcher: new CompoThaSauceFetcher(context.round!.fullId),
+          downloader: new RoundFetcher(),
+          transcoder: new RoundTranscoder(),
+          announcer: new RoundAnnouncer(context.round!.title),
+          extraAnnouncer: new RoundExtraAnnouncer(context.round!.title),
+        })),
         type: 'parallel',
-        on: {
-          STOP: {
-            target: 'stopping',
-          },
-        },
+        on: { STOP: { target: 'stopping' } },
         states: {
           processing: {
             initial: 'fetching',
             states: {
               fetching: {
-                entry: (context) =>
-                  startFetchMessage(context.channels.processing, context.round.fullId),
+                entry: ({ context }) =>
+                  startFetchMessage(context.channels!.processing, context.round!.fullId),
                 invoke: {
                   id: 'fetchRoundMetadata',
-                  src: (context) => context.fetcher.fetch(),
+                  src: fromPromise(({ input }: { input: PartyContext }) =>
+                    input.fetcher!.fetch()
+                  ),
+                  input: ({ context }) => context,
                   onDone: {
                     target: 'transitionProcessedSongs',
                     actions: [
-                      assign((context, event) => {
-                        context.fetchedSongs = event.data.songs;
-                      }),
-                      'reconcileFetchedSongs',
+                      assign(({ context, event }) => ({
+                        fetchedSongs: event.output.songs,
+                        songs: reconcileSongs(context.songs, event.output.songs, context.round!.dirs.parent),
+                      })),
                     ],
                   },
-                  onError: {
-                    target: 'fetchError',
-                  },
+                  onError: { target: 'fetchError' },
                 },
               },
               fetchError: {
                 invoke: {
-                  src: (context) => fetchErrorMessage(context.channels.processing),
-                  onDone: {
-                    actions: send('STOP'),
-                  },
-                  onError: {
-                    actions: send('STOP'),
-                  },
+                  src: fromPromise(({ input }: { input: PartyContext }) =>
+                    fetchErrorMessage(input.channels!.processing)
+                  ),
+                  input: ({ context }) => context,
+                  onDone: { actions: raise({ type: 'STOP' }) },
+                  onError: { actions: raise({ type: 'STOP' }) },
                 },
               },
               transitionProcessedSongs: {
                 invoke: {
                   id: 'processedSongTransitioner',
-                  src: (context) =>
-                    Promise.all(context.songs.map((song) => song.transitionIfProcessed())),
-                  onDone: {
-                    target: 'downloading',
-                  },
+                  src: fromPromise(({ input }: { input: PartyContext }) =>
+                    Promise.all(input.songs!.map((song) => song.transitionIfProcessed()))
+                  ),
+                  input: ({ context }) => context,
+                  onDone: { target: 'downloading' },
                 },
               },
               downloading: {
                 invoke: [
-                  // This is the service that actually downloads the songs, but we don't use it to exit
-                  // this state.
                   {
                     id: 'roundDownloader',
-                    src: (context) => context.downloader.fetch(context.songs),
-                    onError: {
-                      actions: ['downloadErrorMessage', send('STOP')],
-                    },
+                    src: fromPromise(({ input }: { input: PartyContext }) =>
+                      input.downloader!.fetch(input.songs!)
+                    ),
+                    input: ({ context }) => context,
+                    onError: { actions: raise({ type: 'STOP' }) },
                   },
-                  // Instead we exit the state when the discord message finishes updating, so that it can
-                  // reach a done state that makes sense to users.
                   {
                     id: 'fetchingMessage',
                     src: fetchingMessageMachine,
-                    data: {
-                      channel: (context) => context.channels.processing,
-                      round: (context) => context.round.fullId,
-                      songs: (context) => context.songs,
-                    },
-                    onDone: {
-                      target: 'transcoding',
-                    },
+                    input: ({ context }) => ({
+                      channel: context.channels!.processing,
+                      round: context.round!.fullId,
+                      songs: context.songs!,
+                    }),
+                    onDone: { target: 'transcoding' },
                   },
                 ],
               },
               transcoding: {
                 invoke: [
-                  // This is the service that actually transcodes the songs, but we don't use it to exit
-                  // this state.
                   {
                     id: 'roundTranscoder',
-                    src: (context) => context.transcoder.transcode(context.songs),
+                    src: fromPromise(({ input }: { input: PartyContext }) =>
+                      input.transcoder!.transcode(input.songs!)
+                    ),
+                    input: ({ context }) => context,
                   },
-                  // Instead we exit the state when the discord message finishes updating, so that it can
-                  // reach a done state that makes sense to users.
                   {
                     id: 'transcodingMessage',
                     src: transcodingMessageMachine,
-                    data: {
-                      channel: (context) => context.channels.processing,
-                      round: (context) => context.round.fullId,
-                      songs: (context) => context.songs,
-                    },
-                    onDone: {
-                      target: 'parsingMetadata',
-                    },
+                    input: ({ context }) => ({
+                      channel: context.channels!.processing,
+                      round: context.round!.fullId,
+                      songs: context.songs!,
+                    }),
+                    onDone: { target: 'parsingMetadata' },
                   },
                 ],
               },
               parsingMetadata: {
                 invoke: {
                   id: 'metadataParser',
-                  src: (context) => parseMetadata(context.songs),
-                  onDone: {
-                    target: 'generatingAnnouncer',
-                  },
+                  src: fromPromise(({ input }: { input: PartyContext }) =>
+                    parseMetadata(input.songs!)
+                  ),
+                  input: ({ context }) => context,
+                  onDone: { target: 'generatingAnnouncer' },
                 },
               },
               generatingAnnouncer: {
                 invoke: [
-                  // This is the service that actually generates the announcer files, but we don't use it to
-                  // exit this state.
                   {
                     id: 'announcerGenerator',
-                    src: (context) => context.announcer.process(context.songs),
+                    src: fromPromise(({ input }: { input: PartyContext }) =>
+                      input.announcer!.process(input.songs!)
+                    ),
+                    input: ({ context }) => context,
                   },
-                  // Instead we exit the state when the discord message finishes updating, so that it can
-                  // reach a done state that makes sense to users.
                   {
                     id: 'announcerGeneratingMessage',
                     src: announcerMessageMachine,
-                    data: {
-                      channel: (context) => context.channels.processing,
-                      round: (context) => context.round.fullId,
-                      songs: (context) => context.songs,
-                    },
+                    input: ({ context }) => ({
+                      channel: context.channels!.processing,
+                      round: context.round!.fullId,
+                      songs: context.songs!,
+                    }),
                     onDone: {
                       target: 'generatingExtraAnnouncers',
-                      actions: send('START_STREAM'),
+                      actions: raise({ type: 'START_STREAM' }),
                     },
                   },
                 ],
@@ -595,15 +597,15 @@ let machine = createMachine(
               generatingExtraAnnouncers: {
                 invoke: {
                   id: 'extraAnnouncersGenerator',
-                  src: (context) =>
-                    context.extraAnnouncer.process(context.round.dirs.extraAnnouncer),
+                  src: fromPromise(({ input }: { input: PartyContext }) =>
+                    input.extraAnnouncer!.process(input.round!.dirs.extraAnnouncer)
+                  ),
+                  input: ({ context }) => context,
                   onDone: {
-                    actions: assign((context, event) => {
-                      context.outroAnnouncer = event.data.find(
-                        (announcer) => announcer.id === 'outro'
-                      );
-                    }),
                     target: 'idle',
+                    actions: assign(({ event }) => ({
+                      outroAnnouncer: event.output.find((a: ExtraAnnouncer) => a.id === 'outro'),
+                    })),
                   },
                 },
               },
@@ -611,9 +613,9 @@ let machine = createMachine(
                 on: {
                   REFETCH: {
                     target: 'fetching',
-                    actions: assign((context, event) => {
-                      context.channels.processing = event.channel;
-                    }),
+                    actions: assign(({ context, event }) => ({
+                      channels: { ...context.channels!, processing: event.channel },
+                    })),
                   },
                 },
               },
@@ -623,91 +625,83 @@ let machine = createMachine(
             initial: 'idle',
             states: {
               idle: {
-                on: {
-                  START_STREAM: { target: 'setupNodeshout' },
-                },
+                on: { START_STREAM: { target: 'setupNodeshout' } },
               },
               setupNodeshout: {
                 invoke: {
                   src: 'initNodeshout',
+                  input: ({ context }) => context,
                 },
                 on: {
                   PLAY_STREAM: {
                     target: 'playingIntro',
-                    actions: assign((context, event) => {
-                      context._shout = event._shout;
-                    }),
+                    actions: assign(({ event }) => ({ _shout: event._shout })),
                   },
                   ERROR_OPENING_STREAM: {
-                    actions: send('STOP'),
+                    actions: raise({ type: 'STOP' }),
                   },
                 },
               },
               playingIntro: {
                 entry: [
-                  assign((context) => {
-                    context.abortController = new AbortController();
-                  }),
-                  (context) => startIntroMessage(context.channels.party),
+                  assign(() => ({ abortController: new AbortController() })),
+                  ({ context }) => startIntroMessage(context.channels!.party),
                 ],
                 invoke: {
                   id: 'playIntro',
-                  src: 'playIntro',
-                  onDone: {
-                    target: 'pickNextSong',
-                  },
+                  src: fromPromise(({ input }: { input: PartyContext }) =>
+                    playIntro(input._shout!, input.abortController!)
+                  ),
+                  input: ({ context }) => context,
+                  onDone: { target: 'pickNextSong' },
                 },
                 on: {
                   SKIP_SONG: {
-                    actions: (context) => context.abortController.abort(),
+                    actions: ({ context }) => context.abortController?.abort(),
                   },
                 },
               },
               pickNextSong: {
                 entry: 'setCurrentAndNextSong',
                 always: [
-                  { target: 'playingSong', cond: (context) => context.currentSong },
+                  { target: 'playingSong', guard: ({ context }) => context.currentSong != null },
                   { target: 'playingOutro' },
                 ],
               },
               playingSong: {
                 entry: [
-                  assign((context) => {
-                    context.abortController = new AbortController();
-                  }),
-                  (context) =>
+                  assign(() => ({ abortController: new AbortController() })),
+                  ({ context }) =>
                     playCurrentSongMessage({
-                      channel: context.channels.party,
-                      currentSong: context.currentSong,
-                      songs: context.songs,
-                      round: context.round.fullId,
+                      channel: context.channels!.party,
+                      currentSong: context.currentSong!,
+                      songs: context.songs!,
+                      round: context.round!.fullId,
                     }),
                 ],
                 invoke: {
                   id: 'playCurrentSong',
-                  src: 'playCurrentSong',
-                  onDone: {
-                    target: 'pickNextSong',
-                  },
+                  src: fromPromise(({ input }: { input: PartyContext }) =>
+                    playCurrentSong(input._shout!, input.currentSong!, input.abortController!)
+                  ),
+                  input: ({ context }) => context,
+                  onDone: { target: 'pickNextSong' },
                 },
                 on: {
                   SKIP_SONG: {
-                    actions: (context) => context.abortController.abort(),
+                    actions: ({ context }) => context.abortController?.abort(),
                   },
                 },
               },
               playingOutro: {
-                entry: [
-                  assign((context) => {
-                    context.abortController = new AbortController();
-                  }),
-                ],
+                entry: assign(() => ({ abortController: new AbortController() })),
                 invoke: {
                   id: 'playOutro',
-                  src: 'playOutro',
-                  onDone: {
-                    actions: send('STOP'),
-                  },
+                  src: fromPromise(({ input }: { input: PartyContext }) =>
+                    playOutro(input._shout!, input.outroAnnouncer!, input.abortController!)
+                  ),
+                  input: ({ context }) => context,
+                  onDone: { actions: raise({ type: 'STOP' }) },
                 },
               },
             },
@@ -718,60 +712,48 @@ let machine = createMachine(
         entry: 'cleanup',
         invoke: {
           id: 'stopPartyMessage',
-          src: (context, event) => {
-            if (event.immediate) {
-              return stopPartyMessage(context.channels.party);
+          src: fromPromise(({ input }: { input: { context: PartyContext; immediate: boolean } }) => {
+            if (input.immediate) {
+              return stopPartyMessage(input.context.channels!.party);
             } else {
-              return partyConcludedMessage(context.channels.party);
+              return partyConcludedMessage(input.context.channels!.party);
             }
-          },
-          onDone: {
-            target: 'idle',
-          },
-          onError: {
-            target: 'idle',
-          },
+          }),
+          input: ({ context, event }) => ({
+            context,
+            immediate: (event as any).immediate ?? false,
+          }),
+          onDone: { target: 'idle' },
+          onError: { target: 'idle' },
         },
       },
     },
   },
   {
     actions: {
-      makeRoundDirectories: (context) => makeRoundDirectories(context.round.dirs),
-      setRoundContext: assign((context, { channel, round }) => {
-        let { id, prefix } = roundPrefixAndId(round);
-        let parent = path.join(path.dirname(__dirname), 'tmp', 'rounds', round);
-        context.channels = {
-          processing: channel,
-          party: channel,
-        };
-        context.round = {
-          fullId: round,
-          id,
-          prefix,
-          title: roundTitle(prefix, id) || round,
-          dirs: {
-            parent,
-            download: path.join(parent, 'download'),
-            transcode: path.join(parent, 'transcode'),
-            announcer: path.join(parent, 'announcer'),
-            extraAnnouncer: path.join(parent, 'extraAnnouncer'),
+      makeRoundDirectories: ({ context }) => makeRoundDirectories(context.round!.dirs),
+      setRoundContext: assign(({ context, event }) => {
+        const ev = event as Extract<PartyEvent, { type: 'START' }>;
+        const { id, prefix } = roundPrefixAndId(ev.round);
+        const parent = path.join(path.dirname(__dirname), 'tmp', 'rounds', ev.round);
+        return {
+          channels: { processing: ev.channel, party: ev.channel } as any,
+          round: {
+            fullId: ev.round,
+            id,
+            prefix,
+            title: roundTitle(prefix, id) ?? ev.round,
+            dirs: {
+              parent,
+              download: path.join(parent, 'download'),
+              transcode: path.join(parent, 'transcode'),
+              announcer: path.join(parent, 'announcer'),
+              extraAnnouncer: path.join(parent, 'extraAnnouncer'),
+            },
           },
         };
       }),
-      reconcileFetchedSongs: assign((context) => {
-        let currentSongs = context.songs || [];
-
-        context.songs = context.fetchedSongs.map((songData) => {
-          let mappedSong = currentSongs.find((song) => song.id === songData.id);
-          if (!mappedSong) {
-            mappedSong = new Song(context.round.dirs.parent);
-            mappedSong.service.send('FETCH_FINISH', songData);
-          }
-          return mappedSong;
-        });
-      }),
-      cleanup: (context) => {
+      cleanup: ({ context }) => {
         if (context.abortController) {
           console.log('Aborting the current audio pipeline');
           context.abortController.abort();
@@ -781,78 +763,80 @@ let machine = createMachine(
           context._shout.close();
         }
       },
-      setCurrentAndNextSong: assign((context) => {
+      setCurrentAndNextSong: assign(({ context }) => {
         if (!context.currentSong && !context.nextSongId) {
-          // We're just starting the party, so we need to grab the first song.
-          let [first, second] = context.songs;
-
-          context.currentSong = first;
-          context.nextSongId = second ? second.id : null;
+          const [first, second] = context.songs!;
+          return { currentSong: first, nextSongId: second ? second.id : null };
         } else if (!context.nextSongId) {
-          // If there's no next song, we're at the end of the party.
-          context.currentSong = null;
+          return { currentSong: null };
         } else {
-          let previousSongIndex = context.songs.findIndex(
-            (song) => song.id === context.currentSong.id
+          const previousSongIndex = context.songs!.findIndex(
+            (song) => song.id === context.currentSong!.id
           );
-          let songIndex = context.songs.findIndex((song) => song.id === context.nextSongId);
+          const songIndex = context.songs!.findIndex((song) => song.id === context.nextSongId);
 
           if (songIndex === -1 && previousSongIndex === -1) {
-            let [first, second] = context.songs;
-            context.currentSong = first;
-            context.nextSongId = second ? second.id : null;
+            const [first, second] = context.songs!;
+            return { currentSong: first, nextSongId: second ? second.id : null };
           } else if (songIndex === -1) {
-            let song = context.songs[previousSongIndex + 1];
-            let next = context.songs[previousSongIndex + 1];
-            context.currentSong = song;
-            context.nextSongId = next ? next.id : null;
+            const song = context.songs![previousSongIndex + 1];
+            const next = context.songs![previousSongIndex + 1];
+            return { currentSong: song, nextSongId: next ? next.id : null };
           } else {
-            let next = context.songs[songIndex + 1];
-            context.currentSong = context.songs[songIndex];
-            context.nextSongId = next ? next.id : null;
+            const next = context.songs![songIndex + 1];
+            return { currentSong: context.songs![songIndex], nextSongId: next ? next.id : null };
           }
         }
       }),
     },
-    services: {
-      initNodeshout: (context) => (callback) => {
-        let _shout = nodeshout.create();
-        _shout.setHost(STREAM.host);
-        _shout.setPort(STREAM.port);
-        _shout.setUser('source');
-        _shout.setPassword(STREAM.password);
-        _shout.setMount(STREAM.mount);
-        _shout.setFormat(1); // 0=ogg, 1=mp3
-        _shout.setName(`${context.round.fullId} Listening Party`);
-        _shout.setAudioInfo('bitrate', '320');
-        _shout.setAudioInfo('samplerate', '44100');
-        _shout.setAudioInfo('channels', '2');
+    actors: {
+      initNodeshout: fromCallback<any, PartyContext>(({ sendBack, input }) => {
+        const shout = nodeshout.create();
+        shout.setHost(STREAM.host);
+        shout.setPort(STREAM.port);
+        shout.setUser('source');
+        shout.setPassword(STREAM.password);
+        shout.setMount(STREAM.mount);
+        shout.setFormat(1);
+        shout.setName(`${input.round?.fullId} Listening Party`);
+        shout.setAudioInfo('bitrate', '320');
+        shout.setAudioInfo('samplerate', '44100');
+        shout.setAudioInfo('channels', '2');
 
-        let errorCode = _shout.open();
+        const errorCode = shout.open();
 
         if (errorCode === nodeshout.ErrorTypes.SUCCESS) {
-          callback({ type: 'PLAY_STREAM', _shout });
+          sendBack({ type: 'PLAY_STREAM', _shout: shout });
         } else {
-          callback({ type: 'ERROR_OPENING_STREAM', errorCode });
+          sendBack({ type: 'ERROR_OPENING_STREAM', errorCode });
         }
 
-        // Perform cleanup
         return () => {};
-      },
-      playIntro: (context) => playIntro(context._shout, context.abortController),
-      playCurrentSong: (context) =>
-        playCurrentSong(context._shout, context.currentSong, context.abortController),
-      playOutro: (context) =>
-        playOutro(context._shout, context.outroAnnouncer, context.abortController),
+      }),
     },
   }
 );
 
-let partyService = interpret(machine).onTransition((state) => {
-  console.log('Party service transition:');
-  console.log('  State:', state.value);
-  console.log('  Event:', JSON.stringify(state.event, null, 2));
-});
-partyService.start();
+function reconcileSongs(
+  currentSongs: Song[] | undefined,
+  fetchedSongs: any[],
+  roundDir: string
+): Song[] {
+  const existing = currentSongs ?? [];
+  return fetchedSongs.map((songData) => {
+    let song = existing.find((s) => s.id === songData.id);
+    if (!song) {
+      song = new Song(roundDir);
+      song.service.send({ type: 'FETCH_FINISH', ...songData });
+    }
+    return song;
+  });
+}
 
-module.exports = { partyService };
+export const partyService = createActor(machine).start();
+
+partyService.subscribe((snapshot) => {
+  console.log('Party service transition:');
+  console.log('  State:', snapshot.value);
+  console.log('  Event:', JSON.stringify(snapshot.event, null, 2));
+});
