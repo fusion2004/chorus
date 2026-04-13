@@ -4,7 +4,7 @@
   "private": true,
   "author": "Mark Oleson <fusion2004@gmail.com>",
   "description": "Your Party Rock Commander",
-  "main": "index.js",
+  "main": "dist/index.js",
   "dependencies": {
     "@xstate/immer": "^0.2.0",
     "aws-sdk": "^2.1030.0",
@@ -31,26 +31,29 @@
     "zlib-sync": "^0.1.7"
   },
   "engines": {
-    "node": "16.x"
+    "node": ">=18"
   },
   "scripts": {
+    "build": "tsc",
+    "start": "tsc && node dist/index.js",
     "lint": "npm-run-all --aggregate-output --continue-on-error --parallel 'lint:!(fix)'",
     "lint:fix": "npm-run-all --aggregate-output --continue-on-error --parallel 'lint:*:fix'",
-    "lint:eslint": "eslint . --cache",
+    "lint:eslint": "eslint .",
     "lint:eslint:fix": "eslint . --fix",
     "lint:prettier": "prettier --check .",
-    "lint:prettier:fix": "prettier --write .",
-    "start": "node ."
+    "lint:prettier:fix": "prettier --write ."
   },
   "volta": {
-    "node": "16.13.0",
+    "node": "18.20.8",
     "yarn": "1.22.17"
   },
   "devDependencies": {
+    "@types/node": "^25.6.0",
     "eslint": "^8.2.0",
     "eslint-config-prettier": "^8.3.0",
     "npm-run-all": "^4.1.5",
-    "prettier": "^2.4.1"
+    "prettier": "^2.4.1",
+    "typescript": "^6.0.2"
   },
   "packageManager": "yarn@3.1.0"
 }
