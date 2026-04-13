@@ -1,15 +1,27 @@
 import chalk from 'chalk';
-import { createMachine, assign, interpret } from 'xstate';
+import { createMachine, createActor, assign } from 'xstate';
+import type { TextChannel } from 'discord.js';
 
-function sendMessages(channel, messages) {
+function sendMessages(channel: TextChannel, messages: string[]): Promise<any> {
   let message = '```shell\n';
   message += messages.join('\n');
   message += '```';
   return channel.send(message);
 }
 
-let debugChannelMachine = createMachine(
+interface DebugChannelContext {
+  debugChannel: TextChannel | null;
+  messages: string[];
+  nextMessages: string[];
+}
+
+type DebugChannelEvent =
+  | { type: 'SET_DEBUG_CHANNEL'; channel: TextChannel }
+  | { type: 'SEND_MESSAGE'; message: string };
+
+const debugChannelMachine = createMachine(
   {
+    types: {} as { context: DebugChannelContext; events: DebugChannelEvent },
     initial: 'init',
     context: {
       debugChannel: null,
@@ -21,50 +33,65 @@ let debugChannelMachine = createMachine(
         on: {
           SET_DEBUG_CHANNEL: {
             target: 'ready',
-            actions: ['setDebugChannel'],
+            actions: assign(({ event }) => ({ debugChannel: event.channel })),
           },
         },
       },
       ready: {
+        always: [
+          { target: 'debouncing', guard: 'areThereMessagesToSend' },
+        ],
         on: {
-          always: [
-            {
-              target: 'debouncing',
-              cond: 'areThereMessagesToSend',
-            },
-          ],
           SEND_MESSAGE: {
             target: 'debouncing',
-            actions: ['addMessageToSend'],
+            actions: assign(({ context, event }) => ({
+              nextMessages: [...context.nextMessages, event.message],
+            })),
           },
         },
       },
       debouncing: {
         after: {
-          2000: {
-            target: 'sending',
-          },
+          2000: { target: 'sending' },
         },
         on: {
           SEND_MESSAGE: {
-            actions: ['addMessageToSend'],
+            actions: assign(({ context, event }) => ({
+              nextMessages: [...context.nextMessages, event.message],
+            })),
           },
         },
       },
       sending: {
-        entry: ['getMessagesReadyToSend'],
+        entry: assign(({ context }) => {
+          let messages = [...context.messages];
+          let nextMessages = [...context.nextMessages];
+          let length = messages.reduce((sum, msg) => sum + msg.length, 0);
+          let msg: string | undefined;
+
+          while ((msg = nextMessages.shift())) {
+            if (length + msg.length < 1500) {
+              messages.push(msg);
+              length += msg.length;
+            } else {
+              nextMessages.unshift(msg);
+              break;
+            }
+          }
+
+          return { messages, nextMessages };
+        }),
         invoke: {
           id: 'sendMessages',
-          src: (context) => sendMessages(context.debugChannel, context.messages),
+          src: ({ context }) =>
+            sendMessages(context.debugChannel!, context.messages),
           onDone: {
             target: 'ready',
-            actions: assign({
-              messages: () => [],
-            }),
+            actions: assign(() => ({ messages: [] })),
           },
           onError: {
             target: 'ready',
-            actions: (context, event) => {
+            actions: ({ context, event }: any) => {
               console.error('Error sending debug channel messages');
               console.log(event);
             },
@@ -72,7 +99,9 @@ let debugChannelMachine = createMachine(
         },
         on: {
           SEND_MESSAGE: {
-            actions: ['addMessageToSend'],
+            actions: assign(({ context, event }) => ({
+              nextMessages: [...context.nextMessages, event.message],
+            })),
           },
         },
       },
@@ -80,69 +109,33 @@ let debugChannelMachine = createMachine(
   },
   {
     guards: {
-      areThereMessagesToSend: (context) => {
-        // There are messages to send if either of the message arrays have
-        // any members.
-        return !!(context.messages.length || context.nextMessages.length);
-      },
-    },
-    actions: {
-      setDebugChannel: assign({
-        debugChannel: (context, event) => event.channel,
-      }),
-      addMessageToSend: assign({
-        nextMessages: (context, event) => [...context.nextMessages, event.message],
-      }),
-      getMessagesReadyToSend: assign((context) => {
-        let messages = [...context.messages];
-        let nextMessages = [...context.nextMessages];
-        let length = messages.reduce((sum, msg) => sum + msg.length, 0);
-        let msg;
-
-        // Move messages to be sent until we hit a lot characters, so we don't
-        // go over the maximum form body length in discord's API.
-        while ((msg = nextMessages.shift())) {
-          if (length + msg.length < 1500) {
-            messages.push(msg);
-            length += msg.length;
-          } else {
-            nextMessages.unshift(msg);
-            break;
-          }
-        }
-
-        return {
-          ...context,
-          messages,
-          nextMessages,
-        };
-      }),
+      areThereMessagesToSend: ({ context }) =>
+        !!(context.messages.length || context.nextMessages.length),
     },
   }
 );
 
-let debugChannelService = interpret(debugChannelMachine);
+const debugChannelService = createActor(debugChannelMachine);
 debugChannelService.start();
 
-let typeFormatter = new Map();
+const typeFormatter = new Map<string, (text: string) => string>();
 typeFormatter.set('error', chalk.red);
 typeFormatter.set('success', chalk.green);
 typeFormatter.set('info', chalk.blue);
 typeFormatter.set('warn', chalk.yellow);
 
-function formatTextForConsole(text, type) {
-  if (typeFormatter.has(type)) {
-    return typeFormatter.get(type)(text);
-  } else {
-    return text;
+function formatTextForConsole(text: string, type?: string): string {
+  if (type && typeFormatter.has(type)) {
+    return typeFormatter.get(type)!(text);
   }
+  return text;
 }
 
-export function setDebugChannel(channel: any) {
-  debugChannelService.send('SET_DEBUG_CHANNEL', { channel });
+export function setDebugChannel(channel: TextChannel): void {
+  debugChannelService.send({ type: 'SET_DEBUG_CHANNEL', channel });
 }
 
-export function log(text: any, type?: any) {
+export function log(text: string, type?: string): void {
   console.log(formatTextForConsole(text, type));
-  debugChannelService.send('SEND_MESSAGE', { message: text });
+  debugChannelService.send({ type: 'SEND_MESSAGE', message: text });
 }
