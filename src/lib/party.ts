@@ -5,7 +5,7 @@ const path = require('path');
 const { pipeline } = require('stream/promises');
 const mm = require('music-metadata');
 const nodeshout = require('nodeshout-napi');
-const { MessageEmbed } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 
 const CompoThaSauceFetcher = require('./compo-thasauce-fetcher');
 const { metadataUpdater } = require('./machines');
@@ -166,33 +166,31 @@ async function startIntroMessage(channel) {
   await channel.send('**Playing stream intro before we get this party started...**');
 }
 
-async function playCurrentSongMessage({ channel, currentSong, songs, round }) {
-  let index = songs.findIndex((song) => song.id === currentSong.id);
-  let position = index + 1;
+async function playCurrentSongMessage({ channel, currentSong, songs, round }: {
+  channel: any;
+  currentSong: any;
+  songs: any[];
+  round: string;
+}) {
+  const index = songs.findIndex((song: any) => song.id === currentSong.id);
+  const position = index + 1;
 
-  const embed = new MessageEmbed()
-    .setColor('#39aa6e')
+  const embed = new EmbedBuilder()
+    .setColor(0x39aa6e)
     .setTitle(currentSong.safeTitle)
     .setURL(`http://compo.thasauce.net/rounds/view/${round}#entry-${currentSong.id}`)
     .setDescription(
-      `${round} listening party, entry ${position} of ${songs.length}.
-          [Tune in to the stream here!](${streamUrl()})`
+      `${round} listening party, entry ${position} of ${songs.length}.\n[Tune in to the stream here!](${streamUrl()})`
     )
-    .addField('Artist', currentSong.safeArtist)
-    .addField('Length', currentSong.formattedDuration);
+    .addFields(
+      { name: 'Artist', value: currentSong.safeArtist },
+      { name: 'Length', value: currentSong.formattedDuration ?? 'unknown' }
+    );
 
-  // discord.js v12
-  await channel.send(
-    `Now Playing: ${currentSong.safeTitle} by ${currentSong.safeArtist} [${currentSong.formattedDuration}]\n`,
-    { embed }
-  );
-
-  // TODO: discord.js v13
-  // await channel.send({ embeds: [embed] });
-  // await channel.send({
-  //   content: `Now Playing: ${currentSong.safeTitle} by ${currentSong.safeArtist} [${length}]`,
-  //   embeds: [embed],
-  // });
+  await channel.send({
+    content: `Now Playing: ${currentSong.safeTitle} by ${currentSong.safeArtist} [${currentSong.formattedDuration}]`,
+    embeds: [embed],
+  });
 }
 
 function stopPartyMessage(channel) {
