@@ -74,6 +74,7 @@ export class RoundExtraAnnouncer {
     });
 
     const response = await polly.send(command);
+    if (!response.AudioStream) throw new Error('Polly returned no audio stream');
     const pollyStream = response.AudioStream as Readable;
     const pcmWriteStream = fs.createWriteStream(awsPath);
 

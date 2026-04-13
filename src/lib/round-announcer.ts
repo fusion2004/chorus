@@ -1,7 +1,6 @@
 import fs from 'fs';
 import { pipeline } from 'stream/promises';
 import { Readable } from 'stream';
-import path from 'path';
 
 import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
 import Bottleneck from 'bottleneck';
@@ -77,6 +76,7 @@ export class RoundAnnouncer {
     });
 
     const response = await polly.send(command);
+    if (!response.AudioStream) throw new Error('Polly returned no audio stream');
     const pollyStream = response.AudioStream as Readable;
     const pcmWriteStream = fs.createWriteStream(awsPath);
 
