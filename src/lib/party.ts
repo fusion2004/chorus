@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import mm from 'music-metadata';
-const nodeshout = require('nodeshout-napi');
+const nodeshout = require('nodeshout');
+import type { ShoutT } from 'nodeshout';
 
 import { createMachine, createActor, assign, raise, fromPromise, fromCallback } from 'xstate';
 import type { TextChannel, Message } from 'discord.js';
@@ -16,7 +17,7 @@ import RoundExtraAnnouncer from './round-extra-announcer';
 import { announcerFinal, transcodeFinal } from '../utils/symbols';
 import { fetchEnv } from '../utils/fetch-env';
 
-const { ShoutStream } = nodeshout;
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 nodeshout.init();
 
@@ -67,49 +68,47 @@ async function parseMetadata(songs: Song[]): Promise<void> {
   );
 }
 
-async function playIntro(shout: any, abortController: AbortController): Promise<void> {
-  const { pipeline } = await import('stream/promises');
-  const fileStream = fs.createReadStream('./audio/intro01.mp3', { highWaterMark: 65536 });
-  const shoutStream = new ShoutStream(shout);
+async function streamFile(
+  shout: ShoutT,
+  filePath: string,
+  signal: AbortSignal
+): Promise<void> {
+  const fileHandle = await fs.promises.open(filePath);
+  const chunkSize = 65536;
+  const buf = Buffer.alloc(chunkSize);
+
   try {
-    await pipeline(fileStream, shoutStream, { signal: abortController.signal });
-  } catch (error: any) {
-    if (error.name === 'AbortError') return;
-    throw error;
+    while (true) {
+      if (signal.aborted) return;
+      const { bytesRead } = await fileHandle.read(buf, 0, chunkSize, null);
+      if (bytesRead === 0) break;
+      shout.send(buf, bytesRead);
+      await sleep(shout.delay());
+    }
+  } finally {
+    await fileHandle.close();
   }
 }
 
-async function playCurrentSong(shout: any, currentSong: Song, abortController: AbortController): Promise<void> {
-  const { pipeline } = await import('stream/promises');
-  let fileStream = fs.createReadStream(currentSong.path(announcerFinal), { highWaterMark: 65536 });
-  let shoutStream = new ShoutStream(shout);
-  try {
-    await pipeline(fileStream, shoutStream, { signal: abortController.signal });
-  } catch (error: any) {
-    if (error.name === 'AbortError') return;
-    throw error;
-  }
-
-  fileStream = fs.createReadStream(currentSong.path(transcodeFinal), { highWaterMark: 65536 });
-  shoutStream = new ShoutStream(shout);
-  try {
-    await pipeline(fileStream, shoutStream, { signal: abortController.signal });
-  } catch (error: any) {
-    if (error.name === 'AbortError') return;
-    throw error;
-  }
+async function playIntro(shout: ShoutT, abortController: AbortController): Promise<void> {
+  await streamFile(shout, './audio/intro01.mp3', abortController.signal);
 }
 
-async function playOutro(shout: any, announcer: ExtraAnnouncer, abortController: AbortController): Promise<void> {
-  const { pipeline } = await import('stream/promises');
-  const fileStream = fs.createReadStream(announcer.path, { highWaterMark: 65536 });
-  const shoutStream = new ShoutStream(shout);
-  try {
-    await pipeline(fileStream, shoutStream, { signal: abortController.signal });
-  } catch (error: any) {
-    if (error.name === 'AbortError') return;
-    throw error;
-  }
+async function playCurrentSong(
+  shout: ShoutT,
+  currentSong: Song,
+  abortController: AbortController
+): Promise<void> {
+  await streamFile(shout, currentSong.path(announcerFinal), abortController.signal);
+  await streamFile(shout, currentSong.path(transcodeFinal), abortController.signal);
+}
+
+async function playOutro(
+  shout: ShoutT,
+  announcer: ExtraAnnouncer,
+  abortController: AbortController
+): Promise<void> {
+  await streamFile(shout, announcer.path, abortController.signal);
 }
 
 function startFetchMessage(channel: TextChannel, round: string): void {
@@ -807,7 +806,7 @@ const machine = createMachine(
     },
     actors: {
       initNodeshout: fromCallback<any, PartyContext>(({ sendBack, input }) => {
-        const shout = nodeshout.create();
+        const shout: ShoutT = nodeshout.create();
         shout.setHost(STREAM.host);
         shout.setPort(STREAM.port);
         shout.setUser('source');
