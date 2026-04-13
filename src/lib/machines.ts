@@ -1,75 +1,71 @@
-const { createMachine } = require('xstate');
-const { assign, createUpdater } = require('@xstate/immer');
+import { createMachine, assign } from 'xstate';
+import type { IAudioMetadata } from 'music-metadata';
 
-let metadataUpdater = createUpdater(
-  'UPDATE_METADATA',
-  (context, { input }) => (context.metadata = input)
-);
+export interface SongContext {
+  id?: string;
+  title?: string;
+  artist?: string;
+  url?: string;
+  metadata?: IAudioMetadata;
+}
 
-let songMachine = createMachine(
-  {
-    initial: 'init',
-    context: {},
-    states: {
-      init: {
-        on: {
-          FETCH_FINISH: {
-            target: 'fetched',
-            actions: ['storeFetchedData'],
-          },
+export type SongEvent =
+  | { type: 'FETCH_FINISH'; songId: string; title: string; artist: string; url: string }
+  | { type: 'START_DOWNLOAD' }
+  | { type: 'FINISH_DOWNLOAD' }
+  | { type: 'SKIP_DOWNLOAD' }
+  | { type: 'START_TRANSCODE' }
+  | { type: 'FINISH_TRANSCODE' }
+  | { type: 'SKIP_TRANSCODE' }
+  | { type: 'START_ANNOUNCER_DL_AND_TRANSCODE' }
+  | { type: 'FINISH_ANNOUNCER_DL_AND_TRANSCODE' }
+  | { type: 'UPDATE_METADATA'; metadata: IAudioMetadata };
+
+export const songMachine = createMachine({
+  types: {} as { context: SongContext; events: SongEvent },
+  initial: 'init',
+  context: {},
+  states: {
+    init: {
+      on: {
+        FETCH_FINISH: {
+          target: 'fetched',
+          actions: assign(({ event }) => ({
+            id: event.songId,
+            title: event.title,
+            artist: event.artist,
+            url: event.url,
+          })),
         },
       },
-      fetched: {
-        on: {
-          START_DOWNLOAD: 'downloading',
-          SKIP_DOWNLOAD: 'downloaded',
-          SKIP_TRANSCODE: 'transcoded',
-        },
-      },
-      downloading: {
-        on: {
-          FINISH_DOWNLOAD: 'downloaded',
-        },
-      },
-      downloaded: {
-        on: {
-          START_TRANSCODE: 'transcoding',
-        },
-      },
-      transcoding: {
-        on: {
-          FINISH_TRANSCODE: {
-            target: 'transcoded',
-          },
-        },
-      },
-      transcoded: {
-        on: {
-          START_ANNOUNCER_DL_AND_TRANSCODE: 'announcerProcessing',
-          [metadataUpdater.type]: { actions: metadataUpdater.action },
-        },
-      },
-      announcerProcessing: {
-        on: {
-          FINISH_ANNOUNCER_DL_AND_TRANSCODE: 'ready',
-        },
-      },
-      ready: {},
     },
+    fetched: {
+      on: {
+        START_DOWNLOAD: 'downloading',
+        SKIP_DOWNLOAD: 'downloaded',
+        SKIP_TRANSCODE: 'transcoded',
+      },
+    },
+    downloading: {
+      on: { FINISH_DOWNLOAD: 'downloaded' },
+    },
+    downloaded: {
+      on: { START_TRANSCODE: 'transcoding' },
+    },
+    transcoding: {
+      on: { FINISH_TRANSCODE: 'transcoded' },
+    },
+    transcoded: {
+      on: {
+        START_ANNOUNCER_DL_AND_TRANSCODE: 'announcerProcessing',
+        UPDATE_METADATA: {
+          actions: assign(({ event }) => ({ metadata: event.metadata })),
+        },
+      },
+    },
+    announcerProcessing: {
+      on: { FINISH_ANNOUNCER_DL_AND_TRANSCODE: 'ready' },
+    },
+    ready: {},
   },
-  {
-    actions: {
-      storeFetchedData: assign((context, event) => {
-        context.id = event.songId;
-        context.title = event.title;
-        context.artist = event.artist;
-        context.url = event.url;
-      }),
-    },
-  }
-);
-
-module.exports = {
-  songMachine,
-  metadataUpdater,
-};
+});
