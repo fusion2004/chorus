@@ -1,41 +1,45 @@
-const { Command } = require('discord.js-commando');
+import { Command } from '@sapphire/framework';
 
-const { partyService } = require('../../lib/party');
+import { partyService } from '../../lib/party';
 
-module.exports = class StartPartyCommand extends Command {
-  constructor(client) {
-    super(client, {
-      name: 'startparty',
-      aliases: ['party'],
-      group: 'compoverse',
-      memberName: 'startparty',
-      description: 'Starts a listening party for a Compo round',
-      guildOnly: true,
-      args: [
-        {
-          key: 'round',
-          prompt: 'What round would you like to start a party for?',
-          type: 'string',
-        },
-        {
-          key: 'initialSongIndex',
-          prompt: "What's the index of the song we should start on?",
-          type: 'integer',
-          default: 0,
-        },
-      ],
-    });
+export class StartPartyCommand extends Command {
+  public constructor(context: Command.LoaderContext, options: Command.Options) {
+    super(context, { ...options, preconditions: ['CompoAdminOnly'] });
   }
 
-  async run(message, { round, initialSongIndex }) {
+  public override registerApplicationCommands(registry: Command.Registry): void {
+    registry.registerChatInputCommand((builder) =>
+      builder
+        .setName('startparty')
+        .setDescription('Starts a listening party for a Compo round')
+        .addStringOption((option) =>
+          option
+            .setName('round')
+            .setDescription('Round ID to start a party for (e.g. OHC123, 2HTS45)')
+            .setRequired(true)
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName('initial_song_index')
+            .setDescription('Index of the song to start on (default: 0)')
+            .setRequired(false)
+        )
+    );
+  }
+
+  public override async chatInputRun(
+    interaction: Command.ChatInputCommandInteraction
+  ): Promise<void> {
     if (partyService.state.matches('partying')) {
-      message.reply(
-        'there is currently a listening party streaming. We can only stream one at a time.'
-      );
+      await interaction.reply({
+        content: 'there is currently a listening party streaming. We can only stream one at a time.',
+        ephemeral: true,
+      });
       return;
     }
 
-    round = round.toUpperCase();
-    partyService.send({ type: 'START', channel: message.channel, round });
+    const round = interaction.options.getString('round', true).toUpperCase();
+    partyService.send({ type: 'START', channel: interaction.channel, round });
+    await interaction.reply({ content: `Starting listening party for ${round}...` });
   }
-};
+}

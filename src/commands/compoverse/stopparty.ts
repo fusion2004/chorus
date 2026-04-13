@@ -1,25 +1,30 @@
-const { Command } = require('discord.js-commando');
+import { Command } from '@sapphire/framework';
 
-const { partyService } = require('../../lib/party');
+import { partyService } from '../../lib/party';
 
-module.exports = class StopPartyCommand extends Command {
-  constructor(client) {
-    super(client, {
-      name: 'stopparty',
-      aliases: ['stop'],
-      group: 'compoverse',
-      memberName: 'stopparty',
-      description: 'Stops any current listening parties',
-      guildOnly: true,
-    });
+export class StopPartyCommand extends Command {
+  public constructor(context: Command.LoaderContext, options: Command.Options) {
+    super(context, { ...options, preconditions: ['CompoAdminOnly'] });
   }
 
-  async run(message) {
+  public override registerApplicationCommands(registry: Command.Registry): void {
+    registry.registerChatInputCommand((builder) =>
+      builder.setName('stopparty').setDescription('Stops any current listening party')
+    );
+  }
+
+  public override async chatInputRun(
+    interaction: Command.ChatInputCommandInteraction
+  ): Promise<void> {
     if (partyService.state.matches('idle')) {
-      message.reply('there is no listening party to stop!');
+      await interaction.reply({
+        content: 'there is no listening party to stop!',
+        ephemeral: true,
+      });
       return;
     }
 
-    partyService.send('STOP', { immediate: true });
+    partyService.send({ type: 'STOP', immediate: true });
+    await interaction.reply({ content: 'Stopping the listening party...' });
   }
-};
+}

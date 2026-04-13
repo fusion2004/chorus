@@ -1,31 +1,43 @@
-const { Command } = require('discord.js-commando');
+import { Command } from '@sapphire/framework';
 
-const { partyService } = require('../../lib/party');
+import { partyService } from '../../lib/party';
 
-module.exports = class PlaylistCommand extends Command {
-  constructor(client) {
-    super(client, {
-      name: 'playlist',
-      aliases: [],
-      group: 'compoverse',
-      memberName: 'playlist',
-      description: 'Lists all songs in the listening party, highlighting where we are',
-      guildOnly: true,
-    });
+export class PlaylistCommand extends Command {
+  public constructor(context: Command.LoaderContext, options: Command.Options) {
+    super(context, { ...options, preconditions: ['CompoAdminOnly'] });
   }
 
-  async run(message) {
-    let { currentSong, nextSongId, songs } = partyService.state.context;
+  public override registerApplicationCommands(registry: Command.Registry): void {
+    registry.registerChatInputCommand((builder) =>
+      builder
+        .setName('playlist')
+        .setDescription('Lists all songs in the listening party, highlighting the current position')
+    );
+  }
+
+  public override async chatInputRun(
+    interaction: Command.ChatInputCommandInteraction
+  ): Promise<void> {
+    const { currentSong, nextSongId, songs } = partyService.state.context;
+
     if (partyService.state.matches('idle')) {
-      message.reply('there is no listening party, currently!');
+      await interaction.reply({
+        content: 'there is no listening party, currently!',
+        ephemeral: true,
+      });
       return;
-    } else if (!songs || songs.length === 0) {
-      message.reply("there aren't any songs fetched in the listening party, yet!");
+    }
+
+    if (!songs || songs.length === 0) {
+      await interaction.reply({
+        content: "there aren't any songs fetched in the listening party, yet!",
+        ephemeral: true,
+      });
       return;
     }
 
     let msg = '';
-    songs.forEach((song, index) => {
+    songs.forEach((song: any, index: number) => {
       if (currentSong && currentSong.id === song.id) {
         msg = msg.concat(':arrow_forward: ');
       }
@@ -40,6 +52,6 @@ module.exports = class PlaylistCommand extends Command {
       msg = msg.concat('\n');
     });
 
-    message.say(msg);
+    await interaction.reply({ content: msg });
   }
-};
+}
