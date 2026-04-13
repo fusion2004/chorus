@@ -1,5 +1,5 @@
-const chalk = require('chalk');
-const { createMachine, assign, interpret } = require('xstate');
+import chalk from 'chalk';
+import { createMachine, assign, interpret } from 'xstate';
 
 function sendMessages(channel, messages) {
   let message = '```shell\n';
@@ -138,13 +138,11 @@ function formatTextForConsole(text, type) {
   }
 }
 
-function setDebugChannel(channel) {
+export function setDebugChannel(channel: any) {
   debugChannelService.send('SET_DEBUG_CHANNEL', { channel });
 }
 
-function log(text, type) {
+export function log(text: any, type?: any) {
   console.log(formatTextForConsole(text, type));
   debugChannelService.send('SEND_MESSAGE', { message: text });
 }
-
-module.exports = { log, setDebugChannel };
