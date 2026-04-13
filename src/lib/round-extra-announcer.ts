@@ -1,25 +1,32 @@
-const fs = require('fs');
-const { pipeline } = require('stream/promises');
-const path = require('path');
+import fs from 'fs';
+import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
+import path from 'path';
 
-const AWS = require('aws-sdk');
-const Bottleneck = require('bottleneck');
+import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
+import Bottleneck from 'bottleneck';
 const prism = require('prism-media');
-const streamifier = require('streamifier');
 const builder = require('xmlbuilder');
 
-class RoundExtraAnnouncer {
-  constructor(roundTitle) {
+const polly = new PollyClient({});
+
+interface Announcer {
+  id: string;
+  text: string[];
+  path?: string;
+}
+
+export class RoundExtraAnnouncer {
+  roundTitle: string;
+
+  constructor(roundTitle: string) {
     this.roundTitle = roundTitle;
   }
 
-  async process(directory) {
-    let limiter = new Bottleneck({
-      maxConcurrent: 3,
-      minTime: 333,
-    });
+  async process(directory: string): Promise<Announcer[]> {
+    const limiter = new Bottleneck({ maxConcurrent: 3, minTime: 333 });
 
-    let announcers = [
+    const announcers: Announcer[] = [
       {
         id: 'outro',
         text: [
@@ -30,23 +37,21 @@ class RoundExtraAnnouncer {
       },
     ];
 
-    let processPromises = announcers.map((announcer) => {
-      return limiter.schedule(() => this.processIndividual(announcer, directory));
-    });
-
-    return await Promise.all(processPromises);
+    return Promise.all(
+      announcers.map((announcer) =>
+        limiter.schedule(() => this.processIndividual(announcer, directory))
+      )
+    );
   }
 
-  speech(announcer) {
-    let msg = builder
+  speech(announcer: Announcer): string {
+    const msg = builder
       .create('speak', { headless: true })
       .ele('amazon:domain', { name: 'conversational' });
     msg.ele('break', { time: '1500ms' });
 
-    announcer.text.forEach((text, index) => {
-      if (index > 0) {
-        msg.ele('break', { strength: 'weak' });
-      }
+    announcer.text.forEach((text: string, index: number) => {
+      if (index > 0) msg.ele('break', { strength: 'weak' });
       msg.txt(text);
     });
     msg.ele('break', { time: '1500ms' });
@@ -54,55 +59,43 @@ class RoundExtraAnnouncer {
     return msg.end();
   }
 
-  async processIndividual(announcer, directory) {
-    let polly = new AWS.Polly();
-    let awsPath = path.join(directory, `${announcer.id}-aws.mp3`);
-    let intermediatePath = path.join(directory, `${announcer.id}-intermediate.mp3`);
-    let finalPath = path.join(directory, `${announcer.id}.mp3`);
+  async processIndividual(announcer: Announcer, directory: string): Promise<Announcer> {
+    const awsPath = path.join(directory, `${announcer.id}-aws.mp3`);
+    const intermediatePath = path.join(directory, `${announcer.id}-intermediate.mp3`);
+    const finalPath = path.join(directory, `${announcer.id}.mp3`);
 
-    let params = {
+    const command = new SynthesizeSpeechCommand({
       OutputFormat: 'mp3',
       Text: this.speech(announcer),
       VoiceId: 'Joanna',
       Engine: 'neural',
       SampleRate: '24000',
       TextType: 'ssml',
-    };
-    let response = await polly.synthesizeSpeech(params).promise();
-    let pollyReadStream = streamifier.createReadStream(response.AudioStream);
-    let pcmWriteStream = fs.createWriteStream(awsPath);
+    });
 
-    await pipeline(pollyReadStream, pcmWriteStream);
+    const response = await polly.send(command);
+    const pollyStream = response.AudioStream as Readable;
+    const pcmWriteStream = fs.createWriteStream(awsPath);
 
-    let pcmReadStream = fs.createReadStream(awsPath);
+    await pipeline(pollyStream, pcmWriteStream);
 
-    let encodeStream = new prism.FFmpeg({
+    const pcmReadStream = fs.createReadStream(awsPath);
+    const encodeStream = new prism.FFmpeg({
       args: [
-        '-analyzeduration',
-        '0',
-        '-loglevel',
-        '0',
-        // '-f', 's16le',
-        '-map_metadata',
-        '-1',
-        '-filter:a',
-        'loudnorm',
-        '-ar',
-        '44100',
-        '-ac',
-        '2',
-        '-f',
-        'mp3',
-        '-c:a',
-        'libmp3lame',
-        '-b:a',
-        '256k',
+        '-analyzeduration', '0',
+        '-loglevel', '0',
+        '-map_metadata', '-1',
+        '-filter:a', 'loudnorm',
+        '-ar', '44100',
+        '-ac', '2',
+        '-f', 'mp3',
+        '-c:a', 'libmp3lame',
+        '-b:a', '256k',
       ],
     });
-    let mp3WriteStream = fs.createWriteStream(intermediatePath);
+    const mp3WriteStream = fs.createWriteStream(intermediatePath);
 
     await pipeline(pcmReadStream, encodeStream, mp3WriteStream);
-
     await fs.promises.rename(intermediatePath, finalPath);
     await fs.promises.unlink(awsPath);
 
@@ -110,5 +103,3 @@ class RoundExtraAnnouncer {
     return announcer;
   }
 }
-
-module.exports = RoundExtraAnnouncer;
