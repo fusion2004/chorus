@@ -29,7 +29,7 @@ export class RoundFetcher {
     const downloadPath = song.path(downloadIntermediate);
     const finalPath = song.path(downloadFinal);
     const writeStream = fs.createWriteStream(downloadPath);
-    const requestStream = got.stream(song.url);
+    const requestStream = got.stream(song.url!); // url is always set when in 'fetched' state
 
     song.service.send({ type: 'START_DOWNLOAD' });
 

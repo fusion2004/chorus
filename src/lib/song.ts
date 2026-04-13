@@ -3,7 +3,7 @@ import path from 'path';
 import { createActor } from 'xstate';
 import type { Actor } from 'xstate';
 
-import { songMachine, type SongContext } from './machines';
+import { songMachine } from './machines';
 import { escapeDiscordMarkdown } from '../utils/markdown';
 import {
   announcerAws,
