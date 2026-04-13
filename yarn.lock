@@ -169,12 +169,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^25.6.0":
-  version: 25.6.0
-  resolution: "@types/node@npm:25.6.0"
+"@types/node@npm:^18.0.0":
+  version: 18.19.130
+  resolution: "@types/node@npm:18.19.130"
   dependencies:
-    undici-types: ~7.19.0
-  checksum: 98945eb59909a08868ccac203022f122b5549448ef8628de9eac3fe20481467cd6ec32af819fd432695f67ac21ebbbc69c8a141de6c6455edaf6e717e2cb89c9
+    undici-types: ~5.26.4
+  checksum: b7032363581c416e721a88cffdc2b47662337cacd20f8294f5619a1abf79615c7fef1521964c2aa9d36ed6aae733e1a03e8c704661bd5a0c2f34b390f41ea395
   languageName: node
   linkType: hard
 
@@ -558,7 +558,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "chorus@workspace:."
   dependencies:
-    "@types/node": ^25.6.0
+    "@types/node": ^18.0.0
     "@xstate/immer": ^0.2.0
     aws-sdk: ^2.1030.0
     bluebird: ^3.7.2
@@ -3144,10 +3144,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:~7.19.0":
-  version: 7.19.2
-  resolution: "undici-types@npm:7.19.2"
-  checksum: f721026160e1f068a982401d0272b872819c335a2f64783c235ddd37a65ccd94327ec24489cee4556d57c77c14bd68ced60efa5def11cf11e3991f5ebf5e0e72
+"undici-types@npm:~5.26.4":
+  version: 5.26.5
+  resolution: "undici-types@npm:5.26.5"
+  checksum: 3192ef6f3fd5df652f2dc1cd782b49d6ff14dc98e5dced492aa8a8c65425227da5da6aafe22523c67f035a272c599bb89cfe803c1db6311e44bed3042fc25487
   languageName: node
   linkType: hard
 
