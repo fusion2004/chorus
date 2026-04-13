@@ -1,11 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const { interpret } = require('xstate');
+import fs from 'fs';
+import path from 'path';
+import { createActor } from 'xstate';
+import type { Actor } from 'xstate';
 
-const { songMachine } = require('./machines');
-const { escapeDiscordMarkdown } = require('../utils/markdown');
-
-const {
+import { songMachine, type SongContext } from './machines';
+import { escapeDiscordMarkdown } from '../utils/markdown';
+import {
   announcerAws,
   announcerFinal,
   announcerIntermediate,
@@ -13,78 +13,77 @@ const {
   downloadIntermediate,
   transcodeFinal,
   transcodeIntermediate,
-} = require('../utils/symbols');
+} from '../utils/symbols';
+import type { IAudioMetadata } from 'music-metadata';
 
-async function fileExists(path) {
+async function fileExists(filePath: string): Promise<boolean> {
   try {
-    await fs.promises.access(path, fs.constants.F_OK);
+    await fs.promises.access(filePath, fs.constants.F_OK);
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
 
-function formatDuration(durationInSeconds) {
-  let minutes = Math.floor(durationInSeconds / 60);
-  let seconds = `${Math.floor(durationInSeconds % 60)}`;
-
+function formatDuration(durationInSeconds: number): string {
+  const minutes = Math.floor(durationInSeconds / 60);
+  const seconds = `${Math.floor(durationInSeconds % 60)}`;
   return `${minutes}:${seconds.padStart(2, '0')}`;
 }
 
-class Song {
-  constructor(directory) {
-    this.directory = directory;
-    this.service = interpret(songMachine).onTransition((state) => {
-      if (state.value === 'init') {
-        return;
-      }
+export class Song {
+  directory: string;
+  service: Actor<typeof songMachine>;
 
-      console.log(`[Song->${state.value}](${state.event.type}) Song #${this.id} - ${this.title}`);
+  constructor(directory: string) {
+    this.directory = directory;
+    this.service = createActor(songMachine);
+    this.service.subscribe((snapshot) => {
+      if (snapshot.value === 'init') return;
+      console.log(
+        `[Song->${String(snapshot.value)}](${snapshot.event.type}) Song #${this.id} - ${this.title}`
+      );
     });
     this.service.start();
   }
 
-  get id() {
-    return this.service.state.context.id;
+  get id(): string | undefined {
+    return this.service.getSnapshot().context.id;
   }
 
-  get title() {
-    return this.service.state.context.title;
+  get title(): string | undefined {
+    return this.service.getSnapshot().context.title;
   }
 
-  // Returns a title that has any discord formatting markdown escaped
-  get safeTitle() {
-    return escapeDiscordMarkdown(this.title);
+  get safeTitle(): string {
+    return escapeDiscordMarkdown(this.title ?? '');
   }
 
-  get artist() {
-    return this.service.state.context.artist;
+  get artist(): string | undefined {
+    return this.service.getSnapshot().context.artist;
   }
 
-  // Returns an artist that has any discord formatting markdown escaped
-  get safeArtist() {
-    return escapeDiscordMarkdown(this.artist);
+  get safeArtist(): string {
+    return escapeDiscordMarkdown(this.artist ?? '');
   }
 
-  get url() {
-    return this.service.state.context.url;
+  get url(): string | undefined {
+    return this.service.getSnapshot().context.url;
   }
 
-  get metadata() {
-    return this.service.state.context.metadata;
+  get metadata(): IAudioMetadata | undefined {
+    return this.service.getSnapshot().context.metadata;
   }
 
-  get formattedDuration() {
-    let { metadata } = this.service.state.context;
-
+  get formattedDuration(): string | null {
+    const { metadata } = this.service.getSnapshot().context;
     if (metadata?.format?.duration) {
       return formatDuration(metadata.format.duration);
-    } else {
-      return null;
     }
+    return null;
   }
 
-  path(type) {
+  path(type: symbol): string {
     switch (type) {
       case announcerAws:
       case announcerFinal:
@@ -96,10 +95,12 @@ class Song {
       case transcodeFinal:
       case transcodeIntermediate:
         return path.join(this.directory, 'transcode', this.filename(type));
+      default:
+        throw new Error(`Unknown file type symbol`);
     }
   }
 
-  filename(type) {
+  filename(type: symbol): string {
     switch (type) {
       case announcerAws:
         return `${this.id}-announcer-aws.mp3`;
@@ -115,30 +116,23 @@ class Song {
         return `${this.id}-transcode.mp3`;
       case transcodeIntermediate:
         return `${this.id}-transcode-intermediate.mp3`;
+      default:
+        throw new Error(`Unknown file type symbol`);
     }
   }
 
-  // If we have any final files from the stages of processing, we can likely
-  // skip some states of processing!
-  async transitionIfProcessed() {
-    let response = { id: this.id };
-    let finalDownloadExists = await fileExists(this.path(downloadFinal));
-    let finalTranscodeExists = await fileExists(this.path(transcodeFinal));
+  async transitionIfProcessed(): Promise<{ id: string | undefined; action: string | false }> {
+    const finalDownloadExists = await fileExists(this.path(downloadFinal));
+    const finalTranscodeExists = await fileExists(this.path(transcodeFinal));
 
-    // We're not going to skip generating the announcer, even if we have the
-    // final mp3, because the title may have changed.
     if (finalTranscodeExists) {
-      this.service.send('SKIP_TRANSCODE');
-      response.action = 'SKIP_TRANSCODE';
+      this.service.send({ type: 'SKIP_TRANSCODE' });
+      return { id: this.id, action: 'SKIP_TRANSCODE' };
     } else if (finalDownloadExists) {
-      this.service.send('SKIP_DOWNLOAD');
-      response.action = 'SKIP_DOWNLOAD';
+      this.service.send({ type: 'SKIP_DOWNLOAD' });
+      return { id: this.id, action: 'SKIP_DOWNLOAD' };
     } else {
-      response.action = false;
+      return { id: this.id, action: false };
     }
-
-    return response;
   }
 }
-
-module.exports = Song;

@@ -3,7 +3,6 @@ const { pipeline } = require('stream/promises');
 const path = require('path');
 
 const AWS = require('aws-sdk');
-const Promise = require('bluebird');
 const Bottleneck = require('bottleneck');
 const prism = require('prism-media');
 const streamifier = require('streamifier');

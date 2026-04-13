@@ -1,42 +1,42 @@
-const fs = require('fs');
-const { pipeline } = require('stream/promises');
+import fs from 'fs';
+import { pipeline } from 'stream/promises';
 
-const Promise = require('bluebird');
-const Bottleneck = require('bottleneck');
+import Bottleneck from 'bottleneck';
 const got = require('got');
 
-const { downloadFinal, downloadIntermediate } = require('../utils/symbols');
+import { downloadFinal, downloadIntermediate } from '../utils/symbols';
+import type { Song } from './song';
 
-class RoundFetcher {
-  async fetch(songs) {
-    let limiter = new Bottleneck({
+export class RoundFetcher {
+  async fetch(songs: Song[]): Promise<void> {
+    const limiter = new Bottleneck({
       maxConcurrent: 3,
       minTime: 333,
     });
 
-    let songsToFetch = songs.filter((song) => song.service.state.matches('fetched'));
+    const songsToFetch = songs.filter((song) =>
+      song.service.getSnapshot().matches('fetched')
+    );
 
-    let downloadPromises = songsToFetch.map((song) => {
-      return limiter.schedule(() => this.fetchSong(song));
-    });
+    const downloadPromises = songsToFetch.map((song) =>
+      limiter.schedule(() => this.fetchSong(song))
+    );
 
     await Promise.all(downloadPromises);
   }
 
-  async fetchSong(song) {
-    let downloadPath = song.path(downloadIntermediate);
-    let finalPath = song.path(downloadFinal);
-    let writeStream = fs.createWriteStream(downloadPath);
-    let requestStream = got.stream(song.url);
+  async fetchSong(song: Song): Promise<void> {
+    const downloadPath = song.path(downloadIntermediate);
+    const finalPath = song.path(downloadFinal);
+    const writeStream = fs.createWriteStream(downloadPath);
+    const requestStream = got.stream(song.url);
 
-    song.service.send('START_DOWNLOAD');
+    song.service.send({ type: 'START_DOWNLOAD' });
 
     await pipeline(requestStream, writeStream);
 
     await fs.promises.rename(downloadPath, finalPath);
 
-    song.service.send('FINISH_DOWNLOAD');
+    song.service.send({ type: 'FINISH_DOWNLOAD' });
   }
 }
-
-module.exports = RoundFetcher;

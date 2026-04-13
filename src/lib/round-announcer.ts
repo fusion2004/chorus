@@ -2,7 +2,6 @@ const fs = require('fs');
 const { pipeline } = require('stream/promises');
 
 const AWS = require('aws-sdk');
-const Promise = require('bluebird');
 const Bottleneck = require('bottleneck');
 const prism = require('prism-media');
 const streamifier = require('streamifier');
@@ -22,7 +21,7 @@ class RoundAnnouncer {
       minTime: 333,
     });
 
-    let songsToProcess = songs.filter((song) => song.service.state.matches('transcoded'));
+    let songsToProcess = songs.filter((song) => song.service.getSnapshot().matches('transcoded'));
     let [firstSong] = songs;
 
     let processPromises = songsToProcess.map((song) => {
@@ -80,7 +79,7 @@ class RoundAnnouncer {
     let pollyReadStream = streamifier.createReadStream(response.AudioStream);
     let pcmWriteStream = fs.createWriteStream(awsPath);
 
-    song.service.send('START_ANNOUNCER_DL_AND_TRANSCODE');
+    song.service.send({ type: 'START_ANNOUNCER_DL_AND_TRANSCODE' });
 
     await pipeline(pollyReadStream, pcmWriteStream);
 
@@ -116,7 +115,7 @@ class RoundAnnouncer {
     await fs.promises.rename(intermediatePath, finalPath);
     await fs.promises.unlink(awsPath);
 
-    song.service.send('FINISH_ANNOUNCER_DL_AND_TRANSCODE');
+    song.service.send({ type: 'FINISH_ANNOUNCER_DL_AND_TRANSCODE' });
   }
 }
 
