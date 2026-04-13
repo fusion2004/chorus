@@ -433,6 +433,22 @@ const announcerMessageMachine = createMachine({
 
 // ─── Main Party Machine ──────────────────────────────────────────────────────
 
+function reconcileSongs(
+  currentSongs: Song[] | undefined,
+  fetchedSongs: any[],
+  roundDir: string
+): Song[] {
+  const existing = currentSongs ?? [];
+  return fetchedSongs.map((songData) => {
+    let song = existing.find((s) => s.id === songData.id);
+    if (!song) {
+      song = new Song(roundDir);
+      song.service.send({ type: 'FETCH_FINISH', ...songData });
+    }
+    return song;
+  });
+}
+
 const machine = createMachine(
   {
     types: {} as { context: PartyContext; events: PartyEvent },
@@ -721,7 +737,7 @@ const machine = createMachine(
           }),
           input: ({ context, event }) => ({
             context,
-            immediate: (event as any).immediate ?? false,
+            immediate: (event as Extract<PartyEvent, { type: 'STOP' }>).immediate ?? false,
           }),
           onDone: { target: 'idle' },
           onError: { target: 'idle' },
@@ -780,7 +796,7 @@ const machine = createMachine(
             return { currentSong: first, nextSongId: second ? second.id : null };
           } else if (songIndex === -1) {
             const song = context.songs![previousSongIndex + 1];
-            const next = context.songs![previousSongIndex + 1];
+            const next = context.songs![previousSongIndex + 2];
             return { currentSong: song, nextSongId: next ? next.id : null };
           } else {
             const next = context.songs![songIndex + 1];
@@ -816,22 +832,6 @@ const machine = createMachine(
     },
   }
 );
-
-function reconcileSongs(
-  currentSongs: Song[] | undefined,
-  fetchedSongs: any[],
-  roundDir: string
-): Song[] {
-  const existing = currentSongs ?? [];
-  return fetchedSongs.map((songData) => {
-    let song = existing.find((s) => s.id === songData.id);
-    if (!song) {
-      song = new Song(roundDir);
-      song.service.send({ type: 'FETCH_FINISH', ...songData });
-    }
-    return song;
-  });
-}
 
 export const partyService = createActor(machine).start();
 
