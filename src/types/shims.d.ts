@@ -32,11 +32,6 @@ declare module 'prism-media' {
   }
 }
 
-declare module 'streamifier' {
-  import { Readable } from 'stream';
-  export function createReadStream(data: any): Readable;
-}
-
 declare module 'zippa' {
   const zippa: any;
   export = zippa;

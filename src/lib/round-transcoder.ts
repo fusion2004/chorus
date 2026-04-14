@@ -12,11 +12,11 @@ export class RoundTranscoder {
     const limiter = new Bottleneck({ maxConcurrent: 3 });
 
     const songsToTranscode = songs.filter((song) =>
-      song.service.getSnapshot().matches('downloaded')
+      song.service.getSnapshot().matches('downloaded'),
     );
 
     const transcoderPromises = songsToTranscode.map((song) =>
-      limiter.schedule(() => this.transcodeSong(song))
+      limiter.schedule(() => this.transcodeSong(song)),
     );
 
     await Promise.all(transcoderPromises);
@@ -31,14 +31,22 @@ export class RoundTranscoder {
     const readStream = fs.createReadStream(song.path(downloadFinal));
     const encodeStream = new prism.FFmpeg({
       args: [
-        '-analyzeduration', '0',
-        '-loglevel', '0',
-        '-map_metadata', '-1',
-        '-ar', '44100',
-        '-ac', '2',
-        '-f', 'mp3',
-        '-c:a', 'libmp3lame',
-        '-b:a', '256k',
+        '-analyzeduration',
+        '0',
+        '-loglevel',
+        '0',
+        '-map_metadata',
+        '-1',
+        '-ar',
+        '44100',
+        '-ac',
+        '2',
+        '-f',
+        'mp3',
+        '-c:a',
+        'libmp3lame',
+        '-b:a',
+        '256k',
       ],
     });
     const writeStream = fs.createWriteStream(intermediatePath);

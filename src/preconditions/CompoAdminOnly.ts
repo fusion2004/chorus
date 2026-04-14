@@ -22,7 +22,7 @@ export class CompoAdminOnly extends AllFlowsPrecondition {
       (await interaction.guild?.members.fetch(interaction.user.id))) as GuildMember | undefined;
 
     const authorized =
-      member != null &&
+      member !== null &&
       memberHasOneOfTheseRoles(member, [roleIds.thasauceAdmin, roleIds.compoAdmin]);
 
     return authorized

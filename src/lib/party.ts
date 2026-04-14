@@ -12,8 +12,8 @@ import CompoThaSauceFetcher from './compo-thasauce-fetcher';
 import { Song } from './song';
 import { RoundFetcher } from './round-fetcher';
 import { RoundTranscoder } from './round-transcoder';
-import RoundAnnouncer from './round-announcer';
-import RoundExtraAnnouncer from './round-extra-announcer';
+import { RoundAnnouncer } from './round-announcer';
+import { RoundExtraAnnouncer } from './round-extra-announcer';
 import { announcerFinal, transcodeFinal } from '../utils/symbols';
 import { fetchEnv } from '../utils/fetch-env';
 
@@ -38,16 +38,22 @@ function splitAtIndex(str: string, index: number): [string, string] {
 
 function roundTitle(prefix: string | null, id: string): string | null {
   switch (prefix) {
-    case 'OHC': return `One Hour Compo Round ${id}`;
-    case '2HTS': return `Two Hour Track Sundays Round ${id}`;
-    case '90MC': return `Ninety Minute Compo Round ${id}`;
-    default: return null;
+    case 'OHC':
+      return `One Hour Compo Round ${id}`;
+    case '2HTS':
+      return `Two Hour Track Sundays Round ${id}`;
+    case '90MC':
+      return `Ninety Minute Compo Round ${id}`;
+    default:
+      return null;
   }
 }
 
 function makeRoundDirectories(dirs: RoundDirs): void {
   [dirs.parent, dirs.download, dirs.transcode, dirs.announcer, dirs.extraAnnouncer].forEach(
-    (dir) => { if (!fs.existsSync(dir)) fs.mkdirSync(dir); }
+    (dir) => {
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    },
   );
 }
 
@@ -64,15 +70,11 @@ async function parseMetadata(songs: Song[]): Promise<void> {
     songs.map(async (song) => {
       const metadata = await mm.parseFile(song.path(transcodeFinal));
       song.service.send({ type: 'UPDATE_METADATA', metadata });
-    })
+    }),
   );
 }
 
-async function streamFile(
-  shout: ShoutT,
-  filePath: string,
-  signal: AbortSignal
-): Promise<void> {
+async function streamFile(shout: ShoutT, filePath: string, signal: AbortSignal): Promise<void> {
   const fileHandle = await fs.promises.open(filePath);
   const chunkSize = 65536;
   const buf = Buffer.alloc(chunkSize);
@@ -97,7 +99,7 @@ async function playIntro(shout: ShoutT, abortController: AbortController): Promi
 async function playCurrentSong(
   shout: ShoutT,
   currentSong: Song,
-  abortController: AbortController
+  abortController: AbortController,
 ): Promise<void> {
   await streamFile(shout, currentSong.path(announcerFinal), abortController.signal);
   await streamFile(shout, currentSong.path(transcodeFinal), abortController.signal);
@@ -106,7 +108,7 @@ async function playCurrentSong(
 async function playOutro(
   shout: ShoutT,
   announcer: ExtraAnnouncer,
-  abortController: AbortController
+  abortController: AbortController,
 ): Promise<void> {
   await streamFile(shout, announcer.path, abortController.signal);
 }
@@ -124,7 +126,12 @@ async function startIntroMessage(channel: TextChannel): Promise<void> {
   await channel.send('**Playing stream intro before we get this party started...**');
 }
 
-async function playCurrentSongMessage({ channel, currentSong, songs, round }: {
+async function playCurrentSongMessage({
+  channel,
+  currentSong,
+  songs,
+  round,
+}: {
   channel: TextChannel;
   currentSong: Song;
   songs: Song[];
@@ -138,11 +145,11 @@ async function playCurrentSongMessage({ channel, currentSong, songs, round }: {
     .setTitle(currentSong.safeTitle)
     .setURL(`http://compo.thasauce.net/rounds/view/${round}#entry-${currentSong.id}`)
     .setDescription(
-      `${round} listening party, entry ${position} of ${songs.length}.\n[Tune in to the stream here!](${streamUrl()})`
+      `${round} listening party, entry ${position} of ${songs.length}.\n[Tune in to the stream here!](${streamUrl()})`,
     )
     .addFields(
       { name: 'Artist', value: currentSong.safeArtist },
-      { name: 'Length', value: currentSong.formattedDuration ?? 'unknown' }
+      { name: 'Length', value: currentSong.formattedDuration ?? 'unknown' },
     );
 
   await channel.send({
@@ -238,7 +245,7 @@ const fetchingMessageMachine = createMachine({
     sendInitialMessage: {
       invoke: {
         src: fromPromise(({ input }: { input: MessageMachineContext }) =>
-          input.channel.send(`*Downloading ${input.round} songs...*`)
+          input.channel.send(`*Downloading ${input.round} songs...*`),
         ),
         input: ({ context }) => context,
         onDone: {
@@ -256,7 +263,7 @@ const fetchingMessageMachine = createMachine({
         const downloading = context.songs.filter(
           (song) =>
             song.service.getSnapshot().matches('fetched') ||
-            song.service.getSnapshot().matches('downloading')
+            song.service.getSnapshot().matches('downloading'),
         );
         return { completed: context.total - downloading.length };
       }),
@@ -269,8 +276,8 @@ const fetchingMessageMachine = createMachine({
       invoke: {
         src: fromPromise(({ input }: { input: MessageMachineContext }) =>
           input.message!.edit(
-            `*Downloading ${input.round} songs... ${input.completed}/${input.total}*`
-          )
+            `*Downloading ${input.round} songs... ${input.completed}/${input.total}*`,
+          ),
         ),
         input: ({ context }) => context,
         onDone: { target: 'waiting' },
@@ -280,7 +287,7 @@ const fetchingMessageMachine = createMachine({
     finalizeMessage: {
       invoke: {
         src: fromPromise(({ input }: { input: MessageMachineContext }) =>
-          input.message!.edit(`*Downloading ${input.round} songs... done!*`)
+          input.message!.edit(`*Downloading ${input.round} songs... done!*`),
         ),
         input: ({ context }) => context,
         onDone: { target: 'done' },
@@ -306,7 +313,7 @@ const transcodingMessageMachine = createMachine({
     sendInitialMessage: {
       invoke: {
         src: fromPromise(({ input }: { input: MessageMachineContext }) =>
-          input.channel.send(`*Transcoding ${input.round} songs for streaming...*`)
+          input.channel.send(`*Transcoding ${input.round} songs for streaming...*`),
         ),
         input: ({ context }) => context,
         onDone: {
@@ -324,7 +331,7 @@ const transcodingMessageMachine = createMachine({
         const transcoding = context.songs.filter(
           (song) =>
             song.service.getSnapshot().matches('downloaded') ||
-            song.service.getSnapshot().matches('transcoding')
+            song.service.getSnapshot().matches('transcoding'),
         );
         return { completed: context.total - transcoding.length };
       }),
@@ -337,8 +344,8 @@ const transcodingMessageMachine = createMachine({
       invoke: {
         src: fromPromise(({ input }: { input: MessageMachineContext }) =>
           input.message!.edit(
-            `*Transcoding ${input.round} songs for streaming... ${input.completed}/${input.total}*`
-          )
+            `*Transcoding ${input.round} songs for streaming... ${input.completed}/${input.total}*`,
+          ),
         ),
         input: ({ context }) => context,
         onDone: { target: 'waiting' },
@@ -348,7 +355,7 @@ const transcodingMessageMachine = createMachine({
     finalizeMessage: {
       invoke: {
         src: fromPromise(({ input }: { input: MessageMachineContext }) =>
-          input.message!.edit(`*Transcoding ${input.round} songs for streaming... done!*`)
+          input.message!.edit(`*Transcoding ${input.round} songs for streaming... done!*`),
         ),
         input: ({ context }) => context,
         onDone: { target: 'done' },
@@ -375,8 +382,8 @@ const announcerMessageMachine = createMachine({
       invoke: {
         src: fromPromise(({ input }: { input: MessageMachineContext }) =>
           input.channel.send(
-            '<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises...*'
-          )
+            '<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises...*',
+          ),
         ),
         input: ({ context }) => context,
         onDone: {
@@ -394,7 +401,7 @@ const announcerMessageMachine = createMachine({
         const transcoding = context.songs.filter(
           (song) =>
             song.service.getSnapshot().matches('transcoded') ||
-            song.service.getSnapshot().matches('announcerProcessing')
+            song.service.getSnapshot().matches('announcerProcessing'),
         );
         return { completed: context.total - transcoding.length };
       }),
@@ -407,8 +414,8 @@ const announcerMessageMachine = createMachine({
       invoke: {
         src: fromPromise(({ input }: { input: MessageMachineContext }) =>
           input.message!.edit(
-            `<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises... ${input.completed}/${input.total}*`
-          )
+            `<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises... ${input.completed}/${input.total}*`,
+          ),
         ),
         input: ({ context }) => context,
         onDone: { target: 'waiting' },
@@ -419,8 +426,8 @@ const announcerMessageMachine = createMachine({
       invoke: {
         src: fromPromise(({ input }: { input: MessageMachineContext }) =>
           input.message!.edit(
-            '<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises... done!*'
-          )
+            '<:chorus_singing:802805196920061982> *Clearing throat, performing vocal exercises... done!*',
+          ),
         ),
         input: ({ context }) => context,
         onDone: { target: 'done' },
@@ -435,7 +442,7 @@ const announcerMessageMachine = createMachine({
 function reconcileSongs(
   currentSongs: Song[] | undefined,
   fetchedSongs: any[],
-  roundDir: string
+  roundDir: string,
 ): Song[] {
   const existing = currentSongs ?? [];
   return fetchedSongs.map((songData) => {
@@ -496,16 +503,18 @@ const machine = createMachine(
                   startFetchMessage(context.channels!.processing, context.round!.fullId),
                 invoke: {
                   id: 'fetchRoundMetadata',
-                  src: fromPromise(({ input }: { input: PartyContext }) =>
-                    input.fetcher!.fetch()
-                  ),
+                  src: fromPromise(({ input }: { input: PartyContext }) => input.fetcher!.fetch()),
                   input: ({ context }) => context,
                   onDone: {
                     target: 'transitionProcessedSongs',
                     actions: [
                       assign(({ context, event }) => ({
                         fetchedSongs: event.output.songs,
-                        songs: reconcileSongs(context.songs, event.output.songs, context.round!.dirs.parent),
+                        songs: reconcileSongs(
+                          context.songs,
+                          event.output.songs,
+                          context.round!.dirs.parent,
+                        ),
                       })),
                     ],
                   },
@@ -515,7 +524,7 @@ const machine = createMachine(
               fetchError: {
                 invoke: {
                   src: fromPromise(({ input }: { input: PartyContext }) =>
-                    fetchErrorMessage(input.channels!.processing)
+                    fetchErrorMessage(input.channels!.processing),
                   ),
                   input: ({ context }) => context,
                   onDone: { actions: raise({ type: 'STOP' }) },
@@ -526,7 +535,7 @@ const machine = createMachine(
                 invoke: {
                   id: 'processedSongTransitioner',
                   src: fromPromise(({ input }: { input: PartyContext }) =>
-                    Promise.all(input.songs!.map((song) => song.transitionIfProcessed()))
+                    Promise.all(input.songs!.map((song) => song.transitionIfProcessed())),
                   ),
                   input: ({ context }) => context,
                   onDone: { target: 'downloading' },
@@ -537,7 +546,7 @@ const machine = createMachine(
                   {
                     id: 'roundDownloader',
                     src: fromPromise(({ input }: { input: PartyContext }) =>
-                      input.downloader!.fetch(input.songs!)
+                      input.downloader!.fetch(input.songs!),
                     ),
                     input: ({ context }) => context,
                     onError: { actions: raise({ type: 'STOP' }) },
@@ -559,7 +568,7 @@ const machine = createMachine(
                   {
                     id: 'roundTranscoder',
                     src: fromPromise(({ input }: { input: PartyContext }) =>
-                      input.transcoder!.transcode(input.songs!)
+                      input.transcoder!.transcode(input.songs!),
                     ),
                     input: ({ context }) => context,
                   },
@@ -579,7 +588,7 @@ const machine = createMachine(
                 invoke: {
                   id: 'metadataParser',
                   src: fromPromise(({ input }: { input: PartyContext }) =>
-                    parseMetadata(input.songs!)
+                    parseMetadata(input.songs!),
                   ),
                   input: ({ context }) => context,
                   onDone: { target: 'generatingAnnouncer' },
@@ -590,7 +599,7 @@ const machine = createMachine(
                   {
                     id: 'announcerGenerator',
                     src: fromPromise(({ input }: { input: PartyContext }) =>
-                      input.announcer!.process(input.songs!)
+                      input.announcer!.process(input.songs!),
                     ),
                     input: ({ context }) => context,
                   },
@@ -613,7 +622,7 @@ const machine = createMachine(
                 invoke: {
                   id: 'extraAnnouncersGenerator',
                   src: fromPromise(({ input }: { input: PartyContext }) =>
-                    input.extraAnnouncer!.process(input.round!.dirs.extraAnnouncer)
+                    input.extraAnnouncer!.process(input.round!.dirs.extraAnnouncer),
                   ),
                   input: ({ context }) => context,
                   onDone: {
@@ -665,7 +674,7 @@ const machine = createMachine(
                 invoke: {
                   id: 'playIntro',
                   src: fromPromise(({ input }: { input: PartyContext }) =>
-                    playIntro(input._shout!, input.abortController!)
+                    playIntro(input._shout!, input.abortController!),
                   ),
                   input: ({ context }) => context,
                   onDone: { target: 'pickNextSong' },
@@ -679,7 +688,7 @@ const machine = createMachine(
               pickNextSong: {
                 entry: 'setCurrentAndNextSong',
                 always: [
-                  { target: 'playingSong', guard: ({ context }) => context.currentSong != null },
+                  { target: 'playingSong', guard: ({ context }) => context.currentSong !== null },
                   { target: 'playingOutro' },
                 ],
               },
@@ -697,7 +706,7 @@ const machine = createMachine(
                 invoke: {
                   id: 'playCurrentSong',
                   src: fromPromise(({ input }: { input: PartyContext }) =>
-                    playCurrentSong(input._shout!, input.currentSong!, input.abortController!)
+                    playCurrentSong(input._shout!, input.currentSong!, input.abortController!),
                   ),
                   input: ({ context }) => context,
                   onDone: { target: 'pickNextSong' },
@@ -713,7 +722,7 @@ const machine = createMachine(
                 invoke: {
                   id: 'playOutro',
                   src: fromPromise(({ input }: { input: PartyContext }) =>
-                    playOutro(input._shout!, input.outroAnnouncer!, input.abortController!)
+                    playOutro(input._shout!, input.outroAnnouncer!, input.abortController!),
                   ),
                   input: ({ context }) => context,
                   onDone: { actions: raise({ type: 'STOP' }) },
@@ -727,13 +736,15 @@ const machine = createMachine(
         entry: 'cleanup',
         invoke: {
           id: 'stopPartyMessage',
-          src: fromPromise(({ input }: { input: { context: PartyContext; immediate: boolean } }) => {
-            if (input.immediate) {
-              return stopPartyMessage(input.context.channels!.party);
-            } else {
-              return partyConcludedMessage(input.context.channels!.party);
-            }
-          }),
+          src: fromPromise(
+            ({ input }: { input: { context: PartyContext; immediate: boolean } }) => {
+              if (input.immediate) {
+                return stopPartyMessage(input.context.channels!.party);
+              } else {
+                return partyConcludedMessage(input.context.channels!.party);
+              }
+            },
+          ),
           input: ({ context, event }) => ({
             context,
             immediate: (event as Extract<PartyEvent, { type: 'STOP' }>).immediate ?? false,
@@ -747,7 +758,7 @@ const machine = createMachine(
   {
     actions: {
       makeRoundDirectories: ({ context }) => makeRoundDirectories(context.round!.dirs),
-      setRoundContext: assign(({ context, event }) => {
+      setRoundContext: assign(({ event }) => {
         const ev = event as Extract<PartyEvent, { type: 'START' }>;
         const { id, prefix } = roundPrefixAndId(ev.round);
         const parent = path.join(path.dirname(__dirname), 'tmp', 'rounds', ev.round);
@@ -786,7 +797,7 @@ const machine = createMachine(
           return { currentSong: null };
         } else {
           const previousSongIndex = context.songs!.findIndex(
-            (song) => song.id === context.currentSong!.id
+            (song) => song.id === context.currentSong!.id,
           );
           const songIndex = context.songs!.findIndex((song) => song.id === context.nextSongId);
 
@@ -829,7 +840,7 @@ const machine = createMachine(
         return () => {};
       }),
     },
-  }
+  },
 );
 
 export const partyService = createActor(machine).start();
@@ -837,5 +848,5 @@ export const partyService = createActor(machine).start();
 partyService.subscribe((snapshot) => {
   console.log('Party service transition:');
   console.log('  State:', snapshot.value);
-  console.log('  Event:', JSON.stringify(snapshot.event, null, 2));
+  console.log('  Value:', JSON.stringify(snapshot.value, null, 2));
 });

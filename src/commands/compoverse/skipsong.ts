@@ -11,12 +11,12 @@ export class SkipSongCommand extends Command {
     registry.registerChatInputCommand((builder) =>
       builder
         .setName('skipsong')
-        .setDescription('Skips the currently playing song and starts the next one')
+        .setDescription('Skips the currently playing song and starts the next one'),
     );
   }
 
   public override async chatInputRun(
-    interaction: Command.ChatInputCommandInteraction
+    interaction: Command.ChatInputCommandInteraction,
   ): Promise<void> {
     if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({

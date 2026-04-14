@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework';
+import type { TextChannel } from 'discord.js';
 
 import { partyService } from '../../lib/party';
 
@@ -11,12 +12,12 @@ export class RefetchPartyCommand extends Command {
     registry.registerChatInputCommand((builder) =>
       builder
         .setName('refetchparty')
-        .setDescription('Refetches the round for the current listening party (loads new entries)')
+        .setDescription('Refetches the round for the current listening party (loads new entries)'),
     );
   }
 
   public override async chatInputRun(
-    interaction: Command.ChatInputCommandInteraction
+    interaction: Command.ChatInputCommandInteraction,
   ): Promise<void> {
     if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({
@@ -34,7 +35,7 @@ export class RefetchPartyCommand extends Command {
       return;
     }
 
-    partyService.send({ type: 'REFETCH', channel: interaction.channel });
+    partyService.send({ type: 'REFETCH', channel: interaction.channel as TextChannel });
     await interaction.reply({ content: 'Refetching round...' });
   }
 }

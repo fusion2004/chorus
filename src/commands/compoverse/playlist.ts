@@ -11,12 +11,14 @@ export class PlaylistCommand extends Command {
     registry.registerChatInputCommand((builder) =>
       builder
         .setName('playlist')
-        .setDescription('Lists all songs in the listening party, highlighting the current position')
+        .setDescription(
+          'Lists all songs in the listening party, highlighting the current position',
+        ),
     );
   }
 
   public override async chatInputRun(
-    interaction: Command.ChatInputCommandInteraction
+    interaction: Command.ChatInputCommandInteraction,
   ): Promise<void> {
     const { currentSong, nextSongId, songs } = partyService.getSnapshot().context;
 

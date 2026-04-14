@@ -1,6 +1,10 @@
 require('dotenv').config();
 
-import { SapphireClient, ApplicationCommandRegistries, RegisterBehavior } from '@sapphire/framework';
+import {
+  SapphireClient,
+  ApplicationCommandRegistries,
+  RegisterBehavior,
+} from '@sapphire/framework';
 import { GatewayIntentBits, TextChannel } from 'discord.js';
 
 import { fetchEnv } from './utils/fetch-env';
@@ -22,7 +26,7 @@ process.on('SIGINT', function () {
     .fetch(fetchEnv('DEBUG_CHANNEL_ID'))
     .then((debugChannel) => {
       return (debugChannel as TextChannel).send(
-        `\`\`\`Shutting down in ${process.env.NODE_ENV} environment...\`\`\``
+        `\`\`\`Shutting down in ${process.env.NODE_ENV} environment...\`\`\``,
       );
     })
     .then(() => {

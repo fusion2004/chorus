@@ -23,14 +23,12 @@ export class RoundAnnouncer {
   async process(songs: Song[]): Promise<void> {
     const limiter = new Bottleneck({ maxConcurrent: 3, minTime: 333 });
     const [firstSong] = songs;
-    const songsToProcess = songs.filter((song) =>
-      song.service.getSnapshot().matches('transcoded')
-    );
+    const songsToProcess = songs.filter((song) => song.service.getSnapshot().matches('transcoded'));
 
     await Promise.all(
       songsToProcess.map((song) =>
-        limiter.schedule(() => this.processSong(song, song.id === firstSong.id))
-      )
+        limiter.schedule(() => this.processSong(song, song.id === firstSong.id)),
+      ),
     );
   }
 
@@ -87,15 +85,24 @@ export class RoundAnnouncer {
     const pcmReadStream = fs.createReadStream(awsPath);
     const encodeStream = new prism.FFmpeg({
       args: [
-        '-analyzeduration', '0',
-        '-loglevel', '0',
-        '-map_metadata', '-1',
-        '-filter:a', 'loudnorm',
-        '-ar', '44100',
-        '-ac', '2',
-        '-f', 'mp3',
-        '-c:a', 'libmp3lame',
-        '-b:a', '256k',
+        '-analyzeduration',
+        '0',
+        '-loglevel',
+        '0',
+        '-map_metadata',
+        '-1',
+        '-filter:a',
+        'loudnorm',
+        '-ar',
+        '44100',
+        '-ac',
+        '2',
+        '-f',
+        'mp3',
+        '-c:a',
+        'libmp3lame',
+        '-b:a',
+        '256k',
       ],
     });
     const mp3WriteStream = fs.createWriteStream(intermediatePath);

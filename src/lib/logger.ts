@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { createMachine, createActor, assign } from 'xstate';
+import { createMachine, createActor, assign, fromPromise } from 'xstate';
 import type { TextChannel } from 'discord.js';
 
 function sendMessages(channel: TextChannel, messages: string[]): Promise<any> {
@@ -38,9 +38,7 @@ const debugChannelMachine = createMachine(
         },
       },
       ready: {
-        always: [
-          { target: 'debouncing', guard: 'areThereMessagesToSend' },
-        ],
+        always: [{ target: 'debouncing', guard: 'areThereMessagesToSend' }],
         on: {
           SEND_MESSAGE: {
             target: 'debouncing',
@@ -83,15 +81,21 @@ const debugChannelMachine = createMachine(
         }),
         invoke: {
           id: 'sendMessages',
-          src: ({ context }) =>
-            sendMessages(context.debugChannel!, context.messages),
+          src: fromPromise(
+            ({ input }: { input: { debugChannel: TextChannel; messages: string[] } }) =>
+              sendMessages(input.debugChannel, input.messages),
+          ),
+          input: ({ context }: { context: DebugChannelContext }) => ({
+            debugChannel: context.debugChannel!,
+            messages: context.messages,
+          }),
           onDone: {
             target: 'ready',
             actions: assign(() => ({ messages: [] })),
           },
           onError: {
             target: 'ready',
-            actions: ({ context, event }: any) => {
+            actions: ({ event }: any) => {
               console.error('Error sending debug channel messages');
               console.log(event);
             },
@@ -112,7 +116,7 @@ const debugChannelMachine = createMachine(
       areThereMessagesToSend: ({ context }) =>
         !!(context.messages.length || context.nextMessages.length),
     },
-  }
+  },
 );
 
 const debugChannelService = createActor(debugChannelMachine);

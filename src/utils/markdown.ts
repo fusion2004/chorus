@@ -1,7 +1,5 @@
 const unsafeCharactersRegex = /([*_\\|`~])/g;
 
-function escapeDiscordMarkdown(input) {
+export function escapeDiscordMarkdown(input: string): string {
   return input.replace(unsafeCharactersRegex, '\\$1');
 }
-
-module.exports = { escapeDiscordMarkdown };

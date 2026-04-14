@@ -1,17 +1,7 @@
-let announcerAws = Symbol('announcerAws');
-let announcerFinal = Symbol('announcerFinal');
-let announcerIntermediate = Symbol('announcerIntermediate');
-let downloadFinal = Symbol('downloadFinal');
-let downloadIntermediate = Symbol('downloadIntermediate');
-let transcodeFinal = Symbol('transcodeFinal');
-let transcodeIntermediate = Symbol('transcodeIntermediate');
-
-module.exports = {
-  announcerAws,
-  announcerFinal,
-  announcerIntermediate,
-  downloadFinal,
-  downloadIntermediate,
-  transcodeFinal,
-  transcodeIntermediate,
-};
+export const announcerAws = Symbol('announcerAws');
+export const announcerFinal = Symbol('announcerFinal');
+export const announcerIntermediate = Symbol('announcerIntermediate');
+export const downloadFinal = Symbol('downloadFinal');
+export const downloadIntermediate = Symbol('downloadIntermediate');
+export const transcodeFinal = Symbol('transcodeFinal');
+export const transcodeIntermediate = Symbol('transcodeIntermediate');

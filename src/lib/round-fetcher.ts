@@ -14,12 +14,10 @@ export class RoundFetcher {
       minTime: 333,
     });
 
-    const songsToFetch = songs.filter((song) =>
-      song.service.getSnapshot().matches('fetched')
-    );
+    const songsToFetch = songs.filter((song) => song.service.getSnapshot().matches('fetched'));
 
     const downloadPromises = songsToFetch.map((song) =>
-      limiter.schedule(() => this.fetchSong(song))
+      limiter.schedule(() => this.fetchSong(song)),
     );
 
     await Promise.all(downloadPromises);

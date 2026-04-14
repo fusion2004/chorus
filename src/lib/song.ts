@@ -40,9 +40,7 @@ export class Song {
     this.service = createActor(songMachine);
     this.service.subscribe((snapshot) => {
       if (snapshot.value === 'init') return;
-      console.log(
-        `[Song->${String(snapshot.value)}](${snapshot.event.type}) Song #${this.id} - ${this.title}`
-      );
+      console.log(`[Song->${String(snapshot.value)}] Song #${this.id} - ${this.title}`);
     });
     this.service.start();
   }

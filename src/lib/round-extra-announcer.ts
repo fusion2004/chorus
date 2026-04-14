@@ -39,8 +39,8 @@ export class RoundExtraAnnouncer {
 
     return Promise.all(
       announcers.map((announcer) =>
-        limiter.schedule(() => this.processIndividual(announcer, directory))
-      )
+        limiter.schedule(() => this.processIndividual(announcer, directory)),
+      ),
     );
   }
 
@@ -83,15 +83,24 @@ export class RoundExtraAnnouncer {
     const pcmReadStream = fs.createReadStream(awsPath);
     const encodeStream = new prism.FFmpeg({
       args: [
-        '-analyzeduration', '0',
-        '-loglevel', '0',
-        '-map_metadata', '-1',
-        '-filter:a', 'loudnorm',
-        '-ar', '44100',
-        '-ac', '2',
-        '-f', 'mp3',
-        '-c:a', 'libmp3lame',
-        '-b:a', '256k',
+        '-analyzeduration',
+        '0',
+        '-loglevel',
+        '0',
+        '-map_metadata',
+        '-1',
+        '-filter:a',
+        'loudnorm',
+        '-ar',
+        '44100',
+        '-ac',
+        '2',
+        '-f',
+        'mp3',
+        '-c:a',
+        'libmp3lame',
+        '-b:a',
+        '256k',
       ],
     });
     const mp3WriteStream = fs.createWriteStream(intermediatePath);

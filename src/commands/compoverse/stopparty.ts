@@ -9,12 +9,12 @@ export class StopPartyCommand extends Command {
 
   public override registerApplicationCommands(registry: Command.Registry): void {
     registry.registerChatInputCommand((builder) =>
-      builder.setName('stopparty').setDescription('Stops any current listening party')
+      builder.setName('stopparty').setDescription('Stops any current listening party'),
     );
   }
 
   public override async chatInputRun(
-    interaction: Command.ChatInputCommandInteraction
+    interaction: Command.ChatInputCommandInteraction,
   ): Promise<void> {
     if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({

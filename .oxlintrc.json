@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "eqeqeq": "error",
+    "no-console": "off",
+    "no-useless-rename": "error",
+    "object-shorthand": ["error", "always"],
+    "prefer-template": "error",
+    "typescript/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+  },
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**"]
+}
