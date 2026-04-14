@@ -846,7 +846,5 @@ const machine = createMachine(
 export const partyService = createActor(machine).start();
 
 partyService.subscribe((snapshot) => {
-  console.log('Party service transition:');
-  console.log('  State:', snapshot.value);
-  console.log('  Value:', JSON.stringify(snapshot.value, null, 2));
+  console.log('Party service transition:', JSON.stringify(snapshot.value));
 });
