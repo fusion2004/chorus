@@ -10,7 +10,7 @@ declare module 'nodeshout' {
 
   export interface ShoutT {
     setHost(host: string): void;
-    setPort(port: string): void;
+    setPort(port: number): void;
     setUser(user: string): void;
     setPassword(password: string): void;
     setMount(mount: string): void;

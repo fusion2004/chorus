@@ -23,7 +23,7 @@ nodeshout.init();
 
 const STREAM = {
   host: fetchEnv('HUBOT_STREAM_HOST'),
-  port: fetchEnv('HUBOT_STREAM_PORT'),
+  port: parseInt(fetchEnv('HUBOT_STREAM_PORT'), 10),
   mount: fetchEnv('HUBOT_STREAM_MOUNT'),
   password: fetchEnv('HUBOT_STREAM_SOURCE_PASSWORD'),
 };
