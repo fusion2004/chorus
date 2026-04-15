@@ -761,7 +761,7 @@ const machine = createMachine(
       setRoundContext: assign(({ event }) => {
         const ev = event as Extract<PartyEvent, { type: 'START' }>;
         const { id, prefix } = roundPrefixAndId(ev.round);
-        const parent = path.join(path.dirname(__dirname), 'tmp', 'rounds', ev.round);
+        const parent = path.join(process.cwd(), 'tmp', 'rounds', ev.round);
         return {
           channels: { processing: ev.channel, party: ev.channel } as any,
           round: {
