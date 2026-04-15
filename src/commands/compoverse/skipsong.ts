@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework';
+import { MessageFlags } from 'discord.js';
 
 import { partyService } from '../../lib/party';
 
@@ -21,7 +22,7 @@ export class SkipSongCommand extends Command {
     if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({
         content: 'there is no listening party, currently!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -29,7 +30,7 @@ export class SkipSongCommand extends Command {
     if (partyService.getSnapshot().matches({ partying: { streaming: 'idle' } })) {
       await interaction.reply({
         content: "the listening party isn't skippable yet!",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

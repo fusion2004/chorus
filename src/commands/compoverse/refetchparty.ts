@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework';
+import { MessageFlags } from 'discord.js';
 import type { TextChannel } from 'discord.js';
 
 import { partyService } from '../../lib/party';
@@ -22,7 +23,7 @@ export class RefetchPartyCommand extends Command {
     if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({
         content: 'there is no listening party, currently!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -30,7 +31,7 @@ export class RefetchPartyCommand extends Command {
     if (!partyService.getSnapshot().matches({ partying: { processing: 'idle' } })) {
       await interaction.reply({
         content: 'there is already a fetch or refetch running!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

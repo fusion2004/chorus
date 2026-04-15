@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework';
+import { MessageFlags } from 'discord.js';
 
 import { partyService } from '../../lib/party';
 
@@ -25,7 +26,7 @@ export class PlaylistCommand extends Command {
     if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({
         content: 'there is no listening party, currently!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -33,7 +34,7 @@ export class PlaylistCommand extends Command {
     if (!songs || songs.length === 0) {
       await interaction.reply({
         content: "there aren't any songs fetched in the listening party, yet!",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

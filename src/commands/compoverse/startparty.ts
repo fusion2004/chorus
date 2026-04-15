@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework';
+import { MessageFlags } from 'discord.js';
 import type { TextChannel } from 'discord.js';
 
 import { partyService } from '../../lib/party';
@@ -35,7 +36,7 @@ export class StartPartyCommand extends Command {
       await interaction.reply({
         content:
           'there is currently a listening party streaming. We can only stream one at a time.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

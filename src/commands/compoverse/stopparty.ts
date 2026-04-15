@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework';
+import { MessageFlags } from 'discord.js';
 
 import { partyService } from '../../lib/party';
 
@@ -19,7 +20,7 @@ export class StopPartyCommand extends Command {
     if (partyService.getSnapshot().matches('idle')) {
       await interaction.reply({
         content: 'there is no listening party to stop!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
