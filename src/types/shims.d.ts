@@ -32,7 +32,3 @@ declare module 'prism-media' {
   }
 }
 
-declare module 'zippa' {
-  const zippa: any;
-  export = zippa;
-}

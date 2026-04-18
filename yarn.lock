@@ -2197,7 +2197,6 @@ __metadata:
     chalk: "npm:^4.1.2"
     cheerio: "npm:^1.2.0"
     discord.js: "npm:14.26.3"
-    dotenv: "npm:^17.4.2"
     ffmpeg-static: "npm:^5.3.0"
     got: "npm:^11.8.6"
     lodash: "npm:^4.18.1"
@@ -2212,7 +2211,6 @@ __metadata:
     utf-8-validate: "npm:^5.0.10"
     xmlbuilder: "npm:^15.1.1"
     xstate: "npm:^5.30.0"
-    zippa: "npm:^0.3.1"
     zlib-sync: "npm:^0.1.10"
   languageName: unknown
   linkType: soft
@@ -2470,13 +2468,6 @@ __metadata:
     domelementtype: "npm:^2.3.0"
     domhandler: "npm:^5.0.3"
   checksum: 10/2e08842151aa406f50fe5e6d494f4ec73c2373199fa00d1f77b56ec604e566b7f226312ae35ab8160bb7f27a27c7285d574c8044779053e499282ca9198be210
-  languageName: node
-  linkType: hard
-
-"dotenv@npm:^17.4.2":
-  version: 17.4.2
-  resolution: "dotenv@npm:17.4.2"
-  checksum: 10/ca1b6f54d58e39914901e1518958e86083aca8deb5aa2e7f2a51acd53291d97852479b0ab26ed949b6a45a0e9adcc7b0d1c3c72375e8ea670f7005e341c6daba
   languageName: node
   linkType: hard
 
@@ -4205,13 +4196,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ramda@npm:^0.21.0":
-  version: 0.21.0
-  resolution: "ramda@npm:0.21.0"
-  checksum: 10/442011c83499a91bf8e5d81e582a6aff359846be3cc66c4c001edee5cb383494be7e192682a372d8cf38575c370ab1a241d12a86759e7a3239e650b49f3c98d3
-  languageName: node
-  linkType: hard
-
 "read-pkg@npm:^3.0.0":
   version: 3.0.0
   resolution: "read-pkg@npm:3.0.0"
@@ -5063,15 +5047,6 @@ __metadata:
   version: 5.0.0
   resolution: "yallist@npm:5.0.0"
   checksum: 10/1884d272d485845ad04759a255c71775db0fac56308764b4c77ea56a20d56679fad340213054c8c9c9c26fcfd4c4b2a90df993b7e0aaf3cdb73c618d1d1a802a
-  languageName: node
-  linkType: hard
-
-"zippa@npm:^0.3.1":
-  version: 0.3.1
-  resolution: "zippa@npm:0.3.1"
-  dependencies:
-    ramda: "npm:^0.21.0"
-  checksum: 10/3621d3af04a181f56fe694d093a4b3035478823d594847da05b2a79ca8544fd084a2662994e7d7a5aa0d893ed7551cf275c33b91c80f61252eb2dc27d3a21933
   languageName: node
   linkType: hard
 
