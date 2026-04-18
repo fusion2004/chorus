@@ -5,7 +5,7 @@ import { Readable } from 'stream';
 import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
 import Bottleneck from 'bottleneck';
 import prism from 'prism-media';
-import sample from 'lodash/sample.js';
+import { sample } from 'lodash-es';
 import builder from 'xmlbuilder';
 
 import { announcerAws, announcerFinal, announcerIntermediate } from '../utils/symbols.js';
