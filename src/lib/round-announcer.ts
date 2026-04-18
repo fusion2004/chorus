@@ -8,8 +8,8 @@ import { FFmpeg } from 'prism-media';
 import { sample } from 'lodash';
 import builder from 'xmlbuilder';
 
-import { announcerAws, announcerFinal, announcerIntermediate } from '../utils/symbols';
-import type { Song } from './song';
+import { announcerAws, announcerFinal, announcerIntermediate } from '../utils/symbols.js';
+import type { Song } from './song.js';
 
 const polly = new PollyClient({});
 

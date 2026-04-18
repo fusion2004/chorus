@@ -5,6 +5,7 @@
   "author": "Mark Oleson <fusion2004@gmail.com>",
   "description": "Your Party Rock Commander",
   "main": "dist/index.js",
+  "type": "module",
   "dependencies": {
     "@aws-sdk/client-polly": "^3.1032.0",
     "@sapphire/framework": "^5.5.0",
@@ -14,7 +15,7 @@
     "cheerio": "^1.2.0",
     "discord.js": "14.26.3",
     "ffmpeg-static": "^5.3.0",
-    "got": "^11.8.6",
+    "got": "^15",
     "lodash": "^4.18.1",
     "music-metadata": "^7.14.0",
     "nodeshout": "fusion2004/nodeshout#koffi-migration",

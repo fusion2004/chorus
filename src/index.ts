@@ -5,7 +5,7 @@ import {
 } from '@sapphire/framework';
 import { GatewayIntentBits, TextChannel } from 'discord.js';
 
-import { fetchEnv } from './utils/fetch-env';
+import { fetchEnv } from './utils/fetch-env.js';
 
 ApplicationCommandRegistries.setDefaultGuildIds([fetchEnv('GUILD_ID')]);
 ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(RegisterBehavior.BulkOverwrite);

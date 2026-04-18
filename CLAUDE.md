@@ -20,7 +20,7 @@ Deployed via Heroku (`Procfile: bot: yarn start`). TypeScript compiles on every 
 
 ## Architecture
 
-**Stack:** TypeScript (CommonJS), @sapphire/framework v5, discord.js v14, XState v5, nodeshout (Icecast streaming), AWS Polly (TTS)
+**Stack:** TypeScript (ESM, `nodenext`), @sapphire/framework v5, discord.js v14, XState v5, nodeshout (Icecast streaming), AWS Polly (TTS)
 
 ### Sapphire Auto-Discovery
 
@@ -50,6 +50,6 @@ For each song in a round: fetch metadata from ThaSauce → download MP3 → tran
 ### Key Patterns
 
 - **XState v5 syntax:** `createActor()`, `getSnapshot().matches()`, `assign(({ context, event }) => ...)`, `fromPromise()`, `fromCallback()`, `raise({ type: 'EVENT' })`
-- **CommonJS constraint:** `got@11` and `music-metadata@7` are pinned because later versions are ESM-only. `chalk@4` is also pinned for the same reason. Do not upgrade these.
+- **Pinned deps:** `music-metadata@7` and `chalk@4` are pinned to older CJS-compatible versions. Current versions work fine under ESM; upgrades are deferred to separate PRs to isolate API-migration risk.
 - **Ambient type shims:** `src/types/shims.d.ts` provides declarations for untyped packages (nodeshout, prism-media, zippa)
 - **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. See `.env.sample` for the full list.

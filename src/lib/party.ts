@@ -8,14 +8,14 @@ import { createMachine, createActor, assign, raise, fromPromise, fromCallback } 
 import type { TextChannel, Message } from 'discord.js';
 import { EmbedBuilder } from 'discord.js';
 
-import CompoThaSauceFetcher from './compo-thasauce-fetcher';
-import { Song } from './song';
-import { RoundFetcher } from './round-fetcher';
-import { RoundTranscoder } from './round-transcoder';
-import { RoundAnnouncer } from './round-announcer';
-import { RoundExtraAnnouncer } from './round-extra-announcer';
-import { announcerFinal, transcodeFinal } from '../utils/symbols';
-import { fetchEnv } from '../utils/fetch-env';
+import CompoThaSauceFetcher from './compo-thasauce-fetcher.js';
+import { Song } from './song.js';
+import { RoundFetcher } from './round-fetcher.js';
+import { RoundTranscoder } from './round-transcoder.js';
+import { RoundAnnouncer } from './round-announcer.js';
+import { RoundExtraAnnouncer } from './round-extra-announcer.js';
+import { announcerFinal, transcodeFinal } from '../utils/symbols.js';
+import { fetchEnv } from '../utils/fetch-env.js';
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 

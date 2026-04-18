@@ -3,8 +3,8 @@ import path from 'path';
 import { createActor } from 'xstate';
 import type { Actor } from 'xstate';
 
-import { songMachine } from './machines';
-import { escapeDiscordMarkdown } from '../utils/markdown';
+import { songMachine } from './machines.js';
+import { escapeDiscordMarkdown } from '../utils/markdown.js';
 import {
   announcerAws,
   announcerFinal,
@@ -13,7 +13,7 @@ import {
   downloadIntermediate,
   transcodeFinal,
   transcodeIntermediate,
-} from '../utils/symbols';
+} from '../utils/symbols.js';
 import type { IAudioMetadata } from 'music-metadata';
 
 async function fileExists(filePath: string): Promise<boolean> {

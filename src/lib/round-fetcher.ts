@@ -4,8 +4,8 @@ import { pipeline } from 'stream/promises';
 import Bottleneck from 'bottleneck';
 import got from 'got';
 
-import { downloadFinal, downloadIntermediate } from '../utils/symbols';
-import type { Song } from './song';
+import { downloadFinal, downloadIntermediate } from '../utils/symbols.js';
+import type { Song } from './song.js';
 
 export class RoundFetcher {
   async fetch(songs: Song[]): Promise<void> {

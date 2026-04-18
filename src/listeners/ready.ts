@@ -1,8 +1,8 @@
 import { Listener } from '@sapphire/framework';
 import { Events, Client, TextChannel } from 'discord.js';
 
-import { log, setDebugChannel } from '../lib/logger';
-import { fetchEnv } from '../utils/fetch-env';
+import { log, setDebugChannel } from '../lib/logger.js';
+import { fetchEnv } from '../utils/fetch-env.js';
 
 export class ReadyListener extends Listener<typeof Events.ClientReady> {
   public constructor(context: Listener.LoaderContext) {

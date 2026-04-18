@@ -1,7 +1,7 @@
 import { AllFlowsPrecondition } from '@sapphire/framework';
 import type { CommandInteraction, GuildMember } from 'discord.js';
 
-import { memberHasOneOfTheseRoles, roleIds } from '../utils/roles';
+import { memberHasOneOfTheseRoles, roleIds } from '../utils/roles.js';
 
 export class CompoAdminOnly extends AllFlowsPrecondition {
   public override async chatInputRun(interaction: CommandInteraction) {

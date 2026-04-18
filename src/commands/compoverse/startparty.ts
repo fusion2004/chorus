@@ -2,7 +2,7 @@ import { Command } from '@sapphire/framework';
 import { MessageFlags } from 'discord.js';
 import type { TextChannel } from 'discord.js';
 
-import { partyService } from '../../lib/party';
+import { partyService } from '../../lib/party.js';
 
 export class StartPartyCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {

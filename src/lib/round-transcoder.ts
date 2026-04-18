@@ -4,8 +4,8 @@ import { pipeline } from 'stream/promises';
 import Bottleneck from 'bottleneck';
 import { FFmpeg } from 'prism-media';
 
-import { downloadFinal, transcodeFinal, transcodeIntermediate } from '../utils/symbols';
-import type { Song } from './song';
+import { downloadFinal, transcodeFinal, transcodeIntermediate } from '../utils/symbols.js';
+import type { Song } from './song.js';
 
 export class RoundTranscoder {
   async transcode(songs: Song[]): Promise<void> {
