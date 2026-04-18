@@ -5,7 +5,7 @@ import path from 'path';
 
 import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
 import Bottleneck from 'bottleneck';
-import { FFmpeg } from 'prism-media';
+import prism from 'prism-media';
 import builder from 'xmlbuilder';
 
 const polly = new PollyClient({});
@@ -81,7 +81,7 @@ export class RoundExtraAnnouncer {
     await pipeline(pollyStream, pcmWriteStream);
 
     const pcmReadStream = fs.createReadStream(awsPath);
-    const encodeStream = new FFmpeg({
+    const encodeStream = new prism.FFmpeg({
       args: [
         '-analyzeduration',
         '0',

@@ -4,8 +4,8 @@ import { Readable } from 'stream';
 
 import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
 import Bottleneck from 'bottleneck';
-import { FFmpeg } from 'prism-media';
-import { sample } from 'lodash';
+import prism from 'prism-media';
+import sample from 'lodash/sample.js';
 import builder from 'xmlbuilder';
 
 import { announcerAws, announcerFinal, announcerIntermediate } from '../utils/symbols.js';
@@ -83,7 +83,7 @@ export class RoundAnnouncer {
     await pipeline(pollyStream, pcmWriteStream);
 
     const pcmReadStream = fs.createReadStream(awsPath);
-    const encodeStream = new FFmpeg({
+    const encodeStream = new prism.FFmpeg({
       args: [
         '-analyzeduration',
         '0',
