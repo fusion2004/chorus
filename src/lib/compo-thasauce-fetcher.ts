@@ -1,5 +1,5 @@
-const got = require('got');
-const cheerio = require('cheerio');
+import got from 'got';
+import { load } from 'cheerio';
 
 const ROOT_URL = 'http://compo.thasauce.net';
 
@@ -28,7 +28,7 @@ export default class CompoThaSauceFetcher {
   }
 
   private _createSongsFromResponseBody(body: string): SongData[] {
-    const $ = cheerio.load(body);
+    const $ = load(body);
     const items = $('#round-entries .item');
 
     return items.toArray().map((item: any) => {

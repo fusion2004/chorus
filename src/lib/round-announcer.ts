@@ -4,9 +4,9 @@ import { Readable } from 'stream';
 
 import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
 import Bottleneck from 'bottleneck';
-const prism = require('prism-media');
-const _ = require('lodash');
-const builder = require('xmlbuilder');
+import { FFmpeg } from 'prism-media';
+import { sample } from 'lodash';
+import builder from 'xmlbuilder';
 
 import { announcerAws, announcerFinal, announcerIntermediate } from '../utils/symbols';
 import type { Song } from './song';
@@ -40,7 +40,7 @@ export class RoundAnnouncer {
       [`${firstOrNext}, we have ${song.title} `, ` by ${song.artist}`],
       [`The ${firstOrNext} entry is ${song.title} `, ` by ${song.artist}`],
     ];
-    const bumper: string[] = _.sample(options);
+    const bumper: string[] = sample(options) as string[];
 
     const msg = builder
       .create('speak', { headless: true })
@@ -83,7 +83,7 @@ export class RoundAnnouncer {
     await pipeline(pollyStream, pcmWriteStream);
 
     const pcmReadStream = fs.createReadStream(awsPath);
-    const encodeStream = new prism.FFmpeg({
+    const encodeStream = new FFmpeg({
       args: [
         '-analyzeduration',
         '0',

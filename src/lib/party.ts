@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import mm from 'music-metadata';
-const nodeshout = require('nodeshout');
+import nodeshout from 'nodeshout';
 import type { ShoutT } from 'nodeshout';
 
 import { createMachine, createActor, assign, raise, fromPromise, fromCallback } from 'xstate';

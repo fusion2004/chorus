@@ -1,13 +1,6 @@
 // Ambient module declarations for packages that don't ship type definitions.
-// These will be removed or updated as packages are replaced in later layers.
 
 declare module 'nodeshout' {
-  export function init(): void;
-  export function create(): ShoutT;
-  export function shutdown(): void;
-  export function getVersion(): string;
-  export const ErrorTypes: { SUCCESS: number; [key: string]: number };
-
   export interface ShoutT {
     setHost(host: string): void;
     setPort(port: number): void;
@@ -23,12 +16,23 @@ declare module 'nodeshout' {
     delay(): number;
     sync(): void;
   }
+
+  interface Nodeshout {
+    init(): void;
+    create(): ShoutT;
+    shutdown(): void;
+    getVersion(): string;
+    ErrorTypes: { SUCCESS: number; [key: string]: number };
+  }
+
+  const nodeshout: Nodeshout;
+  export default nodeshout;
 }
 
 declare module 'prism-media' {
-  export class FFmpeg {
+  import { Duplex } from 'stream';
+
+  export class FFmpeg extends Duplex {
     constructor(options: { args: string[] });
-    pipe(destination: any): any;
   }
 }
-

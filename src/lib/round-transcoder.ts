@@ -2,7 +2,7 @@ import fs from 'fs';
 import { pipeline } from 'stream/promises';
 
 import Bottleneck from 'bottleneck';
-const prism = require('prism-media');
+import { FFmpeg } from 'prism-media';
 
 import { downloadFinal, transcodeFinal, transcodeIntermediate } from '../utils/symbols';
 import type { Song } from './song';
@@ -29,7 +29,7 @@ export class RoundTranscoder {
     song.service.send({ type: 'START_TRANSCODE' });
 
     const readStream = fs.createReadStream(song.path(downloadFinal));
-    const encodeStream = new prism.FFmpeg({
+    const encodeStream = new FFmpeg({
       args: [
         '-analyzeduration',
         '0',

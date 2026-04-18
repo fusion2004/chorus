@@ -2,7 +2,7 @@ import fs from 'fs';
 import { pipeline } from 'stream/promises';
 
 import Bottleneck from 'bottleneck';
-const got = require('got');
+import got from 'got';
 
 import { downloadFinal, downloadIntermediate } from '../utils/symbols';
 import type { Song } from './song';
