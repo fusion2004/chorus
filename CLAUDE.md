@@ -50,6 +50,5 @@ For each song in a round: fetch metadata from ThaSauce → download MP3 → tran
 ### Key Patterns
 
 - **XState v5 syntax:** `createActor()`, `getSnapshot().matches()`, `assign(({ context, event }) => ...)`, `fromPromise()`, `fromCallback()`, `raise({ type: 'EVENT' })`
-- **Pinned deps:** `music-metadata@7` and `chalk@4` are pinned to older CJS-compatible versions. Current versions work fine under ESM; upgrades are deferred to separate PRs to isolate API-migration risk.
-- **Ambient type shims:** `src/types/shims.d.ts` provides declarations for untyped packages (nodeshout, prism-media, zippa)
-- **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. See `.env.sample` for the full list.
+- **Ambient type shims:** `src/types/shims.d.ts` provides declarations for untyped packages (nodeshout, prism-media)
+- **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. `fetchEnvironment()` returns NODE_ENV with a 'development' fallback. See `.env.sample` for the full list.
