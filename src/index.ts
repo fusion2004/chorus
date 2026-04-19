@@ -13,6 +13,7 @@ ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(RegisterBehavior
 const client = new SapphireClient({
   intents: [GatewayIntentBits.Guilds],
   defaultPrefix: null,
+  baseUserDirectory: import.meta.dirname,
 });
 
 client.on('error', console.error);
