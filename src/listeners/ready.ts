@@ -12,7 +12,7 @@ export class ReadyListener extends Listener<typeof Events.ClientReady> {
   public async run(client: Client<true>): Promise<void> {
     const debugChannel = await client.channels.fetch(fetchEnv('DEBUG_CHANNEL_ID'));
     setDebugChannel(debugChannel as TextChannel);
-    log(`Booted up in ${fetchEnvironment()} environment!`);
-    log(`Logged in as ${client.user.tag}! (${client.user.id})`);
+    log(`Booted up in \`${fetchEnvironment()}\` environment!`);
+    log(`Logged in as ${client.user.tag}! (${client.user.toString()})`);
   }
 }

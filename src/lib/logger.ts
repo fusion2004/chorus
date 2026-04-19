@@ -3,9 +3,10 @@ import { createMachine, createActor, assign, fromPromise } from 'xstate';
 import type { TextChannel } from 'discord.js';
 
 function sendMessages(channel: TextChannel, messages: string[]): Promise<any> {
-  let message = '```shell\n';
-  message += messages.join('\n');
-  message += '```';
+  const message = messages
+    .flatMap((msg) => msg.split('\n'))
+    .map((line) => `> ${line}`)
+    .join('\n');
   return channel.send(message);
 }
 

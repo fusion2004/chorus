@@ -3,6 +3,7 @@ import { MessageFlags } from 'discord.js';
 import type { TextChannel } from 'discord.js';
 
 import { partyService } from '../../lib/party.js';
+import { log } from '../../lib/logger.js';
 
 export class StartPartyCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -32,7 +33,11 @@ export class StartPartyCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction,
   ): Promise<void> {
+    const round = interaction.options.getString('round', true).toUpperCase();
     if (partyService.getSnapshot().matches('partying')) {
+      log(
+        `Attempted to start a listening party for ${round} while one is already running by ${interaction.member.user.username} (${interaction.member.user.toString()}) in ${interaction.guild?.name} #${interaction.channel.name} (${interaction.channel.toString()})`,
+      );
       await interaction.reply({
         content:
           'there is currently a listening party streaming. We can only stream one at a time.',
@@ -41,8 +46,16 @@ export class StartPartyCommand extends Command {
       return;
     }
 
-    const round = interaction.options.getString('round', true).toUpperCase();
-    partyService.send({ type: 'START', channel: interaction.channel as TextChannel, round });
-    await interaction.reply({ content: `Starting listening party for ${round}...` });
+    log(
+      `Starting a listening party for ${round} by ${interaction.member.user.toString()} in ${interaction.guild?.name} #${interaction.channel.name} (${interaction.channel.toString()})`,
+    );
+    partyService.send({
+      type: 'START',
+      channel: interaction.channel as TextChannel,
+      round,
+    });
+    await interaction.reply({
+      content: `Starting listening party for ${round}...`,
+    });
   }
 }

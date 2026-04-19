@@ -25,7 +25,7 @@ process.on('SIGINT', function () {
     .fetch(fetchEnv('DEBUG_CHANNEL_ID'))
     .then((debugChannel) => {
       return (debugChannel as TextChannel).send(
-        `\`\`\`Shutting down in ${fetchEnvironment()} environment...\`\`\``,
+        `> Shutting down in \`${fetchEnvironment()}\` environment...`,
       );
     })
     .then(() => {
