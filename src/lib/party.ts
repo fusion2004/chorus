@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import mm from 'music-metadata';
+import { parseFile } from 'music-metadata';
 import nodeshout from 'nodeshout';
 import type { ShoutT } from 'nodeshout';
 
@@ -68,7 +68,7 @@ function roundPrefixAndId(fullId: string): { prefix: string | null; id: string }
 async function parseMetadata(songs: Song[]): Promise<void> {
   await Promise.all(
     songs.map(async (song) => {
-      const metadata = await mm.parseFile(song.path(transcodeFinal));
+      const metadata = await parseFile(song.path(transcodeFinal));
       song.service.send({ type: 'UPDATE_METADATA', metadata });
     }),
   );
