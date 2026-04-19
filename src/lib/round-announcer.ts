@@ -1,6 +1,6 @@
-import fs from 'fs';
-import { pipeline } from 'stream/promises';
-import { Readable } from 'stream';
+import fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
+import { Readable } from 'node:stream';
 
 import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
 import Bottleneck from 'bottleneck';

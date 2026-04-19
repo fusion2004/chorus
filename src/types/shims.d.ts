@@ -30,7 +30,7 @@ declare module 'nodeshout' {
 }
 
 declare module 'prism-media' {
-  import { Duplex } from 'stream';
+  import { Duplex } from 'node:stream';
 
   class FFmpeg extends Duplex {
     constructor(options: { args: string[] });

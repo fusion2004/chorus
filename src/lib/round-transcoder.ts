@@ -1,5 +1,5 @@
-import fs from 'fs';
-import { pipeline } from 'stream/promises';
+import fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 
 import Bottleneck from 'bottleneck';
 import prism from 'prism-media';

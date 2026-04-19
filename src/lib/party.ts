@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import mm from 'music-metadata';
 import nodeshout from 'nodeshout';
 import type { ShoutT } from 'nodeshout';
