@@ -5,7 +5,7 @@ import {
 } from '@sapphire/framework';
 import { GatewayIntentBits, TextChannel } from 'discord.js';
 
-import { fetchEnv } from './utils/fetch-env.js';
+import { fetchEnv, fetchEnvironment } from './utils/fetch-env.js';
 
 ApplicationCommandRegistries.setDefaultGuildIds([fetchEnv('GUILD_ID')]);
 ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(RegisterBehavior.BulkOverwrite);
@@ -19,13 +19,13 @@ const client = new SapphireClient({
 client.on('error', console.error);
 
 process.on('SIGINT', function () {
-  console.log(`Shutting down in ${process.env.NODE_ENV} environment...`);
+  console.log(`Shutting down in ${fetchEnvironment()} environment...`);
 
   client.channels
     .fetch(fetchEnv('DEBUG_CHANNEL_ID'))
     .then((debugChannel) => {
       return (debugChannel as TextChannel).send(
-        `\`\`\`Shutting down in ${process.env.NODE_ENV} environment...\`\`\``,
+        `\`\`\`Shutting down in ${fetchEnvironment()} environment...\`\`\``,
       );
     })
     .then(() => {

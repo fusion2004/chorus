@@ -9,3 +9,9 @@ export function fetchEnv(envName: string): string {
     throw new Error(`environment variable '${envName}' not found`);
   }
 }
+
+// fetchEnvironment returns NODE_ENV, defaulting to 'development' when unset
+// or blank.
+export function fetchEnvironment(): string {
+  return process.env.NODE_ENV?.trim() || 'development';
+}
