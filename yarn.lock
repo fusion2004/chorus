@@ -2114,7 +2114,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:^5":
+"chalk@npm:^5.6.2":
   version: 5.6.2
   resolution: "chalk@npm:5.6.2"
   checksum: 10/1b2f48f6fba1370670d5610f9cd54c391d6ede28f4b7062dd38244ea5768777af72e5be6b74fb6c6d54cb84c4a2dff3f3afa9b7cb5948f7f022cfd3d087989e0
@@ -2164,13 +2164,13 @@ __metadata:
     "@types/node": "npm:^24.12.2"
     bottleneck: "npm:^2.19.5"
     bufferutil: "npm:^4.1.0"
-    chalk: "npm:^5"
+    chalk: "npm:^5.6.2"
     cheerio: "npm:^1.2.0"
     discord.js: "npm:14.26.3"
     ffmpeg-static: "npm:^5.3.0"
     got: "npm:^15.0.2"
     lodash-es: "npm:^4.18.1"
-    music-metadata: "npm:^11"
+    music-metadata: "npm:^11.12.3"
     nodeshout: "fusion2004/nodeshout#koffi-migration"
     npm-run-all: "npm:^4.1.5"
     oxfmt: "npm:^0.45.0"
@@ -2178,7 +2178,7 @@ __metadata:
     prism-media: "npm:^1.3.5"
     tsx: "npm:^4.21.0"
     typescript: "npm:^6.0.3"
-    utf-8-validate: "npm:^6"
+    utf-8-validate: "npm:^6.0.6"
     xmlbuilder: "npm:^15.1.1"
     xstate: "npm:^5.30.0"
     zlib-sync: "npm:^0.1.10"
@@ -3598,7 +3598,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"music-metadata@npm:^11":
+"music-metadata@npm:^11.12.3":
   version: 11.12.3
   resolution: "music-metadata@npm:11.12.3"
   dependencies:
@@ -4754,7 +4754,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"utf-8-validate@npm:^6":
+"utf-8-validate@npm:^6.0.6":
   version: 6.0.6
   resolution: "utf-8-validate@npm:6.0.6"
   dependencies:
