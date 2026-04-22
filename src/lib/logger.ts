@@ -20,7 +20,7 @@ type DebugChannelEvent =
   | { type: 'SET_DEBUG_CHANNEL'; channel: TextChannel }
   | { type: 'SEND_MESSAGE'; message: string };
 
-const debugChannelMachine = createMachine(
+export const debugChannelMachine = createMachine(
   {
     types: {} as { context: DebugChannelContext; events: DebugChannelEvent },
     initial: 'init',

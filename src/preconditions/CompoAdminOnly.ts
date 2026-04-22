@@ -3,6 +3,11 @@ import type { CommandInteraction, GuildMember } from 'discord.js';
 
 import { memberHasOneOfTheseRoles, roleIds } from '../utils/roles.js';
 
+export function isCompoAdmin(member: GuildMember | null | undefined): boolean {
+  if (!member) return false;
+  return memberHasOneOfTheseRoles(member, [roleIds.thasauceAdmin, roleIds.compoAdmin]);
+}
+
 export class CompoAdminOnly extends AllFlowsPrecondition {
   public override async chatInputRun(interaction: CommandInteraction) {
     return this.checkMember(interaction);
@@ -21,11 +26,7 @@ export class CompoAdminOnly extends AllFlowsPrecondition {
     const member = (interaction.guild?.members.cache.get(interaction.user.id) ??
       (await interaction.guild?.members.fetch(interaction.user.id))) as GuildMember | undefined;
 
-    const authorized =
-      member !== null &&
-      memberHasOneOfTheseRoles(member, [roleIds.thasauceAdmin, roleIds.compoAdmin]);
-
-    return authorized
+    return isCompoAdmin(member)
       ? this.ok()
       : this.error({ message: "you're not allowed to run compoverse commands" });
   }

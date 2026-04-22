@@ -25,7 +25,7 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-function formatDuration(durationInSeconds: number): string {
+export function formatDuration(durationInSeconds: number): string {
   const minutes = Math.floor(durationInSeconds / 60);
   const seconds = `${Math.floor(durationInSeconds % 60)}`;
   return `${minutes}:${seconds.padStart(2, '0')}`;
