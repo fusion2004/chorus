@@ -1,4 +1,4 @@
-import { AllFlowsPrecondition } from '@sapphire/framework';
+import { Precondition } from '@sapphire/framework';
 import type { CommandInteraction, GuildMember } from 'discord.js';
 
 import { memberHasOneOfTheseRoles, roleIds } from '../utils/roles.js';
@@ -8,18 +8,9 @@ export function isCompoAdmin(member: GuildMember | null | undefined): boolean {
   return memberHasOneOfTheseRoles(member, [roleIds.thasauceAdmin, roleIds.compoAdmin]);
 }
 
-export class CompoAdminOnly extends AllFlowsPrecondition {
+export class CompoAdminOnly extends Precondition {
   public override async chatInputRun(interaction: CommandInteraction) {
     return this.checkMember(interaction);
-  }
-
-  // Message commands are not used (slash-only), but AllFlowsPrecondition requires this.
-  public override async messageRun() {
-    return this.error({ message: 'Message commands are not supported.' });
-  }
-
-  public override async contextMenuRun() {
-    return this.error({ message: 'Context menu commands are not supported.' });
   }
 
   private async checkMember(interaction: CommandInteraction) {
@@ -28,7 +19,10 @@ export class CompoAdminOnly extends AllFlowsPrecondition {
 
     return isCompoAdmin(member)
       ? this.ok()
-      : this.error({ message: "you're not allowed to run compoverse commands" });
+      : this.error({
+          message:
+            'You must have either the Compo Organizer or ThaSauce Admin role to run this command.',
+        });
   }
 }
 

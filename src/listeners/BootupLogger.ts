@@ -4,7 +4,7 @@ import { Events, Client, TextChannel } from 'discord.js';
 import { log, setDebugChannel } from '../lib/logger.js';
 import { fetchEnv, fetchEnvironment } from '../utils/fetch-env.js';
 
-export class ReadyListener extends Listener<typeof Events.ClientReady> {
+export class BootupLogger extends Listener<typeof Events.ClientReady> {
   public constructor(context: Listener.LoaderContext) {
     super(context, { event: Events.ClientReady, once: true });
   }
