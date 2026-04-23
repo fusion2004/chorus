@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { isCompoAdmin } from './CompoAdminOnly.js';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { container } from '@sapphire/pieces';
+import { isCompoAdmin, CompoAdminOnly } from './CompoAdminOnly.js';
 import { roleIds } from '../utils/roles.js';
 import {
   makeAdminInteraction,
@@ -7,7 +8,7 @@ import {
   makeNonAdminInteraction,
   makeMissingMemberInteraction,
 } from '../__test_helpers__/interaction.js';
-import { runCompoAdminOnly } from '../__test_helpers__/precondition.js';
+import { registerForTest } from '../__test_helpers__/sapphire.js';
 
 function makeMember(ids: string[]) {
   return {
@@ -45,36 +46,61 @@ describe('isCompoAdmin', () => {
   });
 });
 
-describe('CompoAdminOnly.chatInputRun', () => {
+describe('CompoAdminOnly precondition (via Sapphire store)', () => {
+  beforeAll(async () => {
+    // Bootstrap the Sapphire stores and register CompoAdminOnly; command is a
+    // required part of registerForTest's API, but none of the assertions here
+    // depend on it — any registered command works.
+    const { VoteJarskiCommand } = await import('../commands/compoverse/votejarski.js');
+    await registerForTest({
+      preconditions: [{ name: 'CompoAdminOnly', piece: CompoAdminOnly }],
+      command: { name: 'compo-admin-only-test', piece: VoteJarskiCommand },
+    });
+  });
+
+  function preconditionInstance(): any {
+    return container.stores.get('preconditions').get('CompoAdminOnly');
+  }
+
+  it('the real precondition instance lives in the preconditions store', () => {
+    const p = preconditionInstance();
+    expect(p).toBeDefined();
+    expect(p.name).toBe('CompoAdminOnly');
+  });
+
   it('returns ok() for a member with compoAdmin role', async () => {
-    const result = await runCompoAdminOnly(makeAdminInteraction());
+    const result = await preconditionInstance().chatInputRun(makeAdminInteraction(), {}, {});
     expect(result.isOk()).toBe(true);
   });
 
   it('returns ok() for a member with thasauceAdmin role', async () => {
-    const result = await runCompoAdminOnly(makeThasauceAdminInteraction());
+    const result = await preconditionInstance().chatInputRun(
+      makeThasauceAdminInteraction(),
+      {},
+      {},
+    );
     expect(result.isOk()).toBe(true);
   });
 
   it('returns error() for a member without admin roles', async () => {
-    const result = await runCompoAdminOnly(makeNonAdminInteraction());
+    const result = await preconditionInstance().chatInputRun(makeNonAdminInteraction(), {}, {});
     expect(result.isErr()).toBe(true);
-    expect((result as any).unwrapErr().message).toBe(
-      "you're not allowed to run compoverse commands",
-    );
+    expect(result.unwrapErr().message).toBe("you're not allowed to run compoverse commands");
   });
 
   it('returns error() when the guild member lookup yields undefined', async () => {
-    const result = await runCompoAdminOnly(makeMissingMemberInteraction());
+    const result = await preconditionInstance().chatInputRun(
+      makeMissingMemberInteraction(),
+      {},
+      {},
+    );
     expect(result.isErr()).toBe(true);
   });
 
-  it('fetches the member from the guild when not in cache', async () => {
+  it('falls back to guild.members.fetch() when the member is not in cache', async () => {
     const interaction = makeAdminInteraction();
-    // Empty the cache so the fallback `fetch` path is exercised; the interaction
-    // helper also populates `fetch` to return the same member.
     interaction.guild.members.cache = { get: () => undefined };
-    const result = await runCompoAdminOnly(interaction);
+    const result = await preconditionInstance().chatInputRun(interaction, {}, {});
     expect(interaction.guild.members.fetch).toHaveBeenCalledWith(interaction.user.id);
     expect(result.isOk()).toBe(true);
   });

@@ -1,16 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-vi.mock('@sapphire/framework', async (importActual) => {
-  const actual = await importActual<typeof import('@sapphire/framework')>();
-  class MockCommand {
-    options: any;
-    constructor(_ctx: any, options: any) {
-      this.options = options;
-    }
-    registerApplicationCommands() {}
-  }
-  return { ...actual, Command: MockCommand };
-});
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
 vi.mock('../../lib/party.js', () => ({
   partyService: {
@@ -21,35 +9,55 @@ vi.mock('../../lib/party.js', () => ({
 
 import { MessageFlags } from 'discord.js';
 import { StopPartyCommand } from './stopparty.js';
+import { CompoAdminOnly } from '../../preconditions/CompoAdminOnly.js';
 import { partyService } from '../../lib/party.js';
 import {
   makeAdminInteraction,
   makeNonAdminInteraction,
   makeMissingMemberInteraction,
 } from '../../__test_helpers__/interaction.js';
-import { runCompoAdminOnly } from '../../__test_helpers__/precondition.js';
+import { registerForTest } from '../../__test_helpers__/sapphire.js';
+import { runCommand } from '../../__test_helpers__/run-command.js';
 
 describe('StopPartyCommand', () => {
   let command: StopPartyCommand;
 
+  beforeAll(async () => {
+    command = await registerForTest({
+      preconditions: [{ name: 'CompoAdminOnly', piece: CompoAdminOnly }],
+      command: { name: 'stopparty', piece: StopPartyCommand },
+    });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
-    command = new StopPartyCommand({} as any, {} as any);
   });
 
   it('wires the CompoAdminOnly precondition', () => {
-    expect((command as any).options.preconditions).toContain('CompoAdminOnly');
+    const names = command.preconditions.entries.map((e: any) => e.name);
+    expect(names).toContain('CompoAdminOnly');
   });
 
   describe('authorization', () => {
     it('allows an admin member', async () => {
-      expect((await runCompoAdminOnly(makeAdminInteraction())).isOk()).toBe(true);
+      (partyService.getSnapshot as any).mockReturnValue({ matches: () => false });
+      const res = await runCommand(command, makeAdminInteraction());
+      expect(res.ran).toBe(true);
+      expect(res.blockedBy).toBeNull();
     });
+
     it('blocks a non-admin member', async () => {
-      expect((await runCompoAdminOnly(makeNonAdminInteraction())).isErr()).toBe(true);
+      const interaction = makeNonAdminInteraction();
+      const res = await runCommand(command, interaction);
+      expect(res.ran).toBe(false);
+      expect(res.blockedBy).toBe('CompoAdminOnly');
+      expect(partyService.send).not.toHaveBeenCalled();
     });
-    it('blocks when the member cannot be resolved', async () => {
-      expect((await runCompoAdminOnly(makeMissingMemberInteraction())).isErr()).toBe(true);
+
+    it('blocks when the guild member cannot be resolved', async () => {
+      const res = await runCommand(command, makeMissingMemberInteraction());
+      expect(res.ran).toBe(false);
+      expect(res.blockedBy).toBe('CompoAdminOnly');
     });
   });
 
@@ -60,8 +68,9 @@ describe('StopPartyCommand', () => {
       });
       const interaction = makeAdminInteraction();
 
-      await command.chatInputRun(interaction as any);
+      const res = await runCommand(command, interaction);
 
+      expect(res.ran).toBe(true);
       expect(partyService.send).not.toHaveBeenCalled();
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'there is no listening party to stop!',
@@ -75,8 +84,9 @@ describe('StopPartyCommand', () => {
       });
       const interaction = makeAdminInteraction();
 
-      await command.chatInputRun(interaction as any);
+      const res = await runCommand(command, interaction);
 
+      expect(res.ran).toBe(true);
       expect(partyService.send).toHaveBeenCalledWith({ type: 'STOP', immediate: true });
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Stopping the listening party...',

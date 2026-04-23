@@ -1,16 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-vi.mock('@sapphire/framework', async (importActual) => {
-  const actual = await importActual<typeof import('@sapphire/framework')>();
-  class MockCommand {
-    options: any;
-    constructor(_ctx: any, options: any) {
-      this.options = options;
-    }
-    registerApplicationCommands() {}
-  }
-  return { ...actual, Command: MockCommand };
-});
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
 vi.mock('../../lib/party.js', () => ({
   partyService: {
@@ -26,6 +14,7 @@ vi.mock('../../lib/logger.js', () => ({
 
 import { MessageFlags } from 'discord.js';
 import { StartPartyCommand } from './startparty.js';
+import { CompoAdminOnly } from '../../preconditions/CompoAdminOnly.js';
 import { partyService } from '../../lib/party.js';
 import { log } from '../../lib/logger.js';
 import {
@@ -33,34 +22,53 @@ import {
   makeNonAdminInteraction,
   makeMissingMemberInteraction,
 } from '../../__test_helpers__/interaction.js';
-import { runCompoAdminOnly } from '../../__test_helpers__/precondition.js';
+import { registerForTest } from '../../__test_helpers__/sapphire.js';
+import { runCommand } from '../../__test_helpers__/run-command.js';
 
 describe('StartPartyCommand', () => {
   let command: StartPartyCommand;
 
+  beforeAll(async () => {
+    command = await registerForTest({
+      preconditions: [{ name: 'CompoAdminOnly', piece: CompoAdminOnly }],
+      command: { name: 'startparty', piece: StartPartyCommand },
+    });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
-    command = new StartPartyCommand({} as any, {} as any);
   });
 
   it('wires the CompoAdminOnly precondition', () => {
-    expect((command as any).options.preconditions).toContain('CompoAdminOnly');
+    const names = command.preconditions.entries.map((e: any) => e.name);
+    expect(names).toContain('CompoAdminOnly');
   });
 
   describe('authorization', () => {
-    it('allows an admin member', async () => {
-      const result = await runCompoAdminOnly(makeAdminInteraction());
-      expect(result.isOk()).toBe(true);
+    it('allows an admin member to reach chatInputRun', async () => {
+      (partyService.getSnapshot as any).mockReturnValue({ matches: () => false });
+      const interaction = makeAdminInteraction({ options: { round: 'ohc123' } });
+      const res = await runCommand(command, interaction);
+      expect(res.ran).toBe(true);
+      expect(res.blockedBy).toBeNull();
+      expect(partyService.send).toHaveBeenCalled();
     });
 
-    it('blocks a non-admin member', async () => {
-      const result = await runCompoAdminOnly(makeNonAdminInteraction());
-      expect(result.isErr()).toBe(true);
+    it('blocks a non-admin member before chatInputRun', async () => {
+      const interaction = makeNonAdminInteraction({ options: { round: 'ohc123' } });
+      const res = await runCommand(command, interaction);
+      expect(res.ran).toBe(false);
+      expect(res.blockedBy).toBe('CompoAdminOnly');
+      expect(partyService.send).not.toHaveBeenCalled();
+      expect(interaction.reply).not.toHaveBeenCalled();
     });
 
-    it('blocks when the member cannot be resolved', async () => {
-      const result = await runCompoAdminOnly(makeMissingMemberInteraction());
-      expect(result.isErr()).toBe(true);
+    it('blocks when the guild member cannot be resolved', async () => {
+      const interaction = makeMissingMemberInteraction({ options: { round: 'ohc123' } });
+      const res = await runCommand(command, interaction);
+      expect(res.ran).toBe(false);
+      expect(res.blockedBy).toBe('CompoAdminOnly');
+      expect(partyService.send).not.toHaveBeenCalled();
     });
   });
 
@@ -71,8 +79,9 @@ describe('StartPartyCommand', () => {
       });
       const interaction = makeAdminInteraction({ options: { round: 'ohc123' } });
 
-      await command.chatInputRun(interaction as any);
+      const res = await runCommand(command, interaction);
 
+      expect(res.ran).toBe(true);
       expect(partyService.send).not.toHaveBeenCalled();
       expect(log).toHaveBeenCalledTimes(1);
       expect((log as any).mock.calls[0][0]).toContain('Attempted to start a listening party');
@@ -89,8 +98,9 @@ describe('StartPartyCommand', () => {
       });
       const interaction = makeAdminInteraction({ options: { round: 'ohc123' } });
 
-      await command.chatInputRun(interaction as any);
+      const res = await runCommand(command, interaction);
 
+      expect(res.ran).toBe(true);
       expect(partyService.send).toHaveBeenCalledTimes(1);
       expect(partyService.send).toHaveBeenCalledWith({
         type: 'START',
