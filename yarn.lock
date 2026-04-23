@@ -1472,10 +1472,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sindresorhus/is@npm:^7.2.0":
-  version: 7.2.0
-  resolution: "@sindresorhus/is@npm:7.2.0"
-  checksum: 10/d4f93d0fae3a799e1cb1cf31cdcc77f087f4203e2659e25afd7296493d9b4d430f37c4193404f56658d220a7467928fd2b29946dc141218bf42a2d2ebf8597fb
+"@sindresorhus/is@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "@sindresorhus/is@npm:8.0.0"
+  checksum: 10/108f092af181cffeb2fa56de25b64a335dfc27ce747bf97db9737a40587d035539a1514415c4420a8bdd0d4116663db2dd81cd9aad2f34594ea708483ae080a7
   languageName: node
   linkType: hard
 
@@ -3351,10 +3351,10 @@ __metadata:
   linkType: hard
 
 "got@npm:^15.0.2":
-  version: 15.0.2
-  resolution: "got@npm:15.0.2"
+  version: 15.0.3
+  resolution: "got@npm:15.0.3"
   dependencies:
-    "@sindresorhus/is": "npm:^7.2.0"
+    "@sindresorhus/is": "npm:^8.0.0"
     byte-counter: "npm:^0.1.0"
     cacheable-lookup: "npm:^7.0.0"
     cacheable-request: "npm:^13.0.18"
@@ -3364,9 +3364,9 @@ __metadata:
     keyv: "npm:^5.6.0"
     lowercase-keys: "npm:^4.0.1"
     responselike: "npm:^4.0.2"
-    type-fest: "npm:^5.4.4"
+    type-fest: "npm:^5.6.0"
     uint8array-extras: "npm:^1.5.0"
-  checksum: 10/b647d4da8862163fa53b5c431c6ace5fa47d5d0603b1692806ce35dbc5609aa58c67050949c059b600300972656a05810e81052a473bfebc84b0b6f59ae7c647
+  checksum: 10/6e152a2a053f8520d32efaeb171d1fb4eb9af6c123a5fb11c8da0bfa27e251e5c749f2831728b7e3ffb03d0a94b6be11d1f31ca58dbf15099b4d0c370d89924f
   languageName: node
   linkType: hard
 
@@ -5412,7 +5412,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^5.4.4":
+"type-fest@npm:^5.6.0":
   version: 5.6.0
   resolution: "type-fest@npm:5.6.0"
   dependencies:
