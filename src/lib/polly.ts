@@ -14,7 +14,7 @@ const polly = new PollyClient({});
 const SYNTHESIZE_SETTINGS = {
   OutputFormat: 'mp3',
   VoiceId: 'Joanna',
-  Engine: 'neural',
+  Engine: 'generative',
   SampleRate: '24000',
   TextType: 'ssml',
 } as const;
@@ -25,13 +25,16 @@ type XmlNode = ReturnType<typeof builder.create>;
 
 /**
  * Builds an SSML fragment wrapped in the standard envelope used by every
- * announcer: `<speak><amazon:domain name="conversational">` with a 1500ms
- * break before and after the caller-provided content.
+ * announcer: `<speak>` with a 1500ms break before and after the caller-provided
+ * content.
+ *
+ * Note: we used to wrap the body in `<amazon:domain name="conversational">`,
+ * but that tag is only supported by the neural engine. The generative engine
+ * rejects it with `ValidationException: This voice does not support one of the
+ * used SSML features` and has its own conversational style baked in.
  */
 export function buildSsml(build: (msg: XmlNode) => void): string {
-  const msg = builder
-    .create('speak', { headless: true })
-    .ele('amazon:domain', { name: 'conversational' });
+  const msg = builder.create('speak', { headless: true });
   msg.ele('break', { time: '1500ms' });
   build(msg);
   msg.ele('break', { time: '1500ms' });

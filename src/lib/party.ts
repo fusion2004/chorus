@@ -16,8 +16,19 @@ import { RoundAnnouncer } from './round-announcer.js';
 import { RoundExtraAnnouncer } from './round-extra-announcer.js';
 import { announcerFinal, transcodeFinal } from '../utils/symbols.js';
 import { fetchEnv } from '../utils/fetch-env.js';
+import { log } from './logger.js';
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Action factory for XState onError handlers: pulls the error message off the
+// invoke's error event and forwards it to the debug-channel logger.
+function logActorError(prefix: string) {
+  return ({ event }: { event: unknown }) => {
+    const err = (event as { error?: unknown }).error;
+    const message = (err as { message?: string })?.message ?? String(err);
+    log(`${prefix}: ${message}`, 'error');
+  };
+}
 
 nodeshout.init();
 
@@ -549,7 +560,9 @@ const machine = createMachine(
                       input.downloader!.fetch(input.songs!),
                     ),
                     input: ({ context }) => context,
-                    onError: { actions: raise({ type: 'STOP' }) },
+                    onError: {
+                      actions: [logActorError('Round download failed'), raise({ type: 'STOP' })],
+                    },
                   },
                   {
                     id: 'fetchingMessage',
@@ -571,6 +584,9 @@ const machine = createMachine(
                       input.transcoder!.transcode(input.songs!),
                     ),
                     input: ({ context }) => context,
+                    onError: {
+                      actions: [logActorError('Round transcode failed'), raise({ type: 'STOP' })],
+                    },
                   },
                   {
                     id: 'transcodingMessage',
@@ -592,6 +608,9 @@ const machine = createMachine(
                   ),
                   input: ({ context }) => context,
                   onDone: { target: 'generatingAnnouncer' },
+                  onError: {
+                    actions: [logActorError('Metadata parsing failed'), raise({ type: 'STOP' })],
+                  },
                 },
               },
               generatingAnnouncer: {
@@ -602,6 +621,12 @@ const machine = createMachine(
                       input.announcer!.process(input.songs!),
                     ),
                     input: ({ context }) => context,
+                    onError: {
+                      actions: [
+                        logActorError('Announcer generation failed'),
+                        raise({ type: 'STOP' }),
+                      ],
+                    },
                   },
                   {
                     id: 'announcerGeneratingMessage',
@@ -630,6 +655,12 @@ const machine = createMachine(
                     actions: assign(({ event }) => ({
                       outroAnnouncer: event.output.find((a: ExtraAnnouncer) => a.id === 'outro'),
                     })),
+                  },
+                  onError: {
+                    actions: [
+                      logActorError('Extra announcer generation failed'),
+                      raise({ type: 'STOP' }),
+                    ],
                   },
                 },
               },
