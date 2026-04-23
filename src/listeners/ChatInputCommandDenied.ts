@@ -7,6 +7,10 @@ import {
 import { MessageFlags } from 'discord.js';
 
 export class ChatInputCommandDenied extends Listener<typeof Events.ChatInputCommandDenied> {
+  public constructor(context: Listener.LoaderContext) {
+    super(context, { event: Events.ChatInputCommandDenied });
+  }
+
   public run(error: UserError, { interaction }: ChatInputCommandDeniedPayload) {
     const isSilent = Reflect.get(Object(error.context), 'silent');
 
