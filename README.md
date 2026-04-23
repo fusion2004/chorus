@@ -8,12 +8,16 @@ TypeScript (ESM, `nodenext`) · Node 24 · @sapphire/framework v5 · discord.js 
 
 ## Running it locally
 
-Prereqs: Node 24 and Yarn 4 (Volta will pin these for you — see `package.json`'s `volta` field).
+Prereqs:
+
+- Node 24 and Yarn 4 — Volta will pin these for you (see `package.json`'s `volta` field).
+- [direnv](https://direnv.net/) — the bot reads env vars straight from `process.env`, so something needs to load them into your shell. direnv + an `.envrc` is the recommended setup; anything equivalent (manual `export`s, a shell profile, your shell's secrets manager) works too.
 
 ```bash
 yarn install
-cp .env.sample .env   # fill in the blanks; see "Environment" below
-yarn dev              # tsx watch src/index.ts — live reload
+cp .envrc.sample .envrc   # fill in the blanks; see "Environment" below
+direnv allow              # authorize the .envrc
+yarn dev                  # tsx watch src/index.ts — live reload
 ```
 
 For a production-like run:
@@ -25,7 +29,7 @@ yarn start
 
 ### Environment
 
-Copy `.env.sample` to `.env` and fill in:
+Copy `.envrc.sample` to `.envrc` and fill in the blanks, then `direnv allow`. Required variables:
 
 - `HUBOT_DISCORD_TOKEN` — bot token from the Discord developer portal
 - `GUILD_ID` — Discord guild the slash commands register against (Chorus is guild-only, not global)

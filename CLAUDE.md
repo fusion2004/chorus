@@ -63,7 +63,7 @@ Every `fromPromise` actor that touches an external system has an `onError` handl
 
 - **XState v5 syntax:** `createActor()`, `getSnapshot().matches()`, `assign(({ context, event }) => ...)`, `fromPromise()`, `fromCallback()`, `raise({ type: 'EVENT' })`
 - **Ambient type shims:** `src/types/shims.d.ts` provides declarations for untyped packages (nodeshout, prism-media)
-- **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. `fetchEnvironment()` returns NODE_ENV with a 'development' fallback. See `.env.sample` for the full list.
+- **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. `fetchEnvironment()` returns NODE_ENV with a 'development' fallback. Nothing in the codebase loads a `.env` file automatically (no dotenv); env vars must already be in `process.env` at startup. The recommended local setup is direnv with an `.envrc` copied from `.envrc.sample`. See `.envrc.sample` for the full list.
 
 ## Testing
 
