@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createActor } from 'xstate';
-import { debugChannelMachine } from '../../src/lib/logger.js';
+import { debugChannelMachine } from '@src/lib/logger.js';
 
 function stubChannel() {
   return { send: vi.fn().mockResolvedValue(undefined) } as any;

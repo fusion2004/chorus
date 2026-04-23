@@ -1,6 +1,6 @@
 import { container } from '@sapphire/pieces';
 import { Events } from '@sapphire/framework';
-import { fakeClient } from './sapphire.js';
+import { fakeClient } from '@test/helpers/sapphire.js';
 
 export interface RunCommandResult {
   ran: boolean;

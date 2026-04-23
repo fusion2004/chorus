@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { memberHasOneOfTheseRoles, roleIds } from '../../src/utils/roles.js';
+import { memberHasOneOfTheseRoles, roleIds } from '@src/utils/roles.js';
 
 function makeMember(memberRoleIds: string[]) {
   return {

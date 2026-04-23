@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { container } from '@sapphire/pieces';
-import { isCompoAdmin, CompoAdminOnly } from '../../src/preconditions/CompoAdminOnly.js';
-import { roleIds } from '../../src/utils/roles.js';
+import { isCompoAdmin, CompoAdminOnly } from '@src/preconditions/CompoAdminOnly.js';
+import { roleIds } from '@src/utils/roles.js';
 import {
   makeAdminInteraction,
   makeThasauceAdminInteraction,
   makeNonAdminInteraction,
   makeMissingMemberInteraction,
-} from '../helpers/interaction.js';
-import { registerForTest } from '../helpers/sapphire.js';
+} from '@test/helpers/interaction.js';
+import { registerForTest } from '@test/helpers/sapphire.js';
 
 function makeMember(ids: string[]) {
   return {
@@ -51,7 +51,7 @@ describe('CompoAdminOnly precondition (via Sapphire store)', () => {
     // Bootstrap the Sapphire stores and register CompoAdminOnly; command is a
     // required part of registerForTest's API, but none of the assertions here
     // depend on it — any registered command works.
-    const { VoteJarskiCommand } = await import('../../src/commands/compoverse/votejarski.js');
+    const { VoteJarskiCommand } = await import('@src/commands/compoverse/votejarski.js');
     await registerForTest({
       preconditions: [{ name: 'CompoAdminOnly', piece: CompoAdminOnly }],
       command: { name: 'compo-admin-only-test', piece: VoteJarskiCommand },

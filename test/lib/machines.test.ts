@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createActor } from 'xstate';
-import { songMachine } from '../../src/lib/machines.js';
+import { songMachine } from '@src/lib/machines.js';
 
 function start() {
   const actor = createActor(songMachine);

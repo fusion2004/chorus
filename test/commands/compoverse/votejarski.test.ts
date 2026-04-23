@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
-import { VoteJarskiCommand } from '../../../src/commands/compoverse/votejarski.js';
-import { CompoAdminOnly } from '../../../src/preconditions/CompoAdminOnly.js';
+import { VoteJarskiCommand } from '@src/commands/compoverse/votejarski.js';
+import { CompoAdminOnly } from '@src/preconditions/CompoAdminOnly.js';
 import {
   makeAdminInteraction,
   makeNonAdminInteraction,
   makeMissingMemberInteraction,
-} from '../../helpers/interaction.js';
-import { registerForTest } from '../../helpers/sapphire.js';
-import { runCommand } from '../../helpers/run-command.js';
+} from '@test/helpers/interaction.js';
+import { registerForTest } from '@test/helpers/sapphire.js';
+import { runCommand } from '@test/helpers/run-command.js';
 
 describe('VoteJarskiCommand', () => {
   let command: VoteJarskiCommand;

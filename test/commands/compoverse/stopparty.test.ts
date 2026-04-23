@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
-vi.mock('../../../src/lib/party.js', () => ({
+vi.mock('@src/lib/party.js', () => ({
   partyService: {
     getSnapshot: vi.fn(),
     send: vi.fn(),
@@ -8,16 +8,16 @@ vi.mock('../../../src/lib/party.js', () => ({
 }));
 
 import { MessageFlags } from 'discord.js';
-import { StopPartyCommand } from '../../../src/commands/compoverse/stopparty.js';
-import { CompoAdminOnly } from '../../../src/preconditions/CompoAdminOnly.js';
-import { partyService } from '../../../src/lib/party.js';
+import { StopPartyCommand } from '@src/commands/compoverse/stopparty.js';
+import { CompoAdminOnly } from '@src/preconditions/CompoAdminOnly.js';
+import { partyService } from '@src/lib/party.js';
 import {
   makeAdminInteraction,
   makeNonAdminInteraction,
   makeMissingMemberInteraction,
-} from '../../helpers/interaction.js';
-import { registerForTest } from '../../helpers/sapphire.js';
-import { runCommand } from '../../helpers/run-command.js';
+} from '@test/helpers/interaction.js';
+import { registerForTest } from '@test/helpers/sapphire.js';
+import { runCommand } from '@test/helpers/run-command.js';
 
 describe('StopPartyCommand', () => {
   let command: StopPartyCommand;
