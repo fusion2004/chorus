@@ -18,8 +18,17 @@ const client = new SapphireClient({
 
 client.on('error', console.error);
 
-process.on('SIGINT', function () {
+let shuttingDown = false;
+
+function shutdown() {
+  if (shuttingDown) {
+    return;
+  }
+  shuttingDown = true;
+
   console.log(`Shutting down in ${fetchEnvironment()} environment...`);
+
+  // TODO: immediately shutdown the party machine
 
   client.channels
     .fetch(fetchEnv('DEBUG_CHANNEL_ID'))
@@ -35,6 +44,9 @@ process.on('SIGINT', function () {
       console.log('There was an error sending the shut down message: ', e);
       process.exit();
     });
-});
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 client.login(fetchEnv('HUBOT_DISCORD_TOKEN'));
