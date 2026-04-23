@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
-vi.mock('../../lib/party.js', () => ({
+vi.mock('../../../src/lib/party.js', () => ({
   partyService: {
     getSnapshot: vi.fn(),
     send: vi.fn(),
@@ -8,16 +8,16 @@ vi.mock('../../lib/party.js', () => ({
 }));
 
 import { MessageFlags } from 'discord.js';
-import { SkipSongCommand } from './skipsong.js';
-import { CompoAdminOnly } from '../../preconditions/CompoAdminOnly.js';
-import { partyService } from '../../lib/party.js';
+import { SkipSongCommand } from '../../../src/commands/compoverse/skipsong.js';
+import { CompoAdminOnly } from '../../../src/preconditions/CompoAdminOnly.js';
+import { partyService } from '../../../src/lib/party.js';
 import {
   makeAdminInteraction,
   makeNonAdminInteraction,
   makeMissingMemberInteraction,
-} from '../../__test_helpers__/interaction.js';
-import { registerForTest } from '../../__test_helpers__/sapphire.js';
-import { runCommand } from '../../__test_helpers__/run-command.js';
+} from '../../helpers/interaction.js';
+import { registerForTest } from '../../helpers/sapphire.js';
+import { runCommand } from '../../helpers/run-command.js';
 
 function matchesOnly(states: Array<string | Record<string, any>>) {
   return (state: string | Record<string, any>) => {

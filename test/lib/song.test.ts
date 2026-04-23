@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { Song, formatDuration } from './song.js';
+import { Song, formatDuration } from '../../src/lib/song.js';
 import {
   announcerAws,
   announcerFinal,
@@ -11,7 +11,7 @@ import {
   downloadIntermediate,
   transcodeFinal,
   transcodeIntermediate,
-} from '../utils/symbols.js';
+} from '../../src/utils/symbols.js';
 
 function fetchSong(
   song: Song,

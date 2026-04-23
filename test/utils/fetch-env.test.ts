@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { fetchEnv, fetchEnvironment } from './fetch-env.js';
+import { fetchEnv, fetchEnvironment } from '../../src/utils/fetch-env.js';
 
 const TEST_VAR = 'CHORUS_TEST_FETCH_ENV_VAR';
 

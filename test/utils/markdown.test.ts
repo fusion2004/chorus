@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { escapeDiscordMarkdown } from './markdown.js';
+import { escapeDiscordMarkdown } from '../../src/utils/markdown.js';
 
 describe('escapeDiscordMarkdown', () => {
   it('escapes asterisks', () => {

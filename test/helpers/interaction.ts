@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { roleIds } from '../utils/roles.js';
+import { roleIds } from '../../src/utils/roles.js';
 
 interface MockInteractionOverrides {
   roles?: string[];

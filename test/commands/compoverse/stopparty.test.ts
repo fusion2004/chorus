@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
-vi.mock('../../lib/party.js', () => ({
+vi.mock('../../../src/lib/party.js', () => ({
   partyService: {
     getSnapshot: vi.fn(),
     send: vi.fn(),
@@ -8,31 +8,24 @@ vi.mock('../../lib/party.js', () => ({
 }));
 
 import { MessageFlags } from 'discord.js';
-import { RefetchPartyCommand } from './refetchparty.js';
-import { CompoAdminOnly } from '../../preconditions/CompoAdminOnly.js';
-import { partyService } from '../../lib/party.js';
+import { StopPartyCommand } from '../../../src/commands/compoverse/stopparty.js';
+import { CompoAdminOnly } from '../../../src/preconditions/CompoAdminOnly.js';
+import { partyService } from '../../../src/lib/party.js';
 import {
   makeAdminInteraction,
   makeNonAdminInteraction,
   makeMissingMemberInteraction,
-} from '../../__test_helpers__/interaction.js';
-import { registerForTest } from '../../__test_helpers__/sapphire.js';
-import { runCommand } from '../../__test_helpers__/run-command.js';
+} from '../../helpers/interaction.js';
+import { registerForTest } from '../../helpers/sapphire.js';
+import { runCommand } from '../../helpers/run-command.js';
 
-function matchesOnly(states: Array<string | Record<string, any>>) {
-  return (state: string | Record<string, any>) => {
-    const key = JSON.stringify(state);
-    return states.some((s) => JSON.stringify(s) === key);
-  };
-}
-
-describe('RefetchPartyCommand', () => {
-  let command: RefetchPartyCommand;
+describe('StopPartyCommand', () => {
+  let command: StopPartyCommand;
 
   beforeAll(async () => {
     command = await registerForTest({
       preconditions: [{ name: 'CompoAdminOnly', piece: CompoAdminOnly }],
-      command: { name: 'refetchparty', piece: RefetchPartyCommand },
+      command: { name: 'stopparty', piece: StopPartyCommand },
     });
   });
 
@@ -50,10 +43,12 @@ describe('RefetchPartyCommand', () => {
       (partyService.getSnapshot as any).mockReturnValue({ matches: () => false });
       const res = await runCommand(command, makeAdminInteraction());
       expect(res.ran).toBe(true);
+      expect(res.blockedBy).toBeNull();
     });
 
     it('blocks a non-admin member', async () => {
-      const res = await runCommand(command, makeNonAdminInteraction());
+      const interaction = makeNonAdminInteraction();
+      const res = await runCommand(command, interaction);
       expect(res.ran).toBe(false);
       expect(res.blockedBy).toBe('CompoAdminOnly');
       expect(partyService.send).not.toHaveBeenCalled();
@@ -68,47 +63,34 @@ describe('RefetchPartyCommand', () => {
 
   describe('chatInputRun', () => {
     it('replies ephemerally when idle', async () => {
-      (partyService.getSnapshot as any).mockReturnValue({ matches: matchesOnly(['idle']) });
-      const interaction = makeAdminInteraction();
-
-      const res = await runCommand(command, interaction);
-
-      expect(res.ran).toBe(true);
-      expect(partyService.send).not.toHaveBeenCalled();
-      expect(interaction.reply).toHaveBeenCalledWith({
-        content: 'there is no listening party, currently!',
-        flags: MessageFlags.Ephemeral,
-      });
-    });
-
-    it('replies ephemerally when a fetch or refetch is already running', async () => {
-      (partyService.getSnapshot as any).mockReturnValue({ matches: () => false });
-      const interaction = makeAdminInteraction();
-
-      const res = await runCommand(command, interaction);
-
-      expect(res.ran).toBe(true);
-      expect(partyService.send).not.toHaveBeenCalled();
-      expect(interaction.reply).toHaveBeenCalledWith({
-        content: 'there is already a fetch or refetch running!',
-        flags: MessageFlags.Ephemeral,
-      });
-    });
-
-    it('sends REFETCH and replies when processing is idle', async () => {
       (partyService.getSnapshot as any).mockReturnValue({
-        matches: matchesOnly([{ partying: { processing: 'idle' } }]),
+        matches: (state: string) => state === 'idle',
       });
       const interaction = makeAdminInteraction();
 
       const res = await runCommand(command, interaction);
 
       expect(res.ran).toBe(true);
-      expect(partyService.send).toHaveBeenCalledWith({
-        type: 'REFETCH',
-        channel: interaction.channel,
+      expect(partyService.send).not.toHaveBeenCalled();
+      expect(interaction.reply).toHaveBeenCalledWith({
+        content: 'there is no listening party to stop!',
+        flags: MessageFlags.Ephemeral,
       });
-      expect(interaction.reply).toHaveBeenCalledWith({ content: 'Refetching round...' });
+    });
+
+    it('sends STOP with immediate:true and replies when a party is running', async () => {
+      (partyService.getSnapshot as any).mockReturnValue({
+        matches: (state: string) => state !== 'idle',
+      });
+      const interaction = makeAdminInteraction();
+
+      const res = await runCommand(command, interaction);
+
+      expect(res.ran).toBe(true);
+      expect(partyService.send).toHaveBeenCalledWith({ type: 'STOP', immediate: true });
+      expect(interaction.reply).toHaveBeenCalledWith({
+        content: 'Stopping the listening party...',
+      });
     });
   });
 });
