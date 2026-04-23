@@ -104,6 +104,7 @@ web_modules/
 
 # dotenv environment variables file
 .env
+.envrc
 .env.test
 .env.production
 
@@ -183,3 +184,7 @@ dist
 !/tmp/rounds
 /tmp/rounds/*
 !/tmp/rounds/.keep
+
+# AI things
+docs/superpowers/
+.claude

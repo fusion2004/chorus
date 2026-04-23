@@ -1,0 +1,40 @@
+import fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
+
+import Bottleneck from 'bottleneck';
+import got from 'got';
+
+import { downloadFinal, downloadIntermediate } from '../utils/symbols.js';
+import type { Song } from './song.js';
+
+export class RoundFetcher {
+  async fetch(songs: Song[]): Promise<void> {
+    const limiter = new Bottleneck({
+      maxConcurrent: 3,
+      minTime: 333,
+    });
+
+    const songsToFetch = songs.filter((song) => song.service.getSnapshot().matches('fetched'));
+
+    const downloadPromises = songsToFetch.map((song) =>
+      limiter.schedule(() => this.fetchSong(song)),
+    );
+
+    await Promise.all(downloadPromises);
+  }
+
+  async fetchSong(song: Song): Promise<void> {
+    const downloadPath = song.path(downloadIntermediate);
+    const finalPath = song.path(downloadFinal);
+    const writeStream = fs.createWriteStream(downloadPath);
+    const requestStream = got.stream(song.url!); // url is always set when in 'fetched' state
+
+    song.service.send({ type: 'START_DOWNLOAD' });
+
+    await pipeline(requestStream, writeStream);
+
+    await fs.promises.rename(downloadPath, finalPath);
+
+    song.service.send({ type: 'FINISH_DOWNLOAD' });
+  }
+}

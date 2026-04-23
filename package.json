@@ -4,53 +4,58 @@
   "private": true,
   "author": "Mark Oleson <fusion2004@gmail.com>",
   "description": "Your Party Rock Commander",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "type": "module",
   "dependencies": {
-    "@xstate/immer": "^0.2.0",
-    "aws-sdk": "^2.1030.0",
-    "bluebird": "^3.7.2",
+    "@aws-sdk/client-polly": "^3.1032.0",
+    "@sapphire/framework": "^5.5.0",
     "bottleneck": "^2.19.5",
-    "bufferutil": "^4.0.5",
-    "chalk": "^4.1.2",
-    "cheerio": "^1.0.0-rc.10",
-    "discord.js": "12.5.1",
-    "discord.js-commando": "^0.11.1",
-    "dotenv": "^10.0.0",
-    "ffmpeg-static": "^4.4.0",
-    "got": "^11.8.2",
-    "immer": "^9.0.6",
-    "lodash": "^4.17.21",
-    "music-metadata": "^7.11.4",
-    "nodeshout-napi": "^1.1.1",
-    "prism-media": "^1.3.2",
-    "streamifier": "^0.1.1",
-    "utf-8-validate": "^5.0.7",
+    "bufferutil": "^4.1.0",
+    "chalk": "^5.6.2",
+    "cheerio": "^1.2.0",
+    "discord.js": "14.26.3",
+    "ffmpeg-static": "^5.3.0",
+    "got": "^15.0.2",
+    "lodash-es": "^4.18.1",
+    "music-metadata": "^11.12.3",
+    "nodeshout": "fusion2004/nodeshout#koffi-migration",
+    "prism-media": "^1.3.5",
+    "utf-8-validate": "^6.0.6",
     "xmlbuilder": "^15.1.1",
-    "xstate": "^4.26.0",
-    "zippa": "^0.3.1",
-    "zlib-sync": "^0.1.7"
+    "xstate": "^5.30.0",
+    "zlib-sync": "^0.1.10"
   },
   "engines": {
-    "node": "16.x"
+    "node": "24.x"
   },
   "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "lint": "npm-run-all --aggregate-output --continue-on-error --parallel 'lint:!(fix)'",
     "lint:fix": "npm-run-all --aggregate-output --continue-on-error --parallel 'lint:*:fix'",
-    "lint:eslint": "eslint . --cache",
-    "lint:eslint:fix": "eslint . --fix",
-    "lint:prettier": "prettier --check .",
-    "lint:prettier:fix": "prettier --write .",
-    "start": "node ."
+    "lint:oxlint": "oxlint src/ test/",
+    "lint:oxlint:fix": "oxlint src/ test/ --fix",
+    "lint:oxfmt": "oxfmt --check src/ test/",
+    "lint:oxfmt:fix": "oxfmt src/ test/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "volta": {
-    "node": "16.13.0",
-    "yarn": "1.22.17"
+    "node": "24.15.0",
+    "yarn": "4.14.1"
   },
   "devDependencies": {
-    "eslint": "^8.2.0",
-    "eslint-config-prettier": "^8.3.0",
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^24.12.2",
+    "@vitest/coverage-v8": "^4.1.5",
     "npm-run-all": "^4.1.5",
-    "prettier": "^2.4.1"
+    "oxfmt": "^0.45.0",
+    "oxlint": "^1.60.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
   },
-  "packageManager": "yarn@3.1.0"
+  "packageManager": "yarn@4.13.0"
 }
