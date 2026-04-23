@@ -1,14 +1,11 @@
 import fs from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import { Readable } from 'node:stream';
 import path from 'node:path';
 
-import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
 import Bottleneck from 'bottleneck';
 import prism from 'prism-media';
-import builder from 'xmlbuilder';
 
-const polly = new PollyClient({});
+import { buildSsml, synthesizeToFile } from './polly.js';
 
 interface Announcer {
   id: string;
@@ -45,18 +42,12 @@ export class RoundExtraAnnouncer {
   }
 
   speech(announcer: Announcer): string {
-    const msg = builder
-      .create('speak', { headless: true })
-      .ele('amazon:domain', { name: 'conversational' });
-    msg.ele('break', { time: '1500ms' });
-
-    announcer.text.forEach((text: string, index: number) => {
-      if (index > 0) msg.ele('break', { strength: 'weak' });
-      msg.txt(text);
+    return buildSsml((msg) => {
+      announcer.text.forEach((text: string, index: number) => {
+        if (index > 0) msg.ele('break', { strength: 'weak' });
+        msg.txt(text);
+      });
     });
-    msg.ele('break', { time: '1500ms' });
-
-    return msg.end();
   }
 
   async processIndividual(announcer: Announcer, directory: string): Promise<Announcer> {
@@ -64,21 +55,7 @@ export class RoundExtraAnnouncer {
     const intermediatePath = path.join(directory, `${announcer.id}-intermediate.mp3`);
     const finalPath = path.join(directory, `${announcer.id}.mp3`);
 
-    const command = new SynthesizeSpeechCommand({
-      OutputFormat: 'mp3',
-      Text: this.speech(announcer),
-      VoiceId: 'Joanna',
-      Engine: 'neural',
-      SampleRate: '24000',
-      TextType: 'ssml',
-    });
-
-    const response = await polly.send(command);
-    if (!response.AudioStream) throw new Error('Polly returned no audio stream');
-    const pollyStream = response.AudioStream as Readable;
-    const pcmWriteStream = fs.createWriteStream(awsPath);
-
-    await pipeline(pollyStream, pcmWriteStream);
+    await synthesizeToFile(this.speech(announcer), awsPath);
 
     const pcmReadStream = fs.createReadStream(awsPath);
     const encodeStream = new prism.FFmpeg({

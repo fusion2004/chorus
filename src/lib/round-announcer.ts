@@ -1,17 +1,13 @@
 import fs from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import { Readable } from 'node:stream';
 
-import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
 import Bottleneck from 'bottleneck';
 import prism from 'prism-media';
 import { sample } from 'lodash-es';
-import builder from 'xmlbuilder';
 
 import { announcerAws, announcerFinal, announcerIntermediate } from '../utils/symbols.js';
+import { buildSsml, synthesizeToFile } from './polly.js';
 import type { Song } from './song.js';
-
-const polly = new PollyClient({});
 
 export class RoundAnnouncer {
   roundTitle: string;
@@ -42,21 +38,16 @@ export class RoundAnnouncer {
     ];
     const bumper: string[] = sample(options) as string[];
 
-    const msg = builder
-      .create('speak', { headless: true })
-      .ele('amazon:domain', { name: 'conversational' });
-    msg.ele('break', { time: '1500ms' });
-    if (firstTrack) {
-      msg.txt(`Welcome to the listening party for ${this.roundTitle}.`);
-      msg.ele('break');
-    }
-    bumper.forEach((text: string, index: number) => {
-      if (index > 0) msg.ele('break', { strength: 'weak' });
-      msg.txt(text);
+    return buildSsml((msg) => {
+      if (firstTrack) {
+        msg.txt(`Welcome to the listening party for ${this.roundTitle}.`);
+        msg.ele('break');
+      }
+      bumper.forEach((text: string, index: number) => {
+        if (index > 0) msg.ele('break', { strength: 'weak' });
+        msg.txt(text);
+      });
     });
-    msg.ele('break', { time: '1500ms' });
-
-    return msg.end();
   }
 
   async processSong(song: Song, firstTrack: boolean): Promise<void> {
@@ -64,23 +55,9 @@ export class RoundAnnouncer {
     const intermediatePath = song.path(announcerIntermediate);
     const finalPath = song.path(announcerFinal);
 
-    const command = new SynthesizeSpeechCommand({
-      OutputFormat: 'mp3',
-      Text: this.speech(song, firstTrack),
-      VoiceId: 'Joanna',
-      Engine: 'neural',
-      SampleRate: '24000',
-      TextType: 'ssml',
-    });
-
-    const response = await polly.send(command);
-    if (!response.AudioStream) throw new Error('Polly returned no audio stream');
-    const pollyStream = response.AudioStream as Readable;
-    const pcmWriteStream = fs.createWriteStream(awsPath);
-
     song.service.send({ type: 'START_ANNOUNCER_DL_AND_TRANSCODE' });
 
-    await pipeline(pollyStream, pcmWriteStream);
+    await synthesizeToFile(this.speech(song, firstTrack), awsPath);
 
     const pcmReadStream = fs.createReadStream(awsPath);
     const encodeStream = new prism.FFmpeg({
