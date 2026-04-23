@@ -85,7 +85,9 @@ describe('CompoAdminOnly precondition (via Sapphire store)', () => {
   it('returns error() for a member without admin roles', async () => {
     const result = await preconditionInstance().chatInputRun(makeNonAdminInteraction(), {}, {});
     expect(result.isErr()).toBe(true);
-    expect(result.unwrapErr().message).toBe("you're not allowed to run compoverse commands");
+    expect(result.unwrapErr().message).toBe(
+      'You must have either the Compo Organizer or ThaSauce Admin role to run this command.',
+    );
   });
 
   it('returns error() when the guild member lookup yields undefined', async () => {
