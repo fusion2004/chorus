@@ -1,12 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
 import { VoteJarskiCommand } from '@src/commands/compoverse/votejarski.js';
-import { CompoAdminOnly } from '@src/preconditions/CompoAdminOnly.js';
-import {
-  makeAdminInteraction,
-  makeNonAdminInteraction,
-  makeMissingMemberInteraction,
-} from '@test/helpers/interaction.js';
+import { makeMockInteraction } from '@test/helpers/interaction.js';
 import { registerForTest } from '@test/helpers/sapphire.js';
 import { runCommand } from '@test/helpers/run-command.js';
 
@@ -15,7 +10,7 @@ describe('VoteJarskiCommand', () => {
 
   beforeAll(async () => {
     command = await registerForTest({
-      preconditions: [{ name: 'CompoAdminOnly', piece: CompoAdminOnly }],
+      preconditions: [],
       command: { name: 'votejarski', piece: VoteJarskiCommand },
     });
   });
@@ -24,36 +19,25 @@ describe('VoteJarskiCommand', () => {
     vi.clearAllMocks();
   });
 
-  it('wires the CompoAdminOnly precondition', () => {
-    const names = command.preconditions.entries.map((e: any) => e.name);
-    expect(names).toContain('CompoAdminOnly');
+  it('registers with the name "votejarski"', () => {
+    expect(command.name).toBe('votejarski');
   });
 
-  describe('authorization', () => {
-    it('allows an admin member', async () => {
-      const res = await runCommand(command, makeAdminInteraction());
-      expect(res.ran).toBe(true);
-    });
+  it('has a 60-second cooldown', () => {
+    expect(command.options.cooldownDelay).toBe(60_000);
+  });
 
-    it('blocks a non-admin member', async () => {
-      const res = await runCommand(command, makeNonAdminInteraction());
-      expect(res.ran).toBe(false);
-      expect(res.blockedBy).toBe('CompoAdminOnly');
-    });
-
-    it('blocks when the guild member cannot be resolved', async () => {
-      const res = await runCommand(command, makeMissingMemberInteraction());
-      expect(res.ran).toBe(false);
-      expect(res.blockedBy).toBe('CompoAdminOnly');
-    });
+  it('wires no application-level preconditions', () => {
+    const names = command.preconditions.entries.map((e: any) => e.name);
+    expect(names).not.toContain('CompoAdminOnly');
   });
 
   it('replies with the Jarski reminder (not ephemeral)', async () => {
-    const interaction = makeAdminInteraction();
+    const interaction = makeMockInteraction({ userId: 'votejarski-reminder' });
     const res = await runCommand(command, interaction);
     expect(res.ran).toBe(true);
     expect(interaction.reply).toHaveBeenCalledWith({
-      content: 'Remember to always vote Jarski #1',
+      content: '### Remember to always vote Jarski #1',
     });
   });
 });
