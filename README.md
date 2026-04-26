@@ -10,26 +10,27 @@ TypeScript (ESM, `nodenext`) · Node 24 · @sapphire/framework v5 · discord.js 
 
 Prereqs:
 
-- Node 24 and Yarn 4 — Volta will pin these for you (see `package.json`'s `volta` field).
-- [direnv](https://direnv.net/) — the bot reads env vars straight from `process.env`, so something needs to load them into your shell. direnv + an `.envrc` is the recommended setup; anything equivalent (manual `export`s, a shell profile, your shell's secrets manager) works too.
+- [mise](https://mise.jdx.dev) — pins Node 24 and Yarn 4, manages env vars, and runs project tasks. Install per the mise docs and add `eval "$(mise activate zsh)"` (or your shell's equivalent) to your shell rc so mise auto-loads on `cd` into the repo.
 
 ```bash
+mise install                                # installs Node + Yarn
 yarn install
-cp .envrc.sample .envrc   # fill in the blanks; see "Environment" below
-direnv allow              # authorize the .envrc
-yarn dev                  # tsx watch src/index.ts — live reload
+cp mise.local.toml.sample mise.local.toml   # fill in the blanks; see "Environment" below
+mise run dev                                # tsx watch src/index.ts — live reload
 ```
 
 For a production-like run:
 
 ```bash
-yarn build
-yarn start
+mise run build
+mise run start
 ```
+
+Both `yarn <script>` and `mise run <task>` work for project commands. Node and Yarn versions are pinned by `mise.toml`; `package.json`'s `engines.node` and `packageManager` fields exist for Heroku.
 
 ### Environment
 
-Copy `.envrc.sample` to `.envrc` and fill in the blanks, then `direnv allow`. Required variables:
+Copy `mise.local.toml.sample` to `mise.local.toml` and fill in the blanks. mise auto-loads it when you `cd` into the repo. Required variables:
 
 - `HUBOT_DISCORD_TOKEN` — bot token from the Discord developer portal
 - `GUILD_ID` — Discord guild the slash commands register against (Chorus is guild-only, not global)

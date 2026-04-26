@@ -9,20 +9,22 @@ Chorus is a Discord bot and the "party rock commander" for Compoverse (ThaSauce 
 ## Commands
 
 ```bash
-yarn dev            # Live-reload dev: tsx watch src/index.ts
-yarn build          # Compile TypeScript (src/ → dist/)
-yarn start          # Run the built bot: node dist/index.js
-yarn test           # Run the Vitest suite once
-yarn test:watch     # Vitest in watch mode
-yarn test:coverage  # Vitest with v8 coverage
-yarn lint           # oxlint + oxfmt --check, in parallel
-yarn lint:fix       # Auto-fix lint/format issues
-npx tsc --noEmit    # Type-check without emitting (fast validation)
+mise run dev            # Live-reload dev: tsx watch src/index.ts
+mise run build          # Compile TypeScript (src/ → dist/)
+mise run start          # Run the built bot: node dist/index.js
+mise run test           # Run the Vitest suite once
+mise run test:watch     # Vitest in watch mode
+mise run test:coverage  # Vitest with v8 coverage
+mise run lint           # oxlint + oxfmt --check + tsc --noEmit, in parallel
+mise run lint:fix       # Auto-fix lint/format issues, in parallel
+mise run lint:typecheck # Type-check only (tsc --noEmit)
 ```
+
+`yarn <script>` works too for the same commands (mise tasks just shell out to yarn). The `lint` and `lint:fix` orchestrators only exist as mise tasks — they use `depends` for parallelism, replacing the old `npm-run-all2`-driven scripts.
 
 Deployed via Heroku (`Procfile: bot: yarn start`). The Heroku Node buildpack runs `yarn build` automatically during the build phase, so `yarn start` just runs the already-compiled `dist/index.js` at dyno boot. There is no pre-built `dist/` committed.
 
-CI runs lint + build + test on push and PR via `.github/workflows/ci.yml` (uses `volta-cli/action` to pin Node and Yarn to the versions in `package.json`'s `volta` field).
+CI runs lint + test on push and PR via `.github/workflows/ci.yml` (uses `jdx/mise-action` to install Node and Yarn from `mise.toml`). The `mise run lint` task includes `tsc --noEmit`, so a separate build step isn't needed for typechecking.
 
 ## Architecture
 
@@ -63,7 +65,7 @@ Every `fromPromise` actor that touches an external system has an `onError` handl
 
 - **XState v5 syntax:** `createActor()`, `getSnapshot().matches()`, `assign(({ context, event }) => ...)`, `fromPromise()`, `fromCallback()`, `raise({ type: 'EVENT' })`
 - **Ambient type shims:** `src/types/shims.d.ts` provides declarations for untyped packages (nodeshout, prism-media)
-- **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. `fetchEnvironment()` returns NODE_ENV with a 'development' fallback. Nothing in the codebase loads a `.env` file automatically (no dotenv); env vars must already be in `process.env` at startup. The recommended local setup is direnv with an `.envrc` copied from `.envrc.sample`. See `.envrc.sample` for the full list.
+- **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. `fetchEnvironment()` returns NODE_ENV with a 'development' fallback. Nothing in the codebase loads a `.env` file automatically (no dotenv); env vars must already be in `process.env` at startup. Local setup uses mise: non-secret defaults live in `mise.toml`'s `[env]` block, secrets and per-deployment IDs go in `mise.local.toml` (gitignored, copy from `mise.local.toml.sample`).
 
 ## Testing
 
