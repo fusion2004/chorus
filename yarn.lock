@@ -63,8 +63,8 @@ __metadata:
   linkType: hard
 
 "@aws-sdk/client-polly@npm:^3.1035.0":
-  version: 3.1036.0
-  resolution: "@aws-sdk/client-polly@npm:3.1036.0"
+  version: 3.1037.0
+  resolution: "@aws-sdk/client-polly@npm:3.1037.0"
   dependencies:
     "@aws-crypto/sha256-browser": "npm:5.2.0"
     "@aws-crypto/sha256-js": "npm:5.2.0"
@@ -111,7 +111,7 @@ __metadata:
     "@smithy/util-stream": "npm:^4.5.25"
     "@smithy/util-utf8": "npm:^4.2.2"
     tslib: "npm:^2.6.2"
-  checksum: 10/26fa46391b0a0510477987e24132b82ef654fd79a90345d3bd7b1b003fc310cda9236e3a1a13bcff9c7ec718b09732be3ddcdf690e8b2587c74e0eab3cc28dcf
+  checksum: 10/f7720b73687822a1a77dc265766330675c577b4ec38492c7939138f6f9e23e2afb8b7f6d0e1c604c1b22749e8530e459168aa59bdc69969b68e2e39bdf049244
   languageName: node
   linkType: hard
 
