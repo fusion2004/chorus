@@ -14,8 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install Node & Yarn via Volta
-        uses: volta-cli/action@v5
+      - name: Install mise
+        uses: jdx/mise-action@v3
 
       - name: Cache node_modules
         uses: actions/cache@v5
@@ -25,14 +25,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node_modules-
 
+      - name: Cache yarn global cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.yarn/berry
+          key: ${{ runner.os }}-yarn-berry-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-berry-
+
       - name: Install dependencies
         run: yarn install --immutable
 
       - name: Lint
-        run: yarn lint
-
-      - name: Build (typecheck)
-        run: yarn build
+        run: mise run lint
 
       - name: Test
-        run: yarn test
+        run: mise run test

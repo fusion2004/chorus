@@ -40,7 +40,7 @@ const STREAM = {
 };
 
 function streamUrl(): string {
-  return `http://${STREAM.host}:${STREAM.port}/${STREAM.mount}.m3u`;
+  return `${fetchEnv('ICECAST_ORIGIN')}/${STREAM.mount}.m3u`;
 }
 
 function splitAtIndex(str: string, index: number): [string, string] {

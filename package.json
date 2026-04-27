@@ -32,25 +32,19 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "lint": "npm-run-all --aggregate-output --continue-on-error --parallel 'lint:!(fix)'",
-    "lint:fix": "npm-run-all --aggregate-output --continue-on-error --parallel 'lint:*:fix'",
     "lint:oxlint": "oxlint src/ test/",
     "lint:oxlint:fix": "oxlint src/ test/ --fix",
     "lint:oxfmt": "oxfmt --check src/ test/",
     "lint:oxfmt:fix": "oxfmt src/ test/",
+    "lint:typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
-  },
-  "volta": {
-    "node": "24.15.0",
-    "yarn": "4.14.1"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^24.12.2",
     "@vitest/coverage-v8": "^4.1.5",
-    "npm-run-all2": "^8.0.0",
     "oxfmt": "^0.46.0",
     "oxlint": "^1.61.0",
     "tsx": "^4.21.0",

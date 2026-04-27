@@ -1,0 +1,11 @@
+[providers]
+op  = { type = "1password", vault = "Development" }
+age = { type = "age", recipients = ["age1spd55vzw6m4kdfvl09xnnylz7vqky9yc25tal9958k0fg6rve4vsdu844s"] }
+
+[secrets]
+HUBOT_DISCORD_TOKEN          = { provider = "op", value = "chorus/hubot_discord_token" }
+HUBOT_STREAM_SOURCE_PASSWORD = { provider = "op", value = "chorus/hubot_stream_source_password" }
+AWS_ACCESS_KEY_ID            = { provider = "op", value = "chorus/aws_access_key_id" }
+AWS_SECRET_ACCESS_KEY        = { provider = "op", value = "chorus/aws_secret_access_key" }
+DEBUG_CHANNEL_ID             = { provider = "op", value = "chorus/debug_channel_id" }
+GUILD_ID                     = { provider = "op", value = "chorus/guild_id" }
