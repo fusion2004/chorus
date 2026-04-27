@@ -7,9 +7,10 @@ yarn = "4.14.1"
 # Per-developer values (secrets, IDs) go in mise.local.toml.
 AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
 AWS_REGION = "us-east-1"
-HUBOT_STREAM_HOST = "chorus.thasauce.net"
+HUBOT_STREAM_HOST = "localhost"
 HUBOT_STREAM_MOUNT = "compo"
 HUBOT_STREAM_PORT = "8000"
+ICECAST_ORIGIN = "http://localhost:8000"
 
 [tasks.dev]
 description = "Live-reload dev server"
