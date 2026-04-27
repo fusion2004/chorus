@@ -54,3 +54,7 @@ depends = ["lint:oxlint", "lint:oxfmt", "lint:typecheck"]
 [tasks."lint:fix"]
 description = "Auto-fix lint and format issues in parallel"
 depends = ["lint:oxlint:fix", "lint:oxfmt:fix"]
+
+[tasks."secrets:sync"]
+description = "Refresh fnox.local.toml from 1Password (run after secrets rotate or on fresh clone)"
+run = "fnox sync --provider age --local-file"

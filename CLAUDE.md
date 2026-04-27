@@ -65,7 +65,7 @@ Every `fromPromise` actor that touches an external system has an `onError` handl
 
 - **XState v5 syntax:** `createActor()`, `getSnapshot().matches()`, `assign(({ context, event }) => ...)`, `fromPromise()`, `fromCallback()`, `raise({ type: 'EVENT' })`
 - **Ambient type shims:** `src/types/shims.d.ts` provides declarations for untyped packages (nodeshout, prism-media)
-- **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. `fetchEnvironment()` returns NODE_ENV with a 'development' fallback. Nothing in the codebase loads a `.env` file automatically (no dotenv); env vars must already be in `process.env` at startup. Local setup uses mise: non-secret defaults live in `mise.toml`'s `[env]` block, secrets and per-deployment IDs go in `mise.local.toml` (gitignored, copy from `mise.local.toml.sample`).
+- **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. `fetchEnvironment()` returns NODE_ENV with a 'development' fallback. Nothing in the codebase loads a `.env` file automatically (no dotenv); env vars must already be in `process.env` at startup. Local setup uses fnox: secrets are referenced from 1Password in `fnox.toml`, cached locally age-encrypted in `fnox.local.toml` (gitignored, populated by `mise run secrets:sync`), and loaded into the shell environment by fnox's own `activate zsh` hook (configured in `~/.zshrc`, not in `mise.toml`). Non-secret defaults still live in `mise.toml`'s `[env]` block. fnox uses interactive `op signin` auth — no service account token involved.
 
 ## Testing
 
