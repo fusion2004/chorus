@@ -1,0 +1,8 @@
+[env]
+# Loaded only when MISE_ENV=development.
+# These point at a local Icecast for the dev loop;
+# real deployments override every one of these via platform config vars.
+HUBOT_STREAM_HOST = "localhost"
+HUBOT_STREAM_MOUNT = "compo"
+HUBOT_STREAM_PORT = "8000"
+ICECAST_ORIGIN = "http://localhost:8000"
