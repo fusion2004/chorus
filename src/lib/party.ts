@@ -30,6 +30,12 @@ function logActorError(prefix: string) {
   };
 }
 
+function checkShout(shout: ShoutT, status: number, op: string): void {
+  if (status !== nodeshout.ErrorTypes.SUCCESS) {
+    throw new Error(`libshout ${op} failed: error ${status} ${shout.getError()}`);
+  }
+}
+
 nodeshout.init();
 
 const STREAM = {
@@ -95,8 +101,9 @@ async function streamFile(shout: ShoutT, filePath: string, signal: AbortSignal):
       if (signal.aborted) return;
       const { bytesRead } = await fileHandle.read(buf, 0, chunkSize, null);
       if (bytesRead === 0) break;
-      shout.send(buf, bytesRead);
-      await sleep(shout.delay());
+      checkShout(shout, shout.send(buf, bytesRead), 'send');
+      const delay = shout.delay();
+      if (delay > 0) await sleep(delay);
     }
   } finally {
     await fileHandle.close();
@@ -210,7 +217,7 @@ interface PartyContext {
   extraAnnouncer?: RoundExtraAnnouncer;
   fetchedSongs?: any[];
   songs?: Song[];
-  _shout?: any;
+  _shout?: ShoutT;
   abortController?: AbortController;
   currentSong?: Song | null;
   nextSongId?: string | null;
@@ -223,8 +230,8 @@ type PartyEvent =
   | { type: 'SKIP_SONG' }
   | { type: 'REFETCH'; channel: TextChannel }
   | { type: 'START_STREAM' }
-  | { type: 'PLAY_STREAM'; _shout: any }
-  | { type: 'ERROR_OPENING_STREAM'; errorCode: number };
+  | { type: 'PLAY_STREAM'; _shout: ShoutT }
+  | { type: 'ERROR_OPENING_STREAM'; errorCode: number; message?: string };
 
 // ─── Message Sub-Machines ────────────────────────────────────────────────────
 
@@ -693,7 +700,14 @@ const machine = createMachine(
                     actions: assign(({ event }) => ({ _shout: event._shout })),
                   },
                   ERROR_OPENING_STREAM: {
-                    actions: raise({ type: 'STOP' }),
+                    actions: [
+                      ({ event }) =>
+                        log(
+                          `libshout open failed: ${event.message ?? `errno ${event.errorCode}`}`,
+                          'error',
+                        ),
+                      raise({ type: 'STOP' }),
+                    ],
                   },
                 },
               },
@@ -709,6 +723,9 @@ const machine = createMachine(
                   ),
                   input: ({ context }) => context,
                   onDone: { target: 'pickNextSong' },
+                  onError: {
+                    actions: [logActorError('playIntro'), raise({ type: 'STOP' })],
+                  },
                 },
                 on: {
                   SKIP_SONG: {
@@ -741,6 +758,9 @@ const machine = createMachine(
                   ),
                   input: ({ context }) => context,
                   onDone: { target: 'pickNextSong' },
+                  onError: {
+                    actions: [logActorError('playCurrentSong'), raise({ type: 'STOP' })],
+                  },
                 },
                 on: {
                   SKIP_SONG: {
@@ -757,6 +777,9 @@ const machine = createMachine(
                   ),
                   input: ({ context }) => context,
                   onDone: { actions: raise({ type: 'STOP' }) },
+                  onError: {
+                    actions: [logActorError('playOutro'), raise({ type: 'STOP' })],
+                  },
                 },
               },
             },
@@ -817,7 +840,11 @@ const machine = createMachine(
         }
         if (context._shout) {
           console.log('Closing nodeshout connection');
-          context._shout.close();
+          const status = context._shout.close();
+          if (status !== nodeshout.ErrorTypes.SUCCESS) {
+            log(`libshout close failed: error ${status} ${context._shout.getError()}`, 'error');
+          }
+          context._shout.free();
         }
       },
       setCurrentAndNextSong: assign(({ context }) => {
@@ -849,23 +876,53 @@ const machine = createMachine(
     actors: {
       initNodeshout: fromCallback<any, PartyContext>(({ sendBack, input }) => {
         const shout: ShoutT = nodeshout.create();
-        shout.setHost(STREAM.host);
-        shout.setPort(STREAM.port);
-        shout.setUser('source');
-        shout.setPassword(STREAM.password);
-        shout.setMount(STREAM.mount);
-        shout.setFormat(1);
-        shout.setName(`${input.round?.fullId} Listening Party`);
-        shout.setAudioInfo('bitrate', '320');
-        shout.setAudioInfo('samplerate', '44100');
-        shout.setAudioInfo('channels', '2');
+        try {
+          checkShout(shout, shout.setHost(STREAM.host), 'setHost');
+          checkShout(shout, shout.setPort(STREAM.port), 'setPort');
+          checkShout(shout, shout.setUser('source'), 'setUser');
+          checkShout(shout, shout.setPassword(STREAM.password), 'setPassword');
+          checkShout(shout, shout.setMount(STREAM.mount), 'setMount');
+          checkShout(
+            shout,
+            shout.setContentFormat(nodeshout.Formats.MP3, nodeshout.Usages.AUDIO, null),
+            'setContentFormat',
+          );
+          checkShout(
+            shout,
+            shout.setMeta(nodeshout.MetaKeys.NAME, `${input.round?.fullId} Listening Party`),
+            'setMeta(NAME)',
+          );
+          checkShout(
+            shout,
+            shout.setAudioInfo(nodeshout.AudioInfoKeys.BITRATE, '320'),
+            'setAudioInfo(bitrate)',
+          );
+          checkShout(
+            shout,
+            shout.setAudioInfo(nodeshout.AudioInfoKeys.SAMPLERATE, '44100'),
+            'setAudioInfo(samplerate)',
+          );
+          checkShout(
+            shout,
+            shout.setAudioInfo(nodeshout.AudioInfoKeys.CHANNELS, '2'),
+            'setAudioInfo(channels)',
+          );
 
-        const errorCode = shout.open();
-
-        if (errorCode === nodeshout.ErrorTypes.SUCCESS) {
-          sendBack({ type: 'PLAY_STREAM', _shout: shout });
-        } else {
-          sendBack({ type: 'ERROR_OPENING_STREAM', errorCode });
+          const status = shout.open();
+          if (status === nodeshout.ErrorTypes.SUCCESS) {
+            sendBack({ type: 'PLAY_STREAM', _shout: shout });
+          } else {
+            const detail = `error ${status} ${shout.getError()}`;
+            shout.free();
+            sendBack({ type: 'ERROR_OPENING_STREAM', errorCode: status, message: detail });
+          }
+        } catch (err) {
+          shout.free();
+          sendBack({
+            type: 'ERROR_OPENING_STREAM',
+            errorCode: -1,
+            message: err instanceof Error ? err.message : String(err),
+          });
         }
 
         return () => {};
