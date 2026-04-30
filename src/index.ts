@@ -5,6 +5,7 @@ import {
 } from '@sapphire/framework';
 import { GatewayIntentBits, TextChannel } from 'discord.js';
 
+import { logger } from './lib/logger.js';
 import { fetchEnv, fetchEnvironment } from './utils/fetch-env.js';
 
 ApplicationCommandRegistries.setDefaultGuildIds([fetchEnv('GUILD_ID')]);
@@ -16,7 +17,7 @@ const client = new SapphireClient({
   baseUserDirectory: import.meta.dirname,
 });
 
-client.on('error', console.error);
+client.on('error', (err) => logger.error(err));
 
 let shuttingDown = false;
 
@@ -26,7 +27,7 @@ function shutdown() {
   }
   shuttingDown = true;
 
-  console.log(`Shutting down in ${fetchEnvironment()} environment...`);
+  logger.info({ env: fetchEnvironment() }, 'Shutting down');
 
   // TODO: immediately shutdown the party machine
 
@@ -41,7 +42,7 @@ function shutdown() {
       process.exit();
     })
     .catch((e: Error) => {
-      console.log('There was an error sending the shut down message: ', e);
+      logger.error(e);
       process.exit();
     });
 }

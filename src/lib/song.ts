@@ -3,8 +3,10 @@ import path from 'node:path';
 import { createActor } from 'xstate';
 import type { Actor } from 'xstate';
 
+import { logger } from './logger.js';
 import { songMachine } from './machines.js';
 import { escapeDiscordMarkdown } from '../utils/markdown.js';
+import { xstateTags } from '../utils/xstate-tags.js';
 import {
   announcerAws,
   announcerFinal,
@@ -40,7 +42,10 @@ export class Song {
     this.service = createActor(songMachine);
     this.service.subscribe((snapshot) => {
       if (snapshot.value === 'init') return;
-      console.log(`[Song->${String(snapshot.value)}] Song #${this.id} - ${this.title}`);
+      logger.info(
+        { songId: this.id, title: this.title, tags: xstateTags('song', snapshot.value) },
+        'Song state transition',
+      );
     });
     this.service.start();
   }

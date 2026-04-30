@@ -16,7 +16,8 @@ import { RoundAnnouncer } from './round-announcer.js';
 import { RoundExtraAnnouncer } from './round-extra-announcer.js';
 import { announcerFinal, transcodeFinal } from '../utils/symbols.js';
 import { fetchEnv } from '../utils/fetch-env.js';
-import { log } from './logger.js';
+import { xstateTags } from '../utils/xstate-tags.js';
+import { logger, debugError } from './logger.js';
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -26,7 +27,7 @@ function logActorError(prefix: string) {
   return ({ event }: { event: unknown }) => {
     const err = (event as { error?: unknown }).error;
     const message = (err as { message?: string })?.message ?? String(err);
-    log(`${prefix}: ${message}`, 'error');
+    debugError(`${prefix}: ${message}`);
   };
 }
 
@@ -702,9 +703,8 @@ const machine = createMachine(
                   ERROR_OPENING_STREAM: {
                     actions: [
                       ({ event }) =>
-                        log(
+                        debugError(
                           `libshout open failed: ${event.message ?? `errno ${event.errorCode}`}`,
-                          'error',
                         ),
                       raise({ type: 'STOP' }),
                     ],
@@ -835,14 +835,14 @@ const machine = createMachine(
       }),
       cleanup: ({ context }) => {
         if (context.abortController) {
-          console.log('Aborting the current audio pipeline');
+          logger.info('Aborting the current audio pipeline');
           context.abortController.abort();
         }
         if (context._shout) {
-          console.log('Closing nodeshout connection');
+          logger.info('Closing nodeshout connection');
           const status = context._shout.close();
           if (status !== nodeshout.ErrorTypes.SUCCESS) {
-            log(`libshout close failed: error ${status} ${context._shout.getError()}`, 'error');
+            debugError(`libshout close failed: error ${status} ${context._shout.getError()}`);
           }
           context._shout.free();
         }
@@ -934,5 +934,5 @@ const machine = createMachine(
 export const partyService = createActor(machine).start();
 
 partyService.subscribe((snapshot) => {
-  console.log('Party service transition:', JSON.stringify(snapshot.value));
+  logger.info({ tags: xstateTags('party', snapshot.value) }, 'Party service transition');
 });
