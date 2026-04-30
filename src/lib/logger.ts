@@ -144,7 +144,7 @@ function formatValue(value: unknown): string {
   if (value === undefined) return 'undefined';
   if (value instanceof Error) return `"${value.message}"`;
   if (typeof value === 'string') {
-    return /[\s",]/.test(value) ? `"${value.replace(/"/g, '\\"')}"` : value;
+    return /[\s",]/.test(value) ? `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : value;
   }
   if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
     return String(value);
