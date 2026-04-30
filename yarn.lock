@@ -901,6 +901,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fusion2004/nodeshout-koffi@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@fusion2004/nodeshout-koffi@npm:3.1.0"
+  dependencies:
+    koffi: "npm:^2.16.1"
+  checksum: 10/51975c5f731ca68ecdcd25354a0559284d2a217ce2646473ccf77c18aee397d138b58e2f91cd921be93b6d4d504e1d0bb7c7f65582da2122bb686b159f7c7058
+  languageName: node
+  linkType: hard
+
 "@isaacs/fs-minipass@npm:^4.0.0":
   version: 4.0.1
   resolution: "@isaacs/fs-minipass@npm:4.0.1"
@@ -2427,6 +2436,7 @@ __metadata:
   resolution: "chorus@workspace:."
   dependencies:
     "@aws-sdk/client-polly": "npm:^3.1038.0"
+    "@fusion2004/nodeshout-koffi": "npm:^3.1.0"
     "@sapphire/framework": "npm:^5.5.0"
     "@types/lodash-es": "npm:^4.17.12"
     "@types/node": "npm:^24.12.2"
@@ -2439,7 +2449,6 @@ __metadata:
     got: "npm:^15.0.3"
     lodash-es: "npm:^4.18.1"
     music-metadata: "npm:^11.12.3"
-    nodeshout: "https://github.com/fusion2004/nodeshout.git#commit=7259e0e81adb932896390f95152a2547cac9b7e2"
     oxfmt: "npm:^0.47.0"
     oxlint: "npm:^1.62.0"
     pino: "npm:^10.3.1"
@@ -3091,7 +3100,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"koffi@npm:^2.9.0":
+"koffi@npm:^2.16.1":
   version: 2.16.1
   resolution: "koffi@npm:2.16.1"
   checksum: 10/6675c723e0c120246a469c4e93895b7bf0837b0a862ef8a160b846f1684d23096da9a65f3b77cd8a85b775dcba668d478634e0b712c76d85e8a9a1eca1faadf6
@@ -3397,15 +3406,6 @@ __metadata:
   bin:
     node-gyp: bin/node-gyp.js
   checksum: 10/cd97bf17f0f3e6288c42cc23a6db8528a98e7530abdb72ab558272906d603362e4558069f99f8a5250bc78f65ff305b1438caca4f1b31c81904a8798c242603e
-  languageName: node
-  linkType: hard
-
-"nodeshout@https://github.com/fusion2004/nodeshout.git#commit=7259e0e81adb932896390f95152a2547cac9b7e2":
-  version: 2.0.0
-  resolution: "nodeshout@https://github.com/fusion2004/nodeshout.git#commit=7259e0e81adb932896390f95152a2547cac9b7e2"
-  dependencies:
-    koffi: "npm:^2.9.0"
-  checksum: 10/d66c6b21cf96f120f67035fb7c92d52a7331d666352f84a150412c1d41bc730bfd7f033d8bea3396a4b46e89bcd5c8951e90f90abcb8e27524f7de5d7724b0b3
   languageName: node
   linkType: hard
 

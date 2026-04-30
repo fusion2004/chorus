@@ -1,8 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFile } from 'music-metadata';
-import nodeshout from 'nodeshout';
-import type { ShoutT } from 'nodeshout';
+import {
+  shoutInit,
+  shoutShutdown,
+  createShout,
+  ShoutErrorTypes,
+  ShoutFormats,
+  ShoutUsages,
+  ShoutMetaKeys,
+  ShoutAudioInfoKeys,
+} from '@fusion2004/nodeshout-koffi';
+import type { Shout } from '@fusion2004/nodeshout-koffi';
 
 import { createMachine, createActor, assign, raise, fromPromise, fromCallback } from 'xstate';
 import type { TextChannel, Message } from 'discord.js';
@@ -31,13 +40,11 @@ function logActorError(prefix: string) {
   };
 }
 
-function checkShout(shout: ShoutT, status: number, op: string): void {
-  if (status !== nodeshout.ErrorTypes.SUCCESS) {
+function checkShout(shout: Shout, status: number, op: string): void {
+  if (status !== ShoutErrorTypes.SUCCESS) {
     throw new Error(`libshout ${op} failed: error ${status} ${shout.getError()}`);
   }
 }
-
-nodeshout.init();
 
 const STREAM = {
   host: fetchEnv('HUBOT_STREAM_HOST'),
@@ -92,7 +99,7 @@ async function parseMetadata(songs: Song[]): Promise<void> {
   );
 }
 
-async function streamFile(shout: ShoutT, filePath: string, signal: AbortSignal): Promise<void> {
+async function streamFile(shout: Shout, filePath: string, signal: AbortSignal): Promise<void> {
   const fileHandle = await fs.promises.open(filePath);
   const chunkSize = 65536;
   const buf = Buffer.alloc(chunkSize);
@@ -111,12 +118,12 @@ async function streamFile(shout: ShoutT, filePath: string, signal: AbortSignal):
   }
 }
 
-async function playIntro(shout: ShoutT, abortController: AbortController): Promise<void> {
+async function playIntro(shout: Shout, abortController: AbortController): Promise<void> {
   await streamFile(shout, './audio/intro01.mp3', abortController.signal);
 }
 
 async function playCurrentSong(
-  shout: ShoutT,
+  shout: Shout,
   currentSong: Song,
   abortController: AbortController,
 ): Promise<void> {
@@ -125,7 +132,7 @@ async function playCurrentSong(
 }
 
 async function playOutro(
-  shout: ShoutT,
+  shout: Shout,
   announcer: ExtraAnnouncer,
   abortController: AbortController,
 ): Promise<void> {
@@ -218,7 +225,7 @@ interface PartyContext {
   extraAnnouncer?: RoundExtraAnnouncer;
   fetchedSongs?: any[];
   songs?: Song[];
-  _shout?: ShoutT;
+  _shout?: Shout;
   abortController?: AbortController;
   currentSong?: Song | null;
   nextSongId?: string | null;
@@ -231,7 +238,7 @@ type PartyEvent =
   | { type: 'SKIP_SONG' }
   | { type: 'REFETCH'; channel: TextChannel }
   | { type: 'START_STREAM' }
-  | { type: 'PLAY_STREAM'; _shout: ShoutT }
+  | { type: 'PLAY_STREAM'; _shout: Shout }
   | { type: 'ERROR_OPENING_STREAM'; errorCode: number; message?: string };
 
 // ─── Message Sub-Machines ────────────────────────────────────────────────────
@@ -841,10 +848,11 @@ const machine = createMachine(
         if (context._shout) {
           logger.info('Closing nodeshout connection');
           const status = context._shout.close();
-          if (status !== nodeshout.ErrorTypes.SUCCESS) {
+          if (status !== ShoutErrorTypes.SUCCESS) {
             debugError(`libshout close failed: error ${status} ${context._shout.getError()}`);
           }
           context._shout.free();
+          shoutShutdown();
         }
       },
       setCurrentAndNextSong: assign(({ context }) => {
@@ -875,7 +883,8 @@ const machine = createMachine(
     },
     actors: {
       initNodeshout: fromCallback<any, PartyContext>(({ sendBack, input }) => {
-        const shout: ShoutT = nodeshout.create();
+        shoutInit();
+        const shout: Shout = createShout();
         try {
           checkShout(shout, shout.setHost(STREAM.host), 'setHost');
           checkShout(shout, shout.setPort(STREAM.port), 'setPort');
@@ -884,40 +893,42 @@ const machine = createMachine(
           checkShout(shout, shout.setMount(STREAM.mount), 'setMount');
           checkShout(
             shout,
-            shout.setContentFormat(nodeshout.Formats.MP3, nodeshout.Usages.AUDIO, null),
+            shout.setContentFormat(ShoutFormats.MP3, ShoutUsages.AUDIO, null),
             'setContentFormat',
           );
           checkShout(
             shout,
-            shout.setMeta(nodeshout.MetaKeys.NAME, `${input.round?.fullId} Listening Party`),
+            shout.setMeta(ShoutMetaKeys.NAME, `${input.round?.fullId} Listening Party`),
             'setMeta(NAME)',
           );
           checkShout(
             shout,
-            shout.setAudioInfo(nodeshout.AudioInfoKeys.BITRATE, '320'),
+            shout.setAudioInfo(ShoutAudioInfoKeys.BITRATE, '320'),
             'setAudioInfo(bitrate)',
           );
           checkShout(
             shout,
-            shout.setAudioInfo(nodeshout.AudioInfoKeys.SAMPLERATE, '44100'),
+            shout.setAudioInfo(ShoutAudioInfoKeys.SAMPLERATE, '44100'),
             'setAudioInfo(samplerate)',
           );
           checkShout(
             shout,
-            shout.setAudioInfo(nodeshout.AudioInfoKeys.CHANNELS, '2'),
+            shout.setAudioInfo(ShoutAudioInfoKeys.CHANNELS, '2'),
             'setAudioInfo(channels)',
           );
 
           const status = shout.open();
-          if (status === nodeshout.ErrorTypes.SUCCESS) {
+          if (status === ShoutErrorTypes.SUCCESS) {
             sendBack({ type: 'PLAY_STREAM', _shout: shout });
           } else {
             const detail = `error ${status} ${shout.getError()}`;
             shout.free();
+            shoutShutdown();
             sendBack({ type: 'ERROR_OPENING_STREAM', errorCode: status, message: detail });
           }
         } catch (err) {
           shout.free();
+          shoutShutdown();
           sendBack({
             type: 'ERROR_OPENING_STREAM',
             errorCode: -1,
