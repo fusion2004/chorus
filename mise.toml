@@ -12,6 +12,10 @@ AWS_REGION = "us-east-1"
 description = "Live-reload dev server"
 run = "yarn dev"
 
+[tasks."dev:icecast"]
+description = "Dev icecast server"
+run = "icecast -c icecast.xml"
+
 [tasks.build]
 description = "Compile TypeScript to dist/"
 run = "yarn build"
