@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 
 vi.mock('@src/lib/party.js', () => ({
   partyService: {
@@ -7,16 +7,11 @@ vi.mock('@src/lib/party.js', () => ({
   },
 }));
 
-vi.mock('@src/lib/logger.js', () => ({
-  log: vi.fn(),
-  setDebugChannel: vi.fn(),
-}));
-
 import { MessageFlags } from 'discord.js';
 import { StartPartyCommand } from '@src/commands/compoverse/startparty.js';
 import { CompoAdminOnly } from '@src/preconditions/CompoAdminOnly.js';
 import { partyService } from '@src/lib/party.js';
-import { log } from '@src/lib/logger.js';
+import { logger, debugChannelService } from '@src/lib/logger.js';
 import {
   makeAdminInteraction,
   makeNonAdminInteraction,
@@ -27,6 +22,9 @@ import { runCommand } from '@test/helpers/run-command.js';
 
 describe('StartPartyCommand', () => {
   let command: StartPartyCommand;
+  let infoSpy: ReturnType<typeof vi.spyOn>;
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+  let sendSpy: ReturnType<typeof vi.spyOn>;
 
   beforeAll(async () => {
     command = await registerForTest({
@@ -37,6 +35,13 @@ describe('StartPartyCommand', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    infoSpy = vi.spyOn(logger, 'info');
+    warnSpy = vi.spyOn(logger, 'warn');
+    sendSpy = vi.spyOn(debugChannelService, 'send');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('wires the CompoAdminOnly precondition', () => {
@@ -83,8 +88,17 @@ describe('StartPartyCommand', () => {
 
       expect(res.ran).toBe(true);
       expect(partyService.send).not.toHaveBeenCalled();
-      expect(log).toHaveBeenCalledTimes(1);
-      expect((log as any).mock.calls[0][0]).toContain('Attempted to start a listening party');
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ round: 'OHC123' }),
+        'Attempted to start a listening party while one is already running',
+      );
+      expect(sendSpy).toHaveBeenCalledWith({
+        type: 'SEND_MESSAGE',
+        message: expect.stringMatching(
+          /^WARN: Attempted to start a listening party while one is already running · .*round=OHC123/,
+        ),
+      });
       expect(interaction.reply).toHaveBeenCalledWith({
         content:
           'there is currently a listening party streaming. We can only stream one at a time.',
@@ -110,8 +124,15 @@ describe('StartPartyCommand', () => {
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Starting listening party for OHC123...',
       });
-      expect(log).toHaveBeenCalledTimes(1);
-      expect((log as any).mock.calls[0][0]).toContain('Starting a listening party for OHC123');
+      expect(infoSpy).toHaveBeenCalledTimes(1);
+      expect(infoSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ round: 'OHC123' }),
+        'Starting a listening party',
+      );
+      expect(sendSpy).toHaveBeenCalledWith({
+        type: 'SEND_MESSAGE',
+        message: expect.stringMatching(/^INFO: Starting a listening party · .*round=OHC123/),
+      });
     });
   });
 });

@@ -1,8 +1,17 @@
-import chalk from 'chalk';
+import pino from 'pino';
 import { createMachine, createActor, assign, fromPromise } from 'xstate';
 import type { TextChannel } from 'discord.js';
 
-function sendMessages(channel: TextChannel, messages: string[]): Promise<any> {
+export const logger = pino({
+  level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'test' ? 'silent' : 'info'),
+  formatters: {
+    level(label) {
+      return { level: label };
+    },
+  },
+});
+
+export function sendMessages(channel: TextChannel, messages: string[]): Promise<any> {
   const message = messages
     .flatMap((msg) => msg.split('\n'))
     .map((line) => `> ${line}`)
@@ -97,8 +106,7 @@ export const debugChannelMachine = createMachine(
           onError: {
             target: 'ready',
             actions: ({ event }: any) => {
-              console.error('Error sending debug channel messages');
-              console.log(event);
+              logger.error(event.error ?? event);
             },
           },
         },
@@ -120,27 +128,76 @@ export const debugChannelMachine = createMachine(
   },
 );
 
-const debugChannelService = createActor(debugChannelMachine);
+export const debugChannelService = createActor(debugChannelMachine);
 debugChannelService.start();
-
-const typeFormatter = new Map<string, (text: string) => string>();
-typeFormatter.set('error', chalk.red);
-typeFormatter.set('success', chalk.green);
-typeFormatter.set('info', chalk.blue);
-typeFormatter.set('warn', chalk.yellow);
-
-function formatTextForConsole(text: string, type?: string): string {
-  if (type && typeFormatter.has(type)) {
-    return typeFormatter.get(type)!(text);
-  }
-  return text;
-}
 
 export function setDebugChannel(channel: TextChannel): void {
   debugChannelService.send({ type: 'SET_DEBUG_CHANNEL', channel });
 }
 
-export function log(text: string, type?: string): void {
-  console.log(formatTextForConsole(text, type));
-  debugChannelService.send({ type: 'SEND_MESSAGE', message: text });
+type LogLevel = 'info' | 'warn' | 'error';
+
+const NESTED_VALUE_LIMIT = 200;
+
+function formatValue(value: unknown): string {
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
+  if (value instanceof Error) return `"${value.message}"`;
+  if (typeof value === 'string') {
+    return /[\s",]/.test(value) ? `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(formatValue).join(',')}]`;
+  }
+  if (typeof value === 'object') {
+    const json = JSON.stringify(value);
+    return json.length > NESTED_VALUE_LIMIT ? `${json.slice(0, NESTED_VALUE_LIMIT - 3)}...` : json;
+  }
+  return String(value);
+}
+
+function formatMeta(obj: object): string {
+  return Object.entries(obj)
+    .map(([key, val]) => `${key}=${formatValue(val)}`)
+    .join(', ');
+}
+
+export function debugText(obj: object, msg: string | undefined): string {
+  if (obj instanceof Error) return msg ?? obj.message;
+  const suffix = formatMeta(obj);
+  if (!msg) return suffix;
+  return suffix ? `${msg} · ${suffix}` : msg;
+}
+
+// uses the debugChannelService to queue and send the messages, and logs
+function logAndSend(level: LogLevel, objOrMsg: object | string, msg?: string): void {
+  let text: string;
+  if (typeof objOrMsg === 'string') {
+    logger[level](objOrMsg);
+    text = objOrMsg;
+  } else {
+    logger[level](objOrMsg, msg);
+    text = debugText(objOrMsg, msg);
+  }
+  if (text) {
+    debugChannelService.send({
+      type: 'SEND_MESSAGE',
+      message: `${level.toUpperCase()}: ${text}`,
+    });
+  }
+}
+
+export function debugInfo(objOrMsg: object | string, msg?: string): void {
+  logAndSend('info', objOrMsg, msg);
+}
+
+export function debugWarn(objOrMsg: object | string, msg?: string): void {
+  logAndSend('warn', objOrMsg, msg);
+}
+
+export function debugError(objOrMsg: object | string, msg?: string): void {
+  logAndSend('error', objOrMsg, msg);
 }

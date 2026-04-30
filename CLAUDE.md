@@ -90,4 +90,4 @@ Path aliases: `@src/*` and `@test/*` are configured in both `tsconfig.json` (`co
 
 This means the same `PreconditionContainerArray` → `PreconditionContainerSingle` → store-lookup path that runs in production also runs in tests.
 
-`vi.mock('@src/lib/party.js', ...)` and `vi.mock('@src/lib/logger.js', ...)` replace the heavy module-level singletons in command tests so we don't pull in nodeshout, AWS, etc.
+`vi.mock('@src/lib/party.js', ...)` replaces the heavy module-level `partyService` singleton in command tests so we don't pull in nodeshout, AWS, etc. The logger module is left unmocked: pino is configured to be `silent` when `NODE_ENV=test`, and tests assert via `vi.spyOn(logger, 'info' | 'warn' | 'error')` and `vi.spyOn(debugChannelService, 'send')` — exercising the real code paths rather than stubbing out the integration.

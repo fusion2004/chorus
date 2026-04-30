@@ -1,7 +1,7 @@
 import { Listener } from '@sapphire/framework';
 import { Events, Client, TextChannel } from 'discord.js';
 
-import { log, setDebugChannel } from '../lib/logger.js';
+import { debugInfo, setDebugChannel } from '../lib/logger.js';
 import { fetchEnv, fetchEnvironment } from '../utils/fetch-env.js';
 
 export class BootupLogger extends Listener<typeof Events.ClientReady> {
@@ -12,7 +12,7 @@ export class BootupLogger extends Listener<typeof Events.ClientReady> {
   public async run(client: Client<true>): Promise<void> {
     const debugChannel = await client.channels.fetch(fetchEnv('DEBUG_CHANNEL_ID'));
     setDebugChannel(debugChannel as TextChannel);
-    log(`Booted up in \`${fetchEnvironment()}\` environment!`);
-    log(`Logged in as ${client.user.tag}! (${client.user.toString()})`);
+    debugInfo({ env: fetchEnvironment() }, 'Booted up!');
+    debugInfo(`Logged in as ${client.user.tag}! (${client.user.toString()})`);
   }
 }
