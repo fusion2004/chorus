@@ -11,7 +11,6 @@
     "@sapphire/framework": "^5.5.0",
     "bottleneck": "^2.19.5",
     "bufferutil": "^4.1.0",
-    "chalk": "^5.6.2",
     "cheerio": "^1.2.0",
     "discord.js": "14.26.3",
     "ffmpeg-static": "^5.3.0",
@@ -19,6 +18,7 @@
     "lodash-es": "^4.18.1",
     "music-metadata": "^11.12.3",
     "nodeshout": "https://github.com/fusion2004/nodeshout.git#commit=7259e0e81adb932896390f95152a2547cac9b7e2",
+    "pino": "^10.3.1",
     "prism-media": "^1.3.5",
     "utf-8-validate": "^6.0.6",
     "xmlbuilder": "^15.1.1",
@@ -29,7 +29,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/index.ts | pino-pretty",
     "build": "tsc",
     "start": "node dist/index.js",
     "lint:oxlint": "oxlint src/ test/",
@@ -47,6 +47,7 @@
     "@vitest/coverage-v8": "^4.1.5",
     "oxfmt": "^0.47.0",
     "oxlint": "^1.62.0",
+    "pino-pretty": "^13.1.3",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
