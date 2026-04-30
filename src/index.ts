@@ -5,7 +5,8 @@ import {
 } from '@sapphire/framework';
 import { GatewayIntentBits, TextChannel } from 'discord.js';
 
-import { logger } from './lib/logger.js';
+import { logger, debugText, sendMessages } from './lib/logger.js';
+import { sapphireLogger } from './lib/sapphire-logger.js';
 import { fetchEnv, fetchEnvironment } from './utils/fetch-env.js';
 
 ApplicationCommandRegistries.setDefaultGuildIds([fetchEnv('GUILD_ID')]);
@@ -15,6 +16,7 @@ const client = new SapphireClient({
   intents: [GatewayIntentBits.Guilds],
   defaultPrefix: null,
   baseUserDirectory: import.meta.dirname,
+  logger: { instance: sapphireLogger },
 });
 
 client.on('error', (err) => logger.error(err));
@@ -27,16 +29,15 @@ function shutdown() {
   }
   shuttingDown = true;
 
-  logger.info({ env: fetchEnvironment() }, 'Shutting down');
+  logger.info({ env: fetchEnvironment() }, 'Shutting down...');
 
   // TODO: immediately shutdown the party machine
 
   client.channels
     .fetch(fetchEnv('DEBUG_CHANNEL_ID'))
     .then((debugChannel) => {
-      return (debugChannel as TextChannel).send(
-        `> Shutting down in \`${fetchEnvironment()}\` environment...`,
-      );
+      const message = debugText({ env: fetchEnvironment() }, 'Shutting down...');
+      return sendMessages(debugChannel as TextChannel, [message]);
     })
     .then(() => {
       process.exit();

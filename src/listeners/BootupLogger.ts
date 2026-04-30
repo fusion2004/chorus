@@ -12,7 +12,7 @@ export class BootupLogger extends Listener<typeof Events.ClientReady> {
   public async run(client: Client<true>): Promise<void> {
     const debugChannel = await client.channels.fetch(fetchEnv('DEBUG_CHANNEL_ID'));
     setDebugChannel(debugChannel as TextChannel);
-    debugInfo(`Booted up in \`${fetchEnvironment()}\` environment!`);
+    debugInfo({ env: fetchEnvironment() }, 'Booted up!');
     debugInfo(`Logged in as ${client.user.tag}! (${client.user.toString()})`);
   }
 }

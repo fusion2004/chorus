@@ -11,7 +11,7 @@ export const logger = pino({
   },
 });
 
-function sendMessages(channel: TextChannel, messages: string[]): Promise<any> {
+export function sendMessages(channel: TextChannel, messages: string[]): Promise<any> {
   const message = messages
     .flatMap((msg) => msg.split('\n'))
     .map((line) => `> ${line}`)
@@ -172,6 +172,7 @@ export function debugText(obj: object, msg: string | undefined): string {
   return suffix ? `${msg} · ${suffix}` : msg;
 }
 
+// uses the debugChannelService to queue and send the messages, and logs
 function logAndSend(level: LogLevel, objOrMsg: object | string, msg?: string): void {
   let text: string;
   if (typeof objOrMsg === 'string') {
