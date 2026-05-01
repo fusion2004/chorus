@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "type": "module",
   "dependencies": {
-    "@aws-sdk/client-polly": "^3.1038.0",
+    "@aws-sdk/client-polly": "^3.1040.0",
     "@fusion2004/nodeshout-koffi": "^3.1.0",
     "@sapphire/framework": "^5.5.0",
     "bottleneck": "^2.19.5",
