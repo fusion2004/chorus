@@ -194,3 +194,4 @@ dist
 # AI things
 docs/superpowers/
 .claude
+.superset
