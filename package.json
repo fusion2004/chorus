@@ -8,7 +8,9 @@
   "type": "module",
   "dependencies": {
     "@aws-sdk/client-polly": "^3.1040.0",
+    "@eyevinn/srt": "^0.8.3",
     "@fusion2004/nodeshout-koffi": "^3.1.0",
+    "@mux/mux-node": "^14.0.1",
     "@sapphire/framework": "^5.5.0",
     "bottleneck": "^2.19.5",
     "bufferutil": "^4.1.0",
@@ -39,7 +41,8 @@
     "lint:typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "spike:srt": "tsx src/srt-spike.ts"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
