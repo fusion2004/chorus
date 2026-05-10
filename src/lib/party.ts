@@ -15,11 +15,7 @@ import { RoundAnnouncer } from './round-announcer.js';
 import { RoundExtraAnnouncer } from './round-extra-announcer.js';
 import { icecastMachine } from './streaming/icecast.js';
 import { muxMachine } from './streaming/mux.js';
-import type {
-  ExtraAnnouncer,
-  StreamingMode,
-  StreamingOutputEvent,
-} from './streaming/types.js';
+import type { ExtraAnnouncer, StreamingMode, StreamingOutputEvent } from './streaming/types.js';
 import { transcodeFinal } from '../utils/symbols.js';
 import { xstateTags } from '../utils/xstate-tags.js';
 import { logger, debugError } from './logger.js';
