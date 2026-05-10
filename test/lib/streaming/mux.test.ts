@@ -38,9 +38,25 @@ const fakeSrtControl = {
 
 type MuxTestLogic = ReturnType<typeof muxMachine.provide>;
 
-function makeTestLogic(opts?: { neverResolve?: boolean }): MuxTestLogic {
-  const streamFile = opts?.neverResolve
-    ? fromPromise<{ lastStreamTimeSec: number }, unknown>(() => new Promise(() => {}))
+function makeTestLogic(opts?: { abortable?: boolean }): MuxTestLogic {
+  // `abortable` mode: streamFile holds open until the abort signal fires.
+  // Mimics streamPacketFile's drain-on-abort so SKIP_SONG tests are
+  // deterministic.
+  const streamFile = opts?.abortable
+    ? fromPromise<{ lastStreamTimeSec: number }, { abortController?: AbortController | null }>(
+        ({ input }) => {
+          return new Promise((resolve) => {
+            const ac = input.abortController;
+            if (!ac || ac.signal.aborted) {
+              resolve({ lastStreamTimeSec: 0 });
+              return;
+            }
+            ac.signal.addEventListener('abort', () => resolve({ lastStreamTimeSec: 0 }), {
+              once: true,
+            });
+          });
+        },
+      )
     : fromPromise<{ lastStreamTimeSec: number }, unknown>(async () => ({ lastStreamTimeSec: 0 }));
 
   return muxMachine.provide({
@@ -161,14 +177,18 @@ describe('muxMachine', () => {
     ]);
   });
 
-  it('SKIP_SONG aborts a pending song and emits STREAM_SONG_DONE', async () => {
-    const { child, emitted } = spawnInWrapper(makeTestLogic({ neverResolve: true }));
+  it('SKIP_SONG drains the in-flight stream, skips songAudio, and emits STREAM_SONG_DONE', async () => {
+    const { child, emitted } = spawnInWrapper(makeTestLogic({ abortable: true }));
     child.send({ type: 'CONNECT' });
     await waitForState(child, (v) => v === 'ready');
     child.send({ type: 'PLAY_SONG', song: songLike });
     expect((child.getSnapshot().value as Record<string, string>).playingSong).toBe('announcer');
     child.send({ type: 'SKIP_SONG' });
+    // Drain-before-transition: SKIP_SONG just aborts + flags. The streamFile
+    // stub resolves on abort, the announcer's onDone branches on skipping=true,
+    // and we land in `ready` having skipped songAudio entirely.
     await waitForState(child, (v) => v === 'ready');
+    expect(emitted.map((e) => e.type)).not.toContain('STREAM_SONG_STARTED');
     expect(emitted.at(-1)?.type).toBe('STREAM_SONG_DONE');
   });
 

@@ -77,6 +77,15 @@ interface IcecastContext {
   abortController: AbortController | null;
   currentSong: Song | null;
   outroAnnouncer: ExtraAnnouncer | null;
+  /**
+   * Drain-before-transition flag. SKIP_SONG aborts the abort-controller and
+   * sets this; the in-flight streamFile finishes naturally and the announcer
+   * state's onDone/onError branches on this flag to skip the songAudio half
+   * entirely. Mirrors the pattern in muxMachine — libshout's writes are
+   * synchronous so the concurrent-write hazard doesn't apply here, but
+   * keeping behaviour identical between the two backends is worth it.
+   */
+  skipping: boolean;
 }
 
 type IcecastInternalEvent =
@@ -194,12 +203,13 @@ export const icecastMachine = setup({
 }).createMachine({
   id: 'icecastStreaming',
   initial: 'idle',
-  context: ({ input }) => ({
+  context: ({ input }): IcecastContext => ({
     round: input.round,
     shout: null,
     abortController: null,
     currentSong: null,
     outroAnnouncer: null,
+    skipping: false,
   }),
   on: {
     STOP: { target: '.stopped' },
@@ -281,6 +291,8 @@ export const icecastMachine = setup({
       },
     },
     playingSong: {
+      // Reset skipping each time we enter — see IcecastContext doc.
+      entry: assign({ skipping: false }),
       initial: 'announcer',
       states: {
         announcer: {
@@ -288,14 +300,28 @@ export const icecastMachine = setup({
             id: 'streamAnnouncer',
             src: 'streamAnnouncer',
             input: ({ context }) => context,
-            onDone: 'songAudio',
-            onError: {
-              target: '#icecastStreaming.stopped',
-              actions: [
-                ({ event }) => debugError(`streamAnnouncer: ${actorErrorMessage(event)}`),
-                sendParent({ type: 'STREAM_ERROR', reason: 'streamAnnouncer failed' }),
-              ],
-            },
+            onDone: [
+              {
+                guard: ({ context }) => context.skipping,
+                target: '#icecastStreaming.ready',
+                actions: sendParent({ type: 'STREAM_SONG_DONE' }),
+              },
+              { target: 'songAudio' },
+            ],
+            onError: [
+              {
+                guard: ({ context }) => context.skipping,
+                target: '#icecastStreaming.ready',
+                actions: sendParent({ type: 'STREAM_SONG_DONE' }),
+              },
+              {
+                target: '#icecastStreaming.stopped',
+                actions: [
+                  ({ event }) => debugError(`streamAnnouncer: ${actorErrorMessage(event)}`),
+                  sendParent({ type: 'STREAM_ERROR', reason: 'streamAnnouncer failed' }),
+                ],
+              },
+            ],
           },
         },
         songAudio: {
@@ -308,23 +334,28 @@ export const icecastMachine = setup({
               target: '#icecastStreaming.ready',
               actions: sendParent({ type: 'STREAM_SONG_DONE' }),
             },
-            onError: {
-              target: '#icecastStreaming.stopped',
-              actions: [
-                ({ event }) => debugError(`streamSongAudio: ${actorErrorMessage(event)}`),
-                sendParent({ type: 'STREAM_ERROR', reason: 'streamSongAudio failed' }),
-              ],
-            },
+            onError: [
+              {
+                guard: ({ context }) => context.skipping,
+                target: '#icecastStreaming.ready',
+                actions: sendParent({ type: 'STREAM_SONG_DONE' }),
+              },
+              {
+                target: '#icecastStreaming.stopped',
+                actions: [
+                  ({ event }) => debugError(`streamSongAudio: ${actorErrorMessage(event)}`),
+                  sendParent({ type: 'STREAM_ERROR', reason: 'streamSongAudio failed' }),
+                ],
+              },
+            ],
           },
         },
       },
       on: {
+        // Drain-before-transition: abort + flag, no state change. Onward
+        // transition happens from the in-flight invoke's onDone/onError.
         SKIP_SONG: {
-          target: 'ready',
-          actions: [
-            ({ context }) => context.abortController?.abort(),
-            sendParent({ type: 'STREAM_SONG_DONE' }),
-          ],
+          actions: [({ context }) => context.abortController?.abort(), assign({ skipping: true })],
         },
       },
     },
@@ -348,6 +379,9 @@ export const icecastMachine = setup({
     },
     stopped: {
       type: 'final',
+      // Final states reject further transitions, but be explicit so a
+      // second STOP can't try to re-enter via the top-level `on` handler.
+      on: { STOP: {} },
       entry: 'cleanup',
     },
   },

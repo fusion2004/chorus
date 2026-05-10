@@ -375,6 +375,16 @@ interface MuxContext {
   abortController: AbortController | null;
   currentSong: Song | null;
   outroAnnouncer: ExtraAnnouncer | null;
+  /**
+   * Set true by SKIP_SONG. Drain-before-transition: we let the in-flight
+   * streamFile promise resolve naturally (after its abort-aware loop exits),
+   * then announcer.onDone branches on this flag to skip songAudio entirely.
+   * Without it, transitioning out of playingSong while a streamFile is still
+   * in mid-write would let the next song's streamFile race onto the same
+   * AsyncSRT socket — Mux sees interleaved packets and drops the connection.
+   * Reset to false on each entry to playingSong.
+   */
+  skipping: boolean;
 }
 
 type MuxInternalEvent =
@@ -440,6 +450,7 @@ export const muxMachine = setup({
     abortController: null,
     currentSong: null,
     outroAnnouncer: null,
+    skipping: false,
   }),
   on: {
     STOP: { target: '.stopping' },
@@ -546,6 +557,9 @@ export const muxMachine = setup({
       },
     },
     playingSong: {
+      // Reset skipping on entry — each new song starts fresh. The in-flight
+      // streamFile from a prior song should have already drained by now.
+      entry: assign({ skipping: false }),
       initial: 'announcer',
       states: {
         announcer: {
@@ -558,14 +572,31 @@ export const muxMachine = setup({
               pacing: context.pacing,
               abortController: context.abortController!,
             }),
-            onDone: 'songAudio',
-            onError: {
-              target: '#muxStreaming.stopping',
-              actions: [
-                ({ event }) => debugError(`streamAnnouncer: ${actorErrorMessage(event)}`),
-                sendParent({ type: 'STREAM_ERROR', reason: 'streamAnnouncer failed' }),
-              ],
-            },
+            onDone: [
+              {
+                guard: ({ context }) => context.skipping,
+                target: '#muxStreaming.ready',
+                actions: sendParent({ type: 'STREAM_SONG_DONE' }),
+              },
+              { target: 'songAudio' },
+            ],
+            onError: [
+              // If we were skipping, suppress the error — a write that failed
+              // mid-abort is expected (e.g. SRT half-flushed packet group).
+              // Just emit SONG_DONE and move on.
+              {
+                guard: ({ context }) => context.skipping,
+                target: '#muxStreaming.ready',
+                actions: sendParent({ type: 'STREAM_SONG_DONE' }),
+              },
+              {
+                target: '#muxStreaming.stopping',
+                actions: [
+                  ({ event }) => debugError(`streamAnnouncer: ${actorErrorMessage(event)}`),
+                  sendParent({ type: 'STREAM_ERROR', reason: 'streamAnnouncer failed' }),
+                ],
+              },
+            ],
           },
         },
         songAudio: {
@@ -583,23 +614,32 @@ export const muxMachine = setup({
               target: '#muxStreaming.ready',
               actions: sendParent({ type: 'STREAM_SONG_DONE' }),
             },
-            onError: {
-              target: '#muxStreaming.stopping',
-              actions: [
-                ({ event }) => debugError(`streamSongAudio: ${actorErrorMessage(event)}`),
-                sendParent({ type: 'STREAM_ERROR', reason: 'streamSongAudio failed' }),
-              ],
-            },
+            onError: [
+              // Same skipping suppression as announcer.
+              {
+                guard: ({ context }) => context.skipping,
+                target: '#muxStreaming.ready',
+                actions: sendParent({ type: 'STREAM_SONG_DONE' }),
+              },
+              {
+                target: '#muxStreaming.stopping',
+                actions: [
+                  ({ event }) => debugError(`streamSongAudio: ${actorErrorMessage(event)}`),
+                  sendParent({ type: 'STREAM_ERROR', reason: 'streamSongAudio failed' }),
+                ],
+              },
+            ],
           },
         },
       },
       on: {
+        // Drain-before-transition: don't change state. Just abort the in-flight
+        // streamFile loop and set the skipping flag. The current invoke's
+        // onDone (or onError) sees skipping=true and routes to ready + emits
+        // STREAM_SONG_DONE. Prevents a second streamFile from racing onto the
+        // SRT socket while the first is still mid-write.
         SKIP_SONG: {
-          target: 'ready',
-          actions: [
-            ({ context }) => context.abortController?.abort(),
-            sendParent({ type: 'STREAM_SONG_DONE' }),
-          ],
+          actions: [({ context }) => context.abortController?.abort(), assign({ skipping: true })],
         },
       },
     },
@@ -639,6 +679,12 @@ export const muxMachine = setup({
       },
     },
     stopping: {
+      // Ignore additional STOP events while we're already tearing down.
+      // Without this, the top-level `on: { STOP: { target: '.stopping' } }`
+      // re-enters this state on the second STOP (which the parent fires from
+      // partying.exit when STREAM_ERROR escalates), invoking teardown twice
+      // and crashing on the double `asyncSrt.dispose()` call.
+      on: { STOP: {} },
       invoke: {
         src: 'teardown',
         input: ({ context }) => context,
@@ -649,6 +695,11 @@ export const muxMachine = setup({
         },
       },
     },
-    stopped: { type: 'final' },
+    stopped: {
+      type: 'final',
+      // Final states are already sealed against further transitions, but be
+      // explicit so a stray STOP doesn't try to re-enter via the top-level on.
+      on: { STOP: {} },
+    },
   },
 });

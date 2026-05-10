@@ -38,9 +38,21 @@ import { icecastMachine } from '@src/lib/streaming/icecast.js';
  */
 type IcecastTestLogic = ReturnType<typeof icecastMachine.provide>;
 
-function makeTestLogic(opts?: { neverResolve?: boolean }): IcecastTestLogic {
-  const wireStub = opts?.neverResolve
-    ? fromPromise<void, unknown>(() => new Promise<void>(() => {}))
+function makeTestLogic(opts?: { abortable?: boolean }): IcecastTestLogic {
+  // `abortable` mode: the stubs hold open until the context's abort signal
+  // fires, then resolve. Mimics the real streamFile's drain-on-abort behaviour
+  // so SKIP_SONG tests can drive the abort + drain cycle deterministically.
+  const wireStub = opts?.abortable
+    ? fromPromise<void, { abortController?: AbortController | null }>(({ input }) => {
+        return new Promise<void>((resolve) => {
+          const ac = input.abortController;
+          if (!ac || ac.signal.aborted) {
+            resolve();
+            return;
+          }
+          ac.signal.addEventListener('abort', () => resolve(), { once: true });
+        });
+      })
     : fromPromise<void, unknown>(async () => {});
   return icecastMachine.provide({
     actions: {
@@ -173,15 +185,22 @@ describe('icecastMachine', () => {
     ]);
   });
 
-  it('SKIP_SONG aborts a pending song and emits STREAM_SONG_DONE', async () => {
-    const { child, emitted } = spawnInWrapper(makeTestLogic({ neverResolve: true }));
+  it('SKIP_SONG drains the in-flight stream, skips songAudio, and emits STREAM_SONG_DONE', async () => {
+    const { child, emitted } = spawnInWrapper(makeTestLogic({ abortable: true }));
     child.send({ type: 'CONNECT' });
     await waitForState(child, (v) => v === 'ready');
     child.send({ type: 'PLAY_SONG', song: songLike });
-    // Confirm we entered playingSong before skipping.
+    // The abortable stub holds the announcer open, so we should see the
+    // announcer substate before skipping.
     expect((child.getSnapshot().value as Record<string, string>).playingSong).toBe('announcer');
     child.send({ type: 'SKIP_SONG' });
+    // Drain-before-transition: SKIP_SONG itself doesn't change state — it
+    // sets the skipping flag and aborts. The stub resolves on abort, then
+    // the announcer's onDone branches on skipping=true to land in `ready`.
     await waitForState(child, (v) => v === 'ready');
+    // Critically: we must NOT have entered songAudio at any point — the
+    // SONG_STARTED emit there would be a giveaway.
+    expect(emitted.map((e) => e.type)).not.toContain('STREAM_SONG_STARTED');
     expect(emitted.at(-1)?.type).toBe('STREAM_SONG_DONE');
   });
 
