@@ -215,7 +215,7 @@ export const icecastMachine = setup({
           target: 'ready',
           actions: [
             assign(({ event }) => ({ shout: event.shout })),
-            sendParent(({ event }) => ({ type: 'READY', url: event.url })),
+            sendParent(({ event }) => ({ type: 'STREAM_READY', url: event.url })),
           ],
         },
         STREAM_OPEN_ERROR: {
@@ -224,7 +224,7 @@ export const icecastMachine = setup({
             ({ event }) =>
               debugError(`libshout open failed: ${event.message ?? `errno ${event.errorCode}`}`),
             sendParent(({ event }) => ({
-              type: 'ERROR',
+              type: 'STREAM_ERROR',
               reason: event.message ?? `errno ${event.errorCode}`,
             })),
           ],
@@ -260,13 +260,13 @@ export const icecastMachine = setup({
         input: ({ context }) => context,
         onDone: {
           target: 'ready',
-          actions: sendParent({ type: 'INTRO_DONE' }),
+          actions: sendParent({ type: 'STREAM_INTRO_DONE' }),
         },
         onError: {
           target: 'stopped',
           actions: [
             ({ event }) => debugError(`streamIntro: ${actorErrorMessage(event)}`),
-            sendParent({ type: 'ERROR', reason: 'streamIntro failed' }),
+            sendParent({ type: 'STREAM_ERROR', reason: 'streamIntro failed' }),
           ],
         },
       },
@@ -275,7 +275,7 @@ export const icecastMachine = setup({
           target: 'ready',
           actions: [
             ({ context }) => context.abortController?.abort(),
-            sendParent({ type: 'INTRO_DONE' }),
+            sendParent({ type: 'STREAM_INTRO_DONE' }),
           ],
         },
       },
@@ -293,26 +293,26 @@ export const icecastMachine = setup({
               target: '#icecastStreaming.stopped',
               actions: [
                 ({ event }) => debugError(`streamAnnouncer: ${actorErrorMessage(event)}`),
-                sendParent({ type: 'ERROR', reason: 'streamAnnouncer failed' }),
+                sendParent({ type: 'STREAM_ERROR', reason: 'streamAnnouncer failed' }),
               ],
             },
           },
         },
         songAudio: {
-          entry: sendParent({ type: 'SONG_STARTED' }),
+          entry: sendParent({ type: 'STREAM_SONG_STARTED' }),
           invoke: {
             id: 'streamSongAudio',
             src: 'streamSongAudio',
             input: ({ context }) => context,
             onDone: {
               target: '#icecastStreaming.ready',
-              actions: sendParent({ type: 'SONG_DONE' }),
+              actions: sendParent({ type: 'STREAM_SONG_DONE' }),
             },
             onError: {
               target: '#icecastStreaming.stopped',
               actions: [
                 ({ event }) => debugError(`streamSongAudio: ${actorErrorMessage(event)}`),
-                sendParent({ type: 'ERROR', reason: 'streamSongAudio failed' }),
+                sendParent({ type: 'STREAM_ERROR', reason: 'streamSongAudio failed' }),
               ],
             },
           },
@@ -323,7 +323,7 @@ export const icecastMachine = setup({
           target: 'ready',
           actions: [
             ({ context }) => context.abortController?.abort(),
-            sendParent({ type: 'SONG_DONE' }),
+            sendParent({ type: 'STREAM_SONG_DONE' }),
           ],
         },
       },
@@ -335,13 +335,13 @@ export const icecastMachine = setup({
         input: ({ context }) => context,
         onDone: {
           target: 'stopped',
-          actions: sendParent({ type: 'OUTRO_DONE' }),
+          actions: sendParent({ type: 'STREAM_OUTRO_DONE' }),
         },
         onError: {
           target: 'stopped',
           actions: [
             ({ event }) => debugError(`streamOutro: ${actorErrorMessage(event)}`),
-            sendParent({ type: 'ERROR', reason: 'streamOutro failed' }),
+            sendParent({ type: 'STREAM_ERROR', reason: 'streamOutro failed' }),
           ],
         },
       },

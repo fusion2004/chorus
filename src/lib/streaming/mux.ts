@@ -463,7 +463,7 @@ export const muxMachine = setup({
           target: 'stopping',
           actions: [
             ({ event }) => debugError(`Mux livestream create failed: ${actorErrorMessage(event)}`),
-            sendParent({ type: 'ERROR', reason: 'Mux livestream create failed' }),
+            sendParent({ type: 'STREAM_ERROR', reason: 'Mux livestream create failed' }),
           ],
         },
       },
@@ -477,7 +477,7 @@ export const muxMachine = setup({
           actions: [
             assign(({ event }) => ({ srtControl: event.output })),
             sendParent(({ context }) => ({
-              type: 'READY',
+              type: 'STREAM_READY',
               url: playerUrl(context.liveStream!.playbackId),
             })),
           ],
@@ -486,7 +486,7 @@ export const muxMachine = setup({
           target: 'stopping',
           actions: [
             ({ event }) => debugError(`SRT connect failed: ${actorErrorMessage(event)}`),
-            sendParent({ type: 'ERROR', reason: 'SRT connect failed' }),
+            sendParent({ type: 'STREAM_ERROR', reason: 'SRT connect failed' }),
           ],
         },
       },
@@ -525,13 +525,13 @@ export const muxMachine = setup({
         }),
         onDone: {
           target: 'ready',
-          actions: sendParent({ type: 'INTRO_DONE' }),
+          actions: sendParent({ type: 'STREAM_INTRO_DONE' }),
         },
         onError: {
           target: 'stopping',
           actions: [
             ({ event }) => debugError(`streamIntro: ${actorErrorMessage(event)}`),
-            sendParent({ type: 'ERROR', reason: 'streamIntro failed' }),
+            sendParent({ type: 'STREAM_ERROR', reason: 'streamIntro failed' }),
           ],
         },
       },
@@ -540,7 +540,7 @@ export const muxMachine = setup({
           target: 'ready',
           actions: [
             ({ context }) => context.abortController?.abort(),
-            sendParent({ type: 'INTRO_DONE' }),
+            sendParent({ type: 'STREAM_INTRO_DONE' }),
           ],
         },
       },
@@ -563,13 +563,13 @@ export const muxMachine = setup({
               target: '#muxStreaming.stopping',
               actions: [
                 ({ event }) => debugError(`streamAnnouncer: ${actorErrorMessage(event)}`),
-                sendParent({ type: 'ERROR', reason: 'streamAnnouncer failed' }),
+                sendParent({ type: 'STREAM_ERROR', reason: 'streamAnnouncer failed' }),
               ],
             },
           },
         },
         songAudio: {
-          entry: sendParent({ type: 'SONG_STARTED' }),
+          entry: sendParent({ type: 'STREAM_SONG_STARTED' }),
           invoke: {
             src: 'streamFile',
             input: ({ context }) => ({
@@ -581,13 +581,13 @@ export const muxMachine = setup({
             }),
             onDone: {
               target: '#muxStreaming.ready',
-              actions: sendParent({ type: 'SONG_DONE' }),
+              actions: sendParent({ type: 'STREAM_SONG_DONE' }),
             },
             onError: {
               target: '#muxStreaming.stopping',
               actions: [
                 ({ event }) => debugError(`streamSongAudio: ${actorErrorMessage(event)}`),
-                sendParent({ type: 'ERROR', reason: 'streamSongAudio failed' }),
+                sendParent({ type: 'STREAM_ERROR', reason: 'streamSongAudio failed' }),
               ],
             },
           },
@@ -598,7 +598,7 @@ export const muxMachine = setup({
           target: 'ready',
           actions: [
             ({ context }) => context.abortController?.abort(),
-            sendParent({ type: 'SONG_DONE' }),
+            sendParent({ type: 'STREAM_SONG_DONE' }),
           ],
         },
       },
@@ -624,7 +624,7 @@ export const muxMachine = setup({
           target: 'stopping',
           actions: [
             ({ event }) => debugError(`streamOutro: ${actorErrorMessage(event)}`),
-            sendParent({ type: 'ERROR', reason: 'streamOutro failed' }),
+            sendParent({ type: 'STREAM_ERROR', reason: 'streamOutro failed' }),
           ],
         },
       },
@@ -634,7 +634,7 @@ export const muxMachine = setup({
         src: 'tailHold',
         onDone: {
           target: 'stopping',
-          actions: sendParent({ type: 'OUTRO_DONE' }),
+          actions: sendParent({ type: 'STREAM_OUTRO_DONE' }),
         },
       },
     },
