@@ -52,7 +52,9 @@ describe('StartPartyCommand', () => {
   describe('authorization', () => {
     it('allows an admin member to reach chatInputRun', async () => {
       (partyService.getSnapshot as any).mockReturnValue({ matches: () => false });
-      const interaction = makeAdminInteraction({ options: { round: 'ohc123' } });
+      const interaction = makeAdminInteraction({
+        options: { round: 'ohc123', stream_to: 'icecast' },
+      });
       const res = await runCommand(command, interaction);
       expect(res.ran).toBe(true);
       expect(res.blockedBy).toBeNull();
@@ -60,7 +62,9 @@ describe('StartPartyCommand', () => {
     });
 
     it('blocks a non-admin member before chatInputRun', async () => {
-      const interaction = makeNonAdminInteraction({ options: { round: 'ohc123' } });
+      const interaction = makeNonAdminInteraction({
+        options: { round: 'ohc123', stream_to: 'icecast' },
+      });
       const res = await runCommand(command, interaction);
       expect(res.ran).toBe(false);
       expect(res.blockedBy).toBe('CompoAdminOnly');
@@ -69,7 +73,9 @@ describe('StartPartyCommand', () => {
     });
 
     it('blocks when the guild member cannot be resolved', async () => {
-      const interaction = makeMissingMemberInteraction({ options: { round: 'ohc123' } });
+      const interaction = makeMissingMemberInteraction({
+        options: { round: 'ohc123', stream_to: 'icecast' },
+      });
       const res = await runCommand(command, interaction);
       expect(res.ran).toBe(false);
       expect(res.blockedBy).toBe('CompoAdminOnly');
@@ -82,7 +88,9 @@ describe('StartPartyCommand', () => {
       (partyService.getSnapshot as any).mockReturnValue({
         matches: (state: string) => state === 'partying',
       });
-      const interaction = makeAdminInteraction({ options: { round: 'ohc123' } });
+      const interaction = makeAdminInteraction({
+        options: { round: 'ohc123', stream_to: 'icecast' },
+      });
 
       const res = await runCommand(command, interaction);
 
@@ -110,7 +118,9 @@ describe('StartPartyCommand', () => {
       (partyService.getSnapshot as any).mockReturnValue({
         matches: (state: string) => state !== 'partying',
       });
-      const interaction = makeAdminInteraction({ options: { round: 'ohc123' } });
+      const interaction = makeAdminInteraction({
+        options: { round: 'ohc123', stream_to: 'icecast' },
+      });
 
       const res = await runCommand(command, interaction);
 
@@ -123,7 +133,7 @@ describe('StartPartyCommand', () => {
         streamTo: 'icecast',
       });
       expect(interaction.reply).toHaveBeenCalledWith({
-        content: 'Starting listening party for OHC123...',
+        content: 'Starting listening party for OHC123 (streaming to icecast)...',
       });
       expect(infoSpy).toHaveBeenCalledTimes(1);
       expect(infoSpy).toHaveBeenCalledWith(
@@ -133,6 +143,28 @@ describe('StartPartyCommand', () => {
       expect(sendSpy).toHaveBeenCalledWith({
         type: 'SEND_MESSAGE',
         message: expect.stringMatching(/^INFO: Starting a listening party · .*round=OHC123/),
+      });
+    });
+
+    it('forwards stream_to=mux through to the START event', async () => {
+      (partyService.getSnapshot as any).mockReturnValue({
+        matches: (state: string) => state !== 'partying',
+      });
+      const interaction = makeAdminInteraction({
+        options: { round: 'ohc123', stream_to: 'mux' },
+      });
+
+      const res = await runCommand(command, interaction);
+
+      expect(res.ran).toBe(true);
+      expect(partyService.send).toHaveBeenCalledWith({
+        type: 'START',
+        channel: interaction.channel,
+        round: 'OHC123',
+        streamTo: 'mux',
+      });
+      expect(interaction.reply).toHaveBeenCalledWith({
+        content: 'Starting listening party for OHC123 (streaming to mux)...',
       });
     });
   });

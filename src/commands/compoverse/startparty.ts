@@ -4,6 +4,7 @@ import type { TextChannel } from 'discord.js';
 
 import { partyService } from '../../lib/party.js';
 import { debugInfo, debugWarn } from '../../lib/logger.js';
+import type { StreamingMode } from '../../lib/streaming/types.js';
 
 export class StartPartyCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -21,6 +22,13 @@ export class StartPartyCommand extends Command {
             .setDescription('Round ID to start a party for (e.g. OHC123, 2HTS45)')
             .setRequired(true),
         )
+        .addStringOption((option) =>
+          option
+            .setName('stream_to')
+            .setDescription('Streaming backend')
+            .addChoices({ name: 'Icecast', value: 'icecast' }, { name: 'Mux', value: 'mux' })
+            .setRequired(true),
+        )
         .addIntegerOption((option) =>
           option
             .setName('initial_song_index')
@@ -34,8 +42,10 @@ export class StartPartyCommand extends Command {
     interaction: Command.ChatInputCommandInteraction,
   ): Promise<void> {
     const round = interaction.options.getString('round', true).toUpperCase();
+    const streamTo = interaction.options.getString('stream_to', true) as StreamingMode;
     const meta = {
       round,
+      streamTo,
       user: interaction.member.user.username,
       userMention: interaction.member.user.toString(),
       guild: interaction.guild?.name,
@@ -57,12 +67,10 @@ export class StartPartyCommand extends Command {
       type: 'START',
       channel: interaction.channel as TextChannel,
       round,
-      // The user-facing `stream_to` option lands in a follow-up commit; for
-      // now every party uses the existing Icecast pipeline.
-      streamTo: 'icecast',
+      streamTo,
     });
     await interaction.reply({
-      content: `Starting listening party for ${round}...`,
+      content: `Starting listening party for ${round} (streaming to ${streamTo})...`,
     });
   }
 }
