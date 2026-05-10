@@ -16,7 +16,7 @@ import { RoundExtraAnnouncer } from './round-extra-announcer.js';
 import { icecastMachine } from './streaming/icecast.js';
 import { muxMachine } from './streaming/mux.js';
 import type { ExtraAnnouncer, StreamingMode, StreamingOutputEvent } from './streaming/types.js';
-import { transcodeFinal } from '../utils/symbols.js';
+import { downloadFinal } from '../utils/symbols.js';
 import { xstateTags } from '../utils/xstate-tags.js';
 import { logger, debugError } from './logger.js';
 
@@ -64,9 +64,17 @@ function roundPrefixAndId(fullId: string): { prefix: string | null; id: string }
 }
 
 async function parseMetadata(songs: Song[]): Promise<void> {
+  // Read from the source MP3 rather than the transcoded file: when streamTo
+  // is 'mux', transcodeFinal is an MPEG-TS container which music-metadata
+  // doesn't support (it bails with "Guessed MIME-type not supported:
+  // video/mp2t"). Source MP3 has the same duration + ID3 tags for our
+  // "Now Playing" embed purposes.
+  // TODO: switch to ffprobe (via ffmpeg-static or a similar binary) so we
+  // can read metadata directly off whatever container the streaming backend
+  // produced — gives us the *played* duration including encoder padding.
   await Promise.all(
     songs.map(async (song) => {
-      const metadata = await parseFile(song.path(transcodeFinal));
+      const metadata = await parseFile(song.path(downloadFinal));
       song.service.send({ type: 'UPDATE_METADATA', metadata });
     }),
   );
