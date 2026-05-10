@@ -5,6 +5,8 @@ import type { Actor } from 'xstate';
 
 import { logger } from './logger.js';
 import { songMachine } from './machines.js';
+import { encodedExt } from './streaming/format.js';
+import type { StreamingMode } from './streaming/types.js';
 import { escapeDiscordMarkdown } from '../utils/markdown.js';
 import { xstateTags } from '../utils/xstate-tags.js';
 import {
@@ -35,10 +37,12 @@ export function formatDuration(durationInSeconds: number): string {
 
 export class Song {
   directory: string;
+  streamTo: StreamingMode;
   service: Actor<typeof songMachine>;
 
-  constructor(directory: string) {
+  constructor(directory: string, streamTo: StreamingMode = 'icecast') {
     this.directory = directory;
+    this.streamTo = streamTo;
     this.service = createActor(songMachine);
     this.service.subscribe((snapshot) => {
       if (snapshot.value === 'init') return;
@@ -104,21 +108,25 @@ export class Song {
   }
 
   filename(type: symbol): string {
+    // announcerAws (Polly raw output) and downloadFinal/Intermediate (source
+    // download from Compoverse) are always mp3 — they pre-date the backend
+    // choice. Only the transcode/announcer-encoded files vary by backend.
+    const ext = encodedExt(this.streamTo);
     switch (type) {
       case announcerAws:
         return `${this.id}-announcer-aws.mp3`;
       case announcerFinal:
-        return `${this.id}-announcer.mp3`;
+        return `${this.id}-announcer.${ext}`;
       case announcerIntermediate:
-        return `${this.id}-announcer-intermediate.mp3`;
+        return `${this.id}-announcer-intermediate.${ext}`;
       case downloadFinal:
         return `${this.id}-download.mp3`;
       case downloadIntermediate:
         return `${this.id}-download-intermediate.mp3`;
       case transcodeFinal:
-        return `${this.id}-transcode.mp3`;
+        return `${this.id}-transcode.${ext}`;
       case transcodeIntermediate:
-        return `${this.id}-transcode-intermediate.mp3`;
+        return `${this.id}-transcode-intermediate.${ext}`;
       default:
         throw new Error(`Unknown file type symbol`);
     }

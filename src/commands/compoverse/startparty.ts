@@ -57,6 +57,9 @@ export class StartPartyCommand extends Command {
       type: 'START',
       channel: interaction.channel as TextChannel,
       round,
+      // The user-facing `stream_to` option lands in a follow-up commit; for
+      // now every party uses the existing Icecast pipeline.
+      streamTo: 'icecast',
     });
     await interaction.reply({
       content: `Starting listening party for ${round}...`,

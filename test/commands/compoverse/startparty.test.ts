@@ -120,6 +120,7 @@ describe('StartPartyCommand', () => {
         type: 'START',
         channel: interaction.channel,
         round: 'OHC123',
+        streamTo: 'icecast',
       });
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Starting listening party for OHC123...',

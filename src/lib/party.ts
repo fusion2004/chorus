@@ -23,6 +23,7 @@ import { RoundFetcher } from './round-fetcher.js';
 import { RoundTranscoder } from './round-transcoder.js';
 import { RoundAnnouncer } from './round-announcer.js';
 import { RoundExtraAnnouncer } from './round-extra-announcer.js';
+import type { StreamingMode } from './streaming/types.js';
 import { announcerFinal, transcodeFinal } from '../utils/symbols.js';
 import { fetchEnv } from '../utils/fetch-env.js';
 import { xstateTags } from '../utils/xstate-tags.js';
@@ -218,6 +219,7 @@ interface ExtraAnnouncer {
 interface PartyContext {
   channels?: { processing: TextChannel; party: TextChannel };
   round?: RoundInfo;
+  streamTo?: StreamingMode;
   fetcher?: CompoThaSauceFetcher;
   downloader?: RoundFetcher;
   transcoder?: RoundTranscoder;
@@ -233,7 +235,7 @@ interface PartyContext {
 }
 
 type PartyEvent =
-  | { type: 'START'; channel: TextChannel; round: string }
+  | { type: 'START'; channel: TextChannel; round: string; streamTo: StreamingMode }
   | { type: 'STOP'; immediate?: boolean }
   | { type: 'SKIP_SONG' }
   | { type: 'REFETCH'; channel: TextChannel }
@@ -469,12 +471,13 @@ function reconcileSongs(
   currentSongs: Song[] | undefined,
   fetchedSongs: any[],
   roundDir: string,
+  streamTo: StreamingMode,
 ): Song[] {
   const existing = currentSongs ?? [];
   return fetchedSongs.map((songData) => {
     let song = existing.find((s) => s.id === songData.id);
     if (!song) {
-      song = new Song(roundDir);
+      song = new Song(roundDir, streamTo);
       song.service.send({ type: 'FETCH_FINISH', ...songData });
     }
     return song;
@@ -492,6 +495,7 @@ const machine = createMachine(
         entry: assign(() => ({
           channels: undefined,
           round: undefined,
+          streamTo: undefined,
           fetcher: undefined,
           downloader: undefined,
           announcer: undefined,
@@ -514,9 +518,9 @@ const machine = createMachine(
         entry: assign(({ context }) => ({
           fetcher: new CompoThaSauceFetcher(context.round!.fullId),
           downloader: new RoundFetcher(),
-          transcoder: new RoundTranscoder(),
-          announcer: new RoundAnnouncer(context.round!.title),
-          extraAnnouncer: new RoundExtraAnnouncer(context.round!.title),
+          transcoder: new RoundTranscoder(context.streamTo!),
+          announcer: new RoundAnnouncer(context.round!.title, context.streamTo!),
+          extraAnnouncer: new RoundExtraAnnouncer(context.round!.title, context.streamTo!),
         })),
         type: 'parallel',
         on: { STOP: { target: 'stopping' } },
@@ -540,6 +544,7 @@ const machine = createMachine(
                           context.songs,
                           event.output.songs,
                           context.round!.dirs.parent,
+                          context.streamTo!,
                         ),
                       })),
                     ],
@@ -825,6 +830,7 @@ const machine = createMachine(
         const parent = path.join(process.cwd(), 'tmp', 'rounds', ev.round);
         return {
           channels: { processing: ev.channel, party: ev.channel } as any,
+          streamTo: ev.streamTo,
           round: {
             fullId: ev.round,
             id,
