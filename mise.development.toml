@@ -6,3 +6,7 @@ HUBOT_STREAM_HOST = "localhost"
 HUBOT_STREAM_MOUNT = "compoverse.mp3"
 HUBOT_STREAM_PORT = "8000"
 ICECAST_ORIGIN = "http://localhost:8000"
+
+# Mux credentials for `/startparty stream_to:mux` are secrets — they live in
+# fnox.toml (1Password-backed) rather than here. Same goes for
+# HUBOT_STREAM_SOURCE_PASSWORD.
