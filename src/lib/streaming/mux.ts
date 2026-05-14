@@ -6,7 +6,8 @@
  *
  * Lifecycle:
  *   idle              – await CONNECT
- *   creatingLivestream – Mux API call to provision a fresh audio-only stream
+ *   creatingLivestream – sweep leftover chorus-* entries, then create a fresh
+ *                       audio-only livestream tagged `meta.title = chorus-<ulid>`
  *   connectingSrt     – open AsyncSRT caller, set sock opts, IPv4 lookup,
  *                       connect to global-live.mux.com:6001
  *   ready             – emits READY with player URL; awaits PLAY_*
@@ -15,8 +16,11 @@
  *   playingOutro      – stream the outro announcer .ts
  *   holding           – keep the SRT connection open ~30s past the last
  *                       packet so trailing HLS segments fully publish
- *   stopping          – close SRT, dispose AsyncSRT, delete Mux livestream
- *                       + recorded asset(s)
+ *   stopping          – close SRT, dispose AsyncSRT. We deliberately do NOT
+ *                       delete the Mux livestream / asset here — that cuts
+ *                       trailing HLS playback for any listener still
+ *                       streaming the wind-down. Cleanup happens at the
+ *                       start of the *next* party via cleanupChorusLeftovers().
  *   stopped           – final
  *
  * Most of the wire-level code (AsyncSRT setup, packet rewriter, sender-side
@@ -31,6 +35,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import Mux from '@mux/mux-node';
 import { AsyncSRT } from '@eyevinn/srt';
 import { setup, assign, fromPromise, sendParent } from 'xstate';
+import { ulid } from 'ulid';
 
 import { announcerFinal, transcodeFinal } from '../../utils/symbols.js';
 import { fetchEnv } from '../../utils/fetch-env.js';
@@ -95,6 +100,9 @@ interface MuxLiveStream {
   playbackId: string;
 }
 
+/** Title prefix that identifies a chorus-managed Mux entity. */
+const CHORUS_TITLE_PREFIX = 'chorus-';
+
 async function createMuxLiveStream(roundFullId: string): Promise<{
   client: Mux;
   liveStream: MuxLiveStream;
@@ -104,12 +112,22 @@ async function createMuxLiveStream(roundFullId: string): Promise<{
     tokenSecret: fetchEnv('MUX_TOKEN_SECRET'),
   });
 
+  // Sweep leftover chorus-* entries from prior parties first. We deliberately
+  // don't tear those down at end-of-stream because that cuts trailing HLS
+  // segments off mid-listener; cleaning up on the next start instead lets
+  // each stream live out its natural HLS playback tail.
+  await cleanupChorusLeftovers(client);
+
+  const title = `${CHORUS_TITLE_PREFIX}${ulid()}`;
   const created = await client.video.liveStreams.create({
     playback_policies: ['public'],
     audio_only: true,
     latency_mode: 'low',
     passthrough: roundFullId,
+    meta: { title },
+    new_asset_settings: { meta: { title } },
   });
+  logger.info({ liveStreamId: created.id, title }, '[mux] created livestream');
 
   const playbackId = created.playback_ids?.[0]?.id;
   if (!created.stream_key || !created.srt_passphrase || !playbackId) {
@@ -131,6 +149,59 @@ async function createMuxLiveStream(roundFullId: string): Promise<{
       playbackId,
     },
   };
+}
+
+/**
+ * List every Mux livestream and asset in the account, deleting any whose
+ * `meta.title` starts with the chorus prefix. Called at the start of each
+ * Mux-backed party — see the comment on createMuxLiveStream for the
+ * "sweep-on-start, not teardown-on-stop" rationale.
+ */
+async function cleanupChorusLeftovers(client: Mux): Promise<void> {
+  let deletedStreams = 0;
+  let deletedAssets = 0;
+
+  try {
+    for await (const ls of client.video.liveStreams.list()) {
+      const title = ls.meta?.title;
+      if (!title?.startsWith(CHORUS_TITLE_PREFIX)) continue;
+      try {
+        await client.video.liveStreams.delete(ls.id);
+        deletedStreams++;
+        logger.info({ liveStreamId: ls.id, title }, '[mux/cleanup] deleted leftover livestream');
+      } catch (err) {
+        debugError(
+          `[mux/cleanup] failed to delete livestream ${ls.id}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+  } catch (err) {
+    debugError(
+      `[mux/cleanup] livestream list failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  try {
+    for await (const asset of client.video.assets.list()) {
+      const title = asset.meta?.title;
+      if (!title?.startsWith(CHORUS_TITLE_PREFIX)) continue;
+      try {
+        await client.video.assets.delete(asset.id);
+        deletedAssets++;
+        logger.info({ assetId: asset.id, title }, '[mux/cleanup] deleted leftover asset');
+      } catch (err) {
+        debugError(
+          `[mux/cleanup] failed to delete asset ${asset.id}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+  } catch (err) {
+    debugError(
+      `[mux/cleanup] asset list failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  logger.info({ deletedStreams, deletedAssets }, '[mux/cleanup] swept previous chorus-* entries');
 }
 
 interface SrtControl {
@@ -208,42 +279,6 @@ async function closeSrtCaller(control: SrtControl | null): Promise<void> {
     new Promise<void>((resolve) => setTimeout(resolve, 500)),
   ]);
   await control.asyncSrt.dispose();
-}
-
-async function deleteMuxLiveStream(client: Mux, liveStreamId: string): Promise<void> {
-  // Mux's ingest takes a few seconds after stream end to finalize the asset
-  // and populate recent_asset_ids. Wait briefly so we can find them.
-  await sleep(3000);
-
-  let assetIds: string[] = [];
-  try {
-    const ls = await client.video.liveStreams.retrieve(liveStreamId);
-    assetIds = ls.recent_asset_ids ?? [];
-  } catch (err) {
-    debugError(
-      `[mux] retrieve for cleanup failed: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-  for (const assetId of assetIds) {
-    try {
-      await client.video.assets.delete(assetId);
-    } catch (err) {
-      debugError(
-        `[mux] failed to delete asset ${assetId}: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
-  }
-  try {
-    await client.video.liveStreams.delete(liveStreamId);
-  } catch (err) {
-    debugError(
-      `[mux] failed to delete live stream ${liveStreamId}: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-  logger.info(
-    { liveStreamId, deletedAssets: assetIds.length },
-    'Mux: cleaned up livestream + assets',
-  );
 }
 
 interface PacingState {
@@ -486,9 +521,10 @@ export const muxMachine = setup({
     teardown: fromPromise<void, MuxContext>(async ({ input }) => {
       if (input.abortController) input.abortController.abort();
       await closeSrtCaller(input.srtControl);
-      if (input.client && input.liveStream) {
-        await deleteMuxLiveStream(input.client, input.liveStream.id);
-      }
+      // We deliberately don't delete the livestream or asset here — doing so
+      // truncates trailing HLS segments for listeners still hearing the
+      // wind-down. Cleanup happens at the start of the *next* party via
+      // cleanupChorusLeftovers().
     }),
   },
 }).createMachine({
