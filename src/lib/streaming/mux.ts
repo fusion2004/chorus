@@ -310,8 +310,25 @@ async function streamPacketFile({
   let packetsInChunk = 0;
   let packetsSent = 0;
 
+  // PES-boundary-aware abort. Once `signal.aborted` is true we set
+  // `drainingToBoundary`; the loop keeps reading + sending until it sees a
+  // packet with PUSI=1 on the audio PES PID — i.e. the start of the *next*
+  // PES, which means the one we were mid-way through is now fully on the
+  // wire. Without this, /skipsong cuts mid-PES and Mux's HLS segmenter
+  // stalls on the truncated audio frame, then drops the connection a few
+  // seconds later.
+  //
+  // pesPid is detected from the first PUSI=1 packet whose payload begins
+  // with the PES start-code prefix `0x00 0x00 0x01`. PSI tables (PAT/PMT)
+  // also use PUSI=1 but their payloads start with a table_id byte, so they
+  // don't get falsely identified. Until we've seen at least one PES packet
+  // pesPid stays null and we'll stop at any PUSI=1 (safe fallback — we're
+  // still in the PSI preamble before any audio has been sent).
+  let drainingToBoundary = false;
+  let pesPid: number | null = null;
+
   try {
-    while (!signal.aborted) {
+    while (true) {
       const off = packetsInChunk * TS_PACKET_SIZE;
       const { bytesRead } = await fileHandle.read(chunkBuf, off, TS_PACKET_SIZE, null);
       if (bytesRead === 0) break;
@@ -327,6 +344,35 @@ async function streamPacketFile({
       if (packet[0] !== TS_SYNC_BYTE) {
         throw new Error(`MPEG-TS sync byte missing at packet ${packetsInChunk} of ${filePath}`);
       }
+
+      const pid = ((packet[1] & 0x1f) << 8) | packet[2];
+      const pusi = (packet[1] & 0x40) !== 0;
+
+      // PES-boundary stop check: PUSI=1 on the audio PID means a new PES is
+      // starting, so the previous one (which abort caught us in the middle
+      // of) is now complete on the wire. Stop *before* sending this packet.
+      if (drainingToBoundary && pusi && (pesPid === null || pid === pesPid)) {
+        break;
+      }
+
+      // First time we see a PES start, lock pesPid so subsequent PSI table
+      // PUSI=1 packets don't trip the boundary check above.
+      if (pesPid === null && pusi) {
+        const afc = (packet[3] >> 4) & 0x03;
+        const hasAF = (afc & 0x02) !== 0;
+        const hasPayload = (afc & 0x01) !== 0;
+        const payloadStart = hasAF ? 5 + packet[4] : 4;
+        if (
+          hasPayload &&
+          payloadStart + 2 < TS_PACKET_SIZE &&
+          packet[payloadStart] === 0x00 &&
+          packet[payloadStart + 1] === 0x00 &&
+          packet[payloadStart + 2] === 0x01
+        ) {
+          pesPid = pid;
+        }
+      }
+
       processPacket(packet, offset90kHz, ctx);
       packetsInChunk++;
       packetsSent++;
@@ -345,8 +391,16 @@ async function streamPacketFile({
         }
         packetsInChunk = 0;
       }
+
+      // Set the draining flag *after* sending this packet so we don't bail
+      // out on the very first PUSI=1 — that's the start of the first PES of
+      // the file, which we obviously want to send.
+      if (signal.aborted) drainingToBoundary = true;
     }
-    if (!signal.aborted && packetsInChunk > 0) {
+
+    // Always flush remaining buffered packets — even on abort, those are
+    // part of the in-flight PES we just committed to finishing.
+    if (packetsInChunk > 0) {
       await paceBeforeWrite();
       const flushSize = packetsInChunk * TS_PACKET_SIZE;
       const out = Buffer.allocUnsafeSlow(flushSize);
