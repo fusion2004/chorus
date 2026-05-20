@@ -1,6 +1,6 @@
 [tools]
 node = "24.15.0"
-yarn = "4.14.1"
+yarn = "4.15.0"
 
 [env]
 # Non-secret defaults that used to live in .envrc.sample.
