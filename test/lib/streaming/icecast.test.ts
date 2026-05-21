@@ -28,6 +28,12 @@ vi.mock('@fusion2004/nodeshout-koffi', () => ({
   ShoutAudioInfoKeys: { BITRATE: 'BITRATE', SAMPLERATE: 'SAMPLERATE', CHANNELS: 'CHANNELS' },
 }));
 
+// Mock fetchEnv so the icecast module doesn't blow up if HUBOT_STREAM_* aren't
+// set in the test environment (e.g. CI).
+vi.mock('@src/utils/fetch-env.js', () => ({
+  fetchEnv: vi.fn((name: string) => `dummy-${name}`),
+}));
+
 import { createActor, createMachine, fromCallback, fromPromise, type ActorRefFrom } from 'xstate';
 import { icecastMachine } from '@src/lib/streaming/icecast.js';
 
