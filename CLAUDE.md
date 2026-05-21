@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Chorus is a Discord bot and the "party rock commander" for Compoverse (ThaSauce music composition community). It runs listening parties where it streams competition entries over Icecast with AI-generated voice announcements (AWS Polly), coordinated through Discord slash commands.
+Chorus is a Discord bot and the "party rock commander" for Compoverse (ThaSauce music composition community). It runs listening parties where it streams competition entries to Icecast (MP3) or Mux (AAC over SRT) with AI-generated voice announcements (AWS Polly), coordinated through Discord slash commands. The streaming backend is chosen per party via the `stream_to` option on `/startparty`.
 
 ## Commands
 
@@ -28,7 +28,7 @@ CI runs lint + test on push and PR via `.github/workflows/ci.yml` (uses `jdx/mis
 
 ## Architecture
 
-**Stack:** TypeScript (ESM, `nodenext`), @sapphire/framework v5, discord.js v14, XState v5, nodeshout (Icecast streaming), AWS Polly (TTS), Vitest (tests)
+**Stack:** TypeScript (ESM, `nodenext`), @sapphire/framework v5, discord.js v14, XState v5, nodeshout (Icecast streaming), `@eyevinn/srt` + `@mux/mux-node` (Mux streaming), AWS Polly (TTS), Vitest (tests)
 
 ### Sapphire Auto-Discovery
 
@@ -43,7 +43,7 @@ All slash commands are guild-specific (registered to `GUILD_ID`, not global).
 
 The bot is driven by XState v5 actors. The main flow:
 
-1. **`partyService`** (`src/lib/party.ts`) — the central actor, manages the entire listening party lifecycle. Has parallel states for `processing` (fetch/transcode/announce) and `streaming` (audio playback). Largest and most complex file (~880 lines).
+1. **`partyService`** (`src/lib/party.ts`) — the central actor, manages the entire listening party lifecycle. Inside the `partying` state it runs two parallel substates: `processing` (fetch/transcode/announce) and `streaming` (a thin coordinator that spawns a streaming child machine and forwards events between it and Discord-side message helpers). Largest file (~800 lines).
 
 2. **`songMachine`** (`src/lib/machines.ts`) — tracks each song through: `init` → `fetched` → `downloading` → `downloaded` → `transcoding` → `transcoded` → `announcerProcessing` → `ready`
 
@@ -53,9 +53,27 @@ The `Song` class (`src/lib/song.ts`) wraps a `songMachine` actor instance and ex
 
 ### Audio Pipeline
 
-For each song in a round: fetch metadata from ThaSauce → download MP3 → transcode via FFmpeg (prism-media) → generate TTS announcer (AWS Polly, via `src/lib/polly.ts`) → stream to Icecast via nodeshout's manual chunk loop (`streamFile` helper in party.ts).
+For each song in a round: fetch metadata from ThaSauce → download MP3 → transcode via FFmpeg (prism-media) → generate TTS announcer (AWS Polly, via `src/lib/polly.ts`) → hand off to whichever streaming backend the party was started with.
+
+Transcode output format depends on the chosen backend (`StreamingMode`): Icecast gets MP3 (libmp3lame 256k), Mux gets AAC-LC (160k) muxed into MPEG-TS with `.ts` file extensions. `RoundTranscoder`, `RoundAnnouncer`, and `RoundExtraAnnouncer` all take a `StreamingMode` constructor arg and pick FFmpeg flags + extensions via the helpers in `src/lib/streaming/format.ts`. `Song.path()` reads the same `streamTo` to resolve `transcodeFinal`/`announcerFinal` to the correct extension.
 
 `src/lib/polly.ts` is the single integration point for AWS Polly — it owns the shared `PollyClient`, the `SynthesizeSpeechCommand` settings (voice, engine, sample rate, format), the SSML envelope (`buildSsml`), and the synthesize-to-file helper. Both `RoundAnnouncer` and `RoundExtraAnnouncer` consume it; nothing else should touch `@aws-sdk/client-polly` directly.
+
+### Streaming Backends
+
+`src/lib/streaming/` holds two interchangeable XState v5 child machines:
+
+- `icecast.ts` — owns the libshout/nodeshout connection. Reads `HUBOT_STREAM_*` + `ICECAST_ORIGIN` env vars. Streams MP3 files via libshout's chunk loop with `shout.delay()` for backpressure.
+- `mux.ts` — owns the Mux livestream lifecycle (create on connect, delete on stop), the `@eyevinn/srt` AsyncSRT caller, and the MPEG-TS packet rewriter that keeps PCR/PTS/CC monotonic across file boundaries (`mpegts.ts`). Reads `MUX_TOKEN_ID` / `MUX_TOKEN_SECRET` env vars.
+
+`partyService` spawns one of them at `partying.entry` based on `context.streamTo`, then communicates only via the protocol in `streaming/types.ts` (parent sends `CONNECT`/`PLAY_INTRO`/`PLAY_SONG`/`PLAY_OUTRO`/`SKIP_SONG`/`STOP`; child emits `STREAM_READY`/`STREAM_INTRO_DONE`/`STREAM_SONG_STARTED`/`STREAM_SONG_DONE`/`STREAM_OUTRO_DONE`/`STREAM_ERROR`). The Discord "now playing" embed fires on `STREAM_SONG_STARTED`, which child machines emit between the announcer and the song audio so the message timing aligns with what listeners actually hear.
+
+Mux SRT specifics that look weird but are intentional:
+
+- We resolve the host to an IPv4 in JS (`dns.lookup({ family: 4 })`) before calling `asyncSrt.connect`. `@eyevinn/srt`'s native binding uses `inet_pton(AF_INET, host, ...)` which only accepts literal IPv4s — pass a hostname and the connect silently goes to 0.0.0.0.
+- Each SRT write goes through a `Promise.race` against the next `'error'` event so a broken socket fails fast instead of hanging (`@eyevinn/srt` orphans callbacks after libsrt errors).
+- Buffers passed to `asyncSrt.write` are allocated via `Buffer.allocUnsafeSlow` so their backing `ArrayBuffer` is private and can be transferred through `postMessage` to the worker. Pool-backed buffers throw `DataCloneError`.
+- After the outro finishes streaming, the machine sits in `holding` for ~30s before emitting `STREAM_OUTRO_DONE` so trailing HLS segments fully publish to Mux and listeners can hear the wind-down.
 
 ### Error Handling in `partyService`
 
@@ -64,7 +82,7 @@ Every `fromPromise` actor that touches an external system has an `onError` handl
 ### Key Patterns
 
 - **XState v5 syntax:** `createActor()`, `getSnapshot().matches()`, `assign(({ context, event }) => ...)`, `fromPromise()`, `fromCallback()`, `raise({ type: 'EVENT' })`
-- **Ambient type shims:** `src/types/shims.d.ts` provides declarations for untyped packages (nodeshout, prism-media)
+- **Ambient type shims:** `src/types/shims.d.ts` provides declarations for untyped packages (currently just `prism-media` — `@fusion2004/nodeshout-koffi` and `@eyevinn/srt` ship their own types).
 - **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. `fetchEnvironment()` returns NODE_ENV with a 'development' fallback. Nothing in the codebase loads a `.env` file automatically (no dotenv); env vars must already be in `process.env` at startup. Local setup uses fnox: secrets are referenced from 1Password in `fnox.toml`, cached locally age-encrypted in `fnox.local.toml` (gitignored, populated by `mise run secrets:sync`), and loaded into the shell environment by fnox's own `activate zsh` hook (configured in `~/.zshrc`, not in `mise.toml`). Non-secret defaults still live in `mise.toml`'s `[env]` block. fnox uses interactive `op signin` auth — no service account token involved.
 
 ## Testing

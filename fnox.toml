@@ -9,3 +9,5 @@ AWS_ACCESS_KEY_ID            = { provider = "op", value = "chorus/aws_access_key
 AWS_SECRET_ACCESS_KEY        = { provider = "op", value = "chorus/aws_secret_access_key" }
 DEBUG_CHANNEL_ID             = { provider = "op", value = "chorus/debug_channel_id" }
 GUILD_ID                     = { provider = "op", value = "chorus/guild_id" }
+MUX_TOKEN_ID                 = { provider = "op", value = "chorus/mux_token_id" }
+MUX_TOKEN_SECRET             = { provider = "op", value = "chorus/mux_token_secret" }

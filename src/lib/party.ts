@@ -1,19 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFile } from 'music-metadata';
-import {
-  shoutInit,
-  shoutShutdown,
-  createShout,
-  ShoutErrorTypes,
-  ShoutFormats,
-  ShoutUsages,
-  ShoutMetaKeys,
-  ShoutAudioInfoKeys,
-} from '@fusion2004/nodeshout-koffi';
-import type { Shout } from '@fusion2004/nodeshout-koffi';
 
-import { createMachine, createActor, assign, raise, fromPromise, fromCallback } from 'xstate';
+import { createMachine, createActor, assign, raise, fromPromise, sendTo } from 'xstate';
+import type { ActorRef } from 'xstate';
 import type { TextChannel, Message } from 'discord.js';
 import { EmbedBuilder } from 'discord.js';
 
@@ -23,12 +13,12 @@ import { RoundFetcher } from './round-fetcher.js';
 import { RoundTranscoder } from './round-transcoder.js';
 import { RoundAnnouncer } from './round-announcer.js';
 import { RoundExtraAnnouncer } from './round-extra-announcer.js';
-import { announcerFinal, transcodeFinal } from '../utils/symbols.js';
-import { fetchEnv } from '../utils/fetch-env.js';
+import { icecastMachine } from './streaming/icecast.js';
+import { muxMachine } from './streaming/mux.js';
+import type { ExtraAnnouncer, StreamingMode, StreamingOutputEvent } from './streaming/types.js';
+import { downloadFinal } from '../utils/symbols.js';
 import { xstateTags } from '../utils/xstate-tags.js';
 import { logger, debugError } from './logger.js';
-
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Action factory for XState onError handlers: pulls the error message off the
 // invoke's error event and forwards it to the debug-channel logger.
@@ -38,23 +28,6 @@ function logActorError(prefix: string) {
     const message = (err as { message?: string })?.message ?? String(err);
     debugError(`${prefix}: ${message}`);
   };
-}
-
-function checkShout(shout: Shout, status: number, op: string): void {
-  if (status !== ShoutErrorTypes.SUCCESS) {
-    throw new Error(`libshout ${op} failed: error ${status} ${shout.getError()}`);
-  }
-}
-
-const STREAM = {
-  host: fetchEnv('HUBOT_STREAM_HOST'),
-  port: parseInt(fetchEnv('HUBOT_STREAM_PORT'), 10),
-  mount: fetchEnv('HUBOT_STREAM_MOUNT'),
-  password: fetchEnv('HUBOT_STREAM_SOURCE_PASSWORD'),
-};
-
-function streamUrl(): string {
-  return `${fetchEnv('ICECAST_ORIGIN')}/${STREAM.mount}`;
 }
 
 function splitAtIndex(str: string, index: number): [string, string] {
@@ -91,52 +64,20 @@ function roundPrefixAndId(fullId: string): { prefix: string | null; id: string }
 }
 
 async function parseMetadata(songs: Song[]): Promise<void> {
+  // Read from the source MP3 rather than the transcoded file: when streamTo
+  // is 'mux', transcodeFinal is an MPEG-TS container which music-metadata
+  // doesn't support (it bails with "Guessed MIME-type not supported:
+  // video/mp2t"). Source MP3 has the same duration + ID3 tags for our
+  // "Now Playing" embed purposes.
+  // TODO: switch to ffprobe (via ffmpeg-static or a similar binary) so we
+  // can read metadata directly off whatever container the streaming backend
+  // produced — gives us the *played* duration including encoder padding.
   await Promise.all(
     songs.map(async (song) => {
-      const metadata = await parseFile(song.path(transcodeFinal));
+      const metadata = await parseFile(song.path(downloadFinal));
       song.service.send({ type: 'UPDATE_METADATA', metadata });
     }),
   );
-}
-
-async function streamFile(shout: Shout, filePath: string, signal: AbortSignal): Promise<void> {
-  const fileHandle = await fs.promises.open(filePath);
-  const chunkSize = 65536;
-  const buf = Buffer.alloc(chunkSize);
-
-  try {
-    while (true) {
-      if (signal.aborted) return;
-      const { bytesRead } = await fileHandle.read(buf, 0, chunkSize, null);
-      if (bytesRead === 0) break;
-      checkShout(shout, shout.send(buf, bytesRead), 'send');
-      const delay = shout.delay();
-      if (delay > 0) await sleep(delay);
-    }
-  } finally {
-    await fileHandle.close();
-  }
-}
-
-async function playIntro(shout: Shout, abortController: AbortController): Promise<void> {
-  await streamFile(shout, './audio/intro01.mp3', abortController.signal);
-}
-
-async function playCurrentSong(
-  shout: Shout,
-  currentSong: Song,
-  abortController: AbortController,
-): Promise<void> {
-  await streamFile(shout, currentSong.path(announcerFinal), abortController.signal);
-  await streamFile(shout, currentSong.path(transcodeFinal), abortController.signal);
-}
-
-async function playOutro(
-  shout: Shout,
-  announcer: ExtraAnnouncer,
-  abortController: AbortController,
-): Promise<void> {
-  await streamFile(shout, announcer.path, abortController.signal);
 }
 
 function startFetchMessage(channel: TextChannel, round: string): void {
@@ -147,8 +88,8 @@ function fetchErrorMessage(channel: TextChannel): Promise<Message> {
   return channel.send(`There was an error fetching the round.`);
 }
 
-async function startIntroMessage(channel: TextChannel): Promise<void> {
-  await channel.send(`**Starting stream... ${streamUrl()}**`);
+async function startIntroMessage(channel: TextChannel, streamUrl: string): Promise<void> {
+  await channel.send(`**Starting stream... ${streamUrl}**`);
   await channel.send('**Playing stream intro before we get this party started...**');
 }
 
@@ -157,11 +98,13 @@ async function playCurrentSongMessage({
   currentSong,
   songs,
   round,
+  streamUrl,
 }: {
   channel: TextChannel;
   currentSong: Song;
   songs: Song[];
   round: string;
+  streamUrl: string;
 }): Promise<void> {
   const index = songs.findIndex((song) => song.id === currentSong.id);
   const position = index + 1;
@@ -171,7 +114,7 @@ async function playCurrentSongMessage({
     .setTitle(currentSong.safeTitle)
     .setURL(`http://compo.thasauce.net/rounds/view/${round}#entry-${currentSong.id}`)
     .setDescription(
-      `${round} listening party, entry ${position} of ${songs.length}.\n[Tune in to the stream here!](${streamUrl()})`,
+      `${round} listening party, entry ${position} of ${songs.length}.\n[Tune in to the stream here!](${streamUrl})`,
     )
     .addFields(
       { name: 'Artist', value: currentSong.safeArtist },
@@ -210,14 +153,18 @@ interface RoundInfo {
   dirs: RoundDirs;
 }
 
-interface ExtraAnnouncer {
-  id: string;
-  path: string;
-}
-
 interface PartyContext {
   channels?: { processing: TextChannel; party: TextChannel };
   round?: RoundInfo;
+  streamTo?: StreamingMode;
+  /** URL the streaming child reports back via READY; embedded in Discord messages. */
+  streamUrl?: string;
+  /**
+   * Ref to the spawned streaming child machine (icecastMachine | muxMachine).
+   * Only used so XState doesn't garbage-collect the actor — we communicate
+   * via sendTo('streamer', …) by id rather than via this ref.
+   */
+  streamerRef?: ActorRef<any, any>;
   fetcher?: CompoThaSauceFetcher;
   downloader?: RoundFetcher;
   transcoder?: RoundTranscoder;
@@ -225,21 +172,19 @@ interface PartyContext {
   extraAnnouncer?: RoundExtraAnnouncer;
   fetchedSongs?: any[];
   songs?: Song[];
-  _shout?: Shout;
-  abortController?: AbortController;
   currentSong?: Song | null;
   nextSongId?: string | null;
   outroAnnouncer?: ExtraAnnouncer;
 }
 
 type PartyEvent =
-  | { type: 'START'; channel: TextChannel; round: string }
+  | { type: 'START'; channel: TextChannel; round: string; streamTo: StreamingMode }
   | { type: 'STOP'; immediate?: boolean }
   | { type: 'SKIP_SONG' }
   | { type: 'REFETCH'; channel: TextChannel }
   | { type: 'START_STREAM' }
-  | { type: 'PLAY_STREAM'; _shout: Shout }
-  | { type: 'ERROR_OPENING_STREAM'; errorCode: number; message?: string };
+  // Events emitted by the streaming child machine — see streaming/types.ts
+  | StreamingOutputEvent;
 
 // ─── Message Sub-Machines ────────────────────────────────────────────────────
 
@@ -469,12 +414,13 @@ function reconcileSongs(
   currentSongs: Song[] | undefined,
   fetchedSongs: any[],
   roundDir: string,
+  streamTo: StreamingMode,
 ): Song[] {
   const existing = currentSongs ?? [];
   return fetchedSongs.map((songData) => {
     let song = existing.find((s) => s.id === songData.id);
     if (!song) {
-      song = new Song(roundDir);
+      song = new Song(roundDir, streamTo);
       song.service.send({ type: 'FETCH_FINISH', ...songData });
     }
     return song;
@@ -492,13 +438,14 @@ const machine = createMachine(
         entry: assign(() => ({
           channels: undefined,
           round: undefined,
+          streamTo: undefined,
+          streamUrl: undefined,
+          streamerRef: undefined,
           fetcher: undefined,
           downloader: undefined,
           announcer: undefined,
           fetchedSongs: undefined,
           songs: undefined,
-          _shout: undefined,
-          abortController: undefined,
           currentSong: undefined,
           nextSongId: undefined,
           outroAnnouncer: undefined,
@@ -511,15 +458,30 @@ const machine = createMachine(
         },
       },
       partying: {
-        entry: assign(({ context }) => ({
+        entry: assign(({ context, spawn }) => ({
           fetcher: new CompoThaSauceFetcher(context.round!.fullId),
           downloader: new RoundFetcher(),
-          transcoder: new RoundTranscoder(),
-          announcer: new RoundAnnouncer(context.round!.title),
-          extraAnnouncer: new RoundExtraAnnouncer(context.round!.title),
+          transcoder: new RoundTranscoder(context.streamTo!),
+          announcer: new RoundAnnouncer(context.round!.title, context.streamTo!),
+          extraAnnouncer: new RoundExtraAnnouncer(context.round!.title, context.streamTo!),
+          // Spawn the streaming child machine for the chosen backend. It sits
+          // in `idle` until we send CONNECT (after announcer generation
+          // finishes, matching today's "open the wire after processing" flow).
+          streamerRef: spawn(context.streamTo === 'mux' ? muxMachine : icecastMachine, {
+            id: 'streamer',
+            input: { round: { fullId: context.round!.fullId } },
+          }),
         })),
+        // STOP is sent both intentionally (slash command, party concluded) and
+        // raised internally on errors. Either way, transition to `stopping`
+        // and have it tell the streamer to tear itself down.
+        exit: sendTo('streamer', { type: 'STOP' }),
         type: 'parallel',
-        on: { STOP: { target: 'stopping' } },
+        on: {
+          STOP: { target: 'stopping' },
+          // /skipsong — forward to the streamer, which decides what aborts.
+          SKIP_SONG: { actions: sendTo('streamer', { type: 'SKIP_SONG' }) },
+        },
         states: {
           processing: {
             initial: 'fetching',
@@ -540,6 +502,7 @@ const machine = createMachine(
                           context.songs,
                           event.output.songs,
                           context.round!.dirs.parent,
+                          context.streamTo!,
                         ),
                       })),
                     ],
@@ -693,51 +656,43 @@ const machine = createMachine(
           },
           streaming: {
             initial: 'idle',
+            // Hard errors from the streaming child. Treat them as a request to
+            // wind the party down — same policy as actor onError elsewhere.
+            on: {
+              STREAM_ERROR: {
+                actions: [
+                  ({ event }) => debugError(`Streamer error: ${event.reason}`),
+                  raise({ type: 'STOP' }),
+                ],
+              },
+            },
             states: {
               idle: {
-                on: { START_STREAM: { target: 'setupNodeshout' } },
-              },
-              setupNodeshout: {
-                invoke: {
-                  src: 'initNodeshout',
-                  input: ({ context }) => context,
-                },
+                // Processing pipeline raises START_STREAM after announcer
+                // generation finishes; we forward CONNECT to the streamer so
+                // it opens the wire only once everything's ready.
                 on: {
-                  PLAY_STREAM: {
-                    target: 'playingIntro',
-                    actions: assign(({ event }) => ({ _shout: event._shout })),
+                  START_STREAM: {
+                    target: 'connecting',
+                    actions: sendTo('streamer', { type: 'CONNECT' }),
                   },
-                  ERROR_OPENING_STREAM: {
+                },
+              },
+              connecting: {
+                on: {
+                  STREAM_READY: {
+                    target: 'playingIntro',
                     actions: [
-                      ({ event }) =>
-                        debugError(
-                          `libshout open failed: ${event.message ?? `errno ${event.errorCode}`}`,
-                        ),
-                      raise({ type: 'STOP' }),
+                      assign(({ event }) => ({ streamUrl: event.url })),
+                      ({ context, event }) => startIntroMessage(context.channels!.party, event.url),
+                      sendTo('streamer', { type: 'PLAY_INTRO' }),
                     ],
                   },
                 },
               },
               playingIntro: {
-                entry: [
-                  assign(() => ({ abortController: new AbortController() })),
-                  ({ context }) => startIntroMessage(context.channels!.party),
-                ],
-                invoke: {
-                  id: 'playIntro',
-                  src: fromPromise(({ input }: { input: PartyContext }) =>
-                    playIntro(input._shout!, input.abortController!),
-                  ),
-                  input: ({ context }) => context,
-                  onDone: { target: 'pickNextSong' },
-                  onError: {
-                    actions: [logActorError('playIntro'), raise({ type: 'STOP' })],
-                  },
-                },
                 on: {
-                  SKIP_SONG: {
-                    actions: ({ context }) => context.abortController?.abort(),
-                  },
+                  STREAM_INTRO_DONE: { target: 'pickNextSong' },
                 },
               },
               pickNextSong: {
@@ -748,45 +703,34 @@ const machine = createMachine(
                 ],
               },
               playingSong: {
-                entry: [
-                  assign(() => ({ abortController: new AbortController() })),
-                  ({ context }) =>
-                    playCurrentSongMessage({
-                      channel: context.channels!.party,
-                      currentSong: context.currentSong!,
-                      songs: context.songs!,
-                      round: context.round!.fullId,
-                    }),
-                ],
-                invoke: {
-                  id: 'playCurrentSong',
-                  src: fromPromise(({ input }: { input: PartyContext }) =>
-                    playCurrentSong(input._shout!, input.currentSong!, input.abortController!),
-                  ),
-                  input: ({ context }) => context,
-                  onDone: { target: 'pickNextSong' },
-                  onError: {
-                    actions: [logActorError('playCurrentSong'), raise({ type: 'STOP' })],
-                  },
-                },
+                entry: sendTo('streamer', ({ context }) => ({
+                  type: 'PLAY_SONG',
+                  song: context.currentSong!,
+                })),
                 on: {
-                  SKIP_SONG: {
-                    actions: ({ context }) => context.abortController?.abort(),
+                  // The streamer emits SONG_STARTED once the announcer is done
+                  // and song audio is starting — that's when we post the "Now
+                  // Playing" embed so its timing matches what listeners hear.
+                  STREAM_SONG_STARTED: {
+                    actions: ({ context }) =>
+                      playCurrentSongMessage({
+                        channel: context.channels!.party,
+                        currentSong: context.currentSong!,
+                        songs: context.songs!,
+                        round: context.round!.fullId,
+                        streamUrl: context.streamUrl!,
+                      }),
                   },
+                  STREAM_SONG_DONE: { target: 'pickNextSong' },
                 },
               },
               playingOutro: {
-                entry: assign(() => ({ abortController: new AbortController() })),
-                invoke: {
-                  id: 'playOutro',
-                  src: fromPromise(({ input }: { input: PartyContext }) =>
-                    playOutro(input._shout!, input.outroAnnouncer!, input.abortController!),
-                  ),
-                  input: ({ context }) => context,
-                  onDone: { actions: raise({ type: 'STOP' }) },
-                  onError: {
-                    actions: [logActorError('playOutro'), raise({ type: 'STOP' })],
-                  },
+                entry: sendTo('streamer', ({ context }) => ({
+                  type: 'PLAY_OUTRO',
+                  announcer: context.outroAnnouncer!,
+                })),
+                on: {
+                  STREAM_OUTRO_DONE: { actions: raise({ type: 'STOP' }) },
                 },
               },
             },
@@ -794,7 +738,8 @@ const machine = createMachine(
         },
       },
       stopping: {
-        entry: 'cleanup',
+        // No explicit cleanup action here — partying.exit already sent STOP
+        // to the streamer, which handles its own libshout/SRT teardown.
         invoke: {
           id: 'stopPartyMessage',
           src: fromPromise(
@@ -825,6 +770,7 @@ const machine = createMachine(
         const parent = path.join(process.cwd(), 'tmp', 'rounds', ev.round);
         return {
           channels: { processing: ev.channel, party: ev.channel } as any,
+          streamTo: ev.streamTo,
           round: {
             fullId: ev.round,
             id,
@@ -840,21 +786,6 @@ const machine = createMachine(
           },
         };
       }),
-      cleanup: ({ context }) => {
-        if (context.abortController) {
-          logger.info('Aborting the current audio pipeline');
-          context.abortController.abort();
-        }
-        if (context._shout) {
-          logger.info('Closing nodeshout connection');
-          const status = context._shout.close();
-          if (status !== ShoutErrorTypes.SUCCESS) {
-            debugError(`libshout close failed: error ${status} ${context._shout.getError()}`);
-          }
-          context._shout.free();
-          shoutShutdown();
-        }
-      },
       setCurrentAndNextSong: assign(({ context }) => {
         if (!context.currentSong && !context.nextSongId) {
           const [first, second] = context.songs!;
@@ -879,64 +810,6 @@ const machine = createMachine(
             return { currentSong: context.songs![songIndex], nextSongId: next ? next.id : null };
           }
         }
-      }),
-    },
-    actors: {
-      initNodeshout: fromCallback<any, PartyContext>(({ sendBack, input }) => {
-        shoutInit();
-        const shout: Shout = createShout();
-        try {
-          checkShout(shout, shout.setHost(STREAM.host), 'setHost');
-          checkShout(shout, shout.setPort(STREAM.port), 'setPort');
-          checkShout(shout, shout.setUser('source'), 'setUser');
-          checkShout(shout, shout.setPassword(STREAM.password), 'setPassword');
-          checkShout(shout, shout.setMount(STREAM.mount), 'setMount');
-          checkShout(
-            shout,
-            shout.setContentFormat(ShoutFormats.MP3, ShoutUsages.AUDIO, null),
-            'setContentFormat',
-          );
-          checkShout(
-            shout,
-            shout.setMeta(ShoutMetaKeys.NAME, `${input.round?.fullId} Listening Party`),
-            'setMeta(NAME)',
-          );
-          checkShout(
-            shout,
-            shout.setAudioInfo(ShoutAudioInfoKeys.BITRATE, '320'),
-            'setAudioInfo(bitrate)',
-          );
-          checkShout(
-            shout,
-            shout.setAudioInfo(ShoutAudioInfoKeys.SAMPLERATE, '44100'),
-            'setAudioInfo(samplerate)',
-          );
-          checkShout(
-            shout,
-            shout.setAudioInfo(ShoutAudioInfoKeys.CHANNELS, '2'),
-            'setAudioInfo(channels)',
-          );
-
-          const status = shout.open();
-          if (status === ShoutErrorTypes.SUCCESS) {
-            sendBack({ type: 'PLAY_STREAM', _shout: shout });
-          } else {
-            const detail = `error ${status} ${shout.getError()}`;
-            shout.free();
-            shoutShutdown();
-            sendBack({ type: 'ERROR_OPENING_STREAM', errorCode: status, message: detail });
-          }
-        } catch (err) {
-          shout.free();
-          shoutShutdown();
-          sendBack({
-            type: 'ERROR_OPENING_STREAM',
-            errorCode: -1,
-            message: err instanceof Error ? err.message : String(err),
-          });
-        }
-
-        return () => {};
       }),
     },
   },

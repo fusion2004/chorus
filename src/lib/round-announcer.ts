@@ -7,13 +7,17 @@ import { sample } from 'lodash-es';
 
 import { announcerAws, announcerFinal, announcerIntermediate } from '../utils/symbols.js';
 import { buildSsml, synthesizeToFile } from './polly.js';
+import { ffmpegOutputArgs } from './streaming/format.js';
+import type { StreamingMode } from './streaming/types.js';
 import type { Song } from './song.js';
 
 export class RoundAnnouncer {
   roundTitle: string;
+  streamTo: StreamingMode;
 
-  constructor(roundTitle: string) {
+  constructor(roundTitle: string, streamTo: StreamingMode) {
     this.roundTitle = roundTitle;
+    this.streamTo = streamTo;
   }
 
   async process(songs: Song[]): Promise<void> {
@@ -74,17 +78,12 @@ export class RoundAnnouncer {
         '44100',
         '-ac',
         '2',
-        '-f',
-        'mp3',
-        '-c:a',
-        'libmp3lame',
-        '-b:a',
-        '256k',
+        ...ffmpegOutputArgs(this.streamTo),
       ],
     });
-    const mp3WriteStream = fs.createWriteStream(intermediatePath);
+    const writeStream = fs.createWriteStream(intermediatePath);
 
-    await pipeline(pcmReadStream, encodeStream, mp3WriteStream);
+    await pipeline(pcmReadStream, encodeStream, writeStream);
     await fs.promises.rename(intermediatePath, finalPath);
     await fs.promises.unlink(awsPath);
 

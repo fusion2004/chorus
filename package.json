@@ -8,7 +8,9 @@
   "type": "module",
   "dependencies": {
     "@aws-sdk/client-polly": "^3.1043.0",
+    "@eyevinn/srt": "^0.8.3",
     "@fusion2004/nodeshout-koffi": "^3.1.0",
+    "@mux/mux-node": "^14.0.1",
     "@sapphire/framework": "^5.5.0",
     "bottleneck": "^2.19.5",
     "bufferutil": "^4.1.0",
@@ -20,6 +22,7 @@
     "music-metadata": "^11.12.3",
     "pino": "^10.3.1",
     "prism-media": "^1.3.5",
+    "ulid": "^3.0.2",
     "utf-8-validate": "^6.0.6",
     "xmlbuilder": "^15.1.1",
     "xstate": "^5.31.0",
@@ -39,7 +42,8 @@
     "lint:typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "spike:srt": "tsx src/srt-spike.ts"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",

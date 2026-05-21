@@ -6,6 +6,8 @@ import Bottleneck from 'bottleneck';
 import prism from 'prism-media';
 
 import { buildSsml, synthesizeToFile } from './polly.js';
+import { encodedExt, ffmpegOutputArgs } from './streaming/format.js';
+import type { StreamingMode } from './streaming/types.js';
 
 interface Announcer {
   id: string;
@@ -15,9 +17,11 @@ interface Announcer {
 
 export class RoundExtraAnnouncer {
   roundTitle: string;
+  streamTo: StreamingMode;
 
-  constructor(roundTitle: string) {
+  constructor(roundTitle: string, streamTo: StreamingMode) {
     this.roundTitle = roundTitle;
+    this.streamTo = streamTo;
   }
 
   async process(directory: string): Promise<Announcer[]> {
@@ -51,9 +55,10 @@ export class RoundExtraAnnouncer {
   }
 
   async processIndividual(announcer: Announcer, directory: string): Promise<Announcer> {
+    const ext = encodedExt(this.streamTo);
     const awsPath = path.join(directory, `${announcer.id}-aws.mp3`);
-    const intermediatePath = path.join(directory, `${announcer.id}-intermediate.mp3`);
-    const finalPath = path.join(directory, `${announcer.id}.mp3`);
+    const intermediatePath = path.join(directory, `${announcer.id}-intermediate.${ext}`);
+    const finalPath = path.join(directory, `${announcer.id}.${ext}`);
 
     await synthesizeToFile(this.speech(announcer), awsPath);
 
@@ -72,17 +77,12 @@ export class RoundExtraAnnouncer {
         '44100',
         '-ac',
         '2',
-        '-f',
-        'mp3',
-        '-c:a',
-        'libmp3lame',
-        '-b:a',
-        '256k',
+        ...ffmpegOutputArgs(this.streamTo),
       ],
     });
-    const mp3WriteStream = fs.createWriteStream(intermediatePath);
+    const writeStream = fs.createWriteStream(intermediatePath);
 
-    await pipeline(pcmReadStream, encodeStream, mp3WriteStream);
+    await pipeline(pcmReadStream, encodeStream, writeStream);
     await fs.promises.rename(intermediatePath, finalPath);
     await fs.promises.unlink(awsPath);
 
