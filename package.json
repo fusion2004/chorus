@@ -9,7 +9,7 @@
   "dependencies": {
     "@aws-sdk/client-polly": "^3.1051.0",
     "@eyevinn/srt": "^0.8.3",
-    "@fusion2004/nodeshout-koffi": "^3.1.0",
+    "@fusion2004/nodeshout-koffi": "^3.2.0",
     "@mux/mux-node": "^14.1.0",
     "@sapphire/framework": "^5.5.0",
     "bottleneck": "^2.19.5",
