@@ -72,10 +72,14 @@ const TS_PACKETS_PER_SRT_CHUNK = 7;
 const SRT_CHUNK_SIZE = TS_PACKETS_PER_SRT_CHUNK * TS_PACKET_SIZE;
 
 // Sender-side pacing: never let the writer get more than this far ahead of
-// real-time. Pacing reads PTS/PCR from each packet directly. Must stay
-// comfortably under SRTO_LATENCY — packets older than the latency window get
-// TLPKTDROP'd by libsrt, so a large lead causes ~50% sender-side packet drops.
-const PACING_LEAD_MS = 900;
+// real-time. Pacing reads PTS/PCR from each packet directly. Must stay well
+// under the libsrt TLPKTDROP threshold (= SRTO_PEERLATENCY + SRTO_SNDDROPDELAY
+// + 2 * 10ms ACK interval ≈ 1020ms with our 1000ms latency). Packets stay in
+// the SRT send buffer until ACK'd; production traces show ACKs from Mux
+// arriving ~800ms late, so anything close to 1020ms means routine ACK jitter
+// pushes packets past the threshold and ~50% get TLPKTDROP'd. 250ms keeps the
+// buffer's age comfortably below the threshold even with sluggish ACKs.
+const PACING_LEAD_MS = 250;
 // After the outro we hold the SRT connection open this long so trailing-edge
 // HLS segments fully publish to Mux before we tear down.
 const TAIL_HOLD_SEC = 30;
@@ -255,9 +259,16 @@ function startStatsLogger(asyncSrt: AsyncSRTWithDispose, socket: number): () => 
           mbpsSendRate: s.mbpsSendRate,
           mbpsBandwidth: s.mbpsBandwidth,
           pktSent: s.pktSent,
+          byteSent: s.byteSent,
           pktSndLoss: s.pktSndLoss,
           pktRetrans: s.pktRetrans,
           pktSndDrop: s.pktSndDrop,
+          // pktRecvACK is "ACKs received by sender from peer" — sender-side
+          // metric. Confirms whether Mux is acknowledging our packets at all.
+          // pktSentACK is receiver-side, included so we see the 0 explicitly
+          // rather than guessing the field is absent.
+          pktRecvACK: s.pktRecvACK,
+          pktSentACK: s.pktSentACK,
           pktFlightSize: s.pktFlightSize,
           pktSndBuf: s.pktSndBuf,
           msSndBuf: s.msSndBuf,
