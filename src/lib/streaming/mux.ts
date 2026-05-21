@@ -39,7 +39,7 @@ import { ulid } from 'ulid';
 
 import { announcerFinal, transcodeFinal } from '../../utils/symbols.js';
 import { fetchEnv } from '../../utils/fetch-env.js';
-import { logger, debugError } from '../logger.js';
+import { logger, debugError, debugInfo, debugWarn } from '../logger.js';
 import type { Song } from '../song.js';
 import { processPacket, TS_PACKET_SIZE, TS_SYNC_BYTE, type PacketContext } from './mpegts.js';
 import type { ExtraAnnouncer, StreamingInput, StreamingInputEvent } from './types.js';
@@ -77,6 +77,19 @@ const PACING_LEAD_SEC = 15;
 // After the outro we hold the SRT connection open this long so trailing-edge
 // HLS segments fully publish to Mux before we tear down.
 const TAIL_HOLD_SEC = 30;
+// Mux holds the livestream open this long after a disconnect, accepting a
+// reconnect with the same stream key. Must comfortably exceed the time it
+// takes us to tear down a broken socket and reconnect (DNS + handshake +
+// retry, typically a few seconds).
+const MUX_RECONNECT_WINDOW_SEC = 30;
+// Interval for srt_bstats polling — frequent enough that the snapshot before
+// a disconnect is useful, sparse enough not to spam logs.
+const SRT_STATS_INTERVAL_MS = 2000;
+// Maximum SRT reconnect attempts per streamFile invocation (per intro /
+// announcer / song / outro). Multiple-disconnect scenarios in production
+// have shown one retry isn't always enough; cap stops a fully-broken path
+// from looping forever.
+const MAX_RECONNECTS_PER_FILE = 5;
 
 const PLAYER_POSTER_URL = 'https://misc-cdn.thasauce.io/chorus/chorus-mux-poster.webp';
 
@@ -123,6 +136,11 @@ async function createMuxLiveStream(roundFullId: string): Promise<{
     playback_policies: ['public'],
     audio_only: true,
     latency_mode: 'low',
+    // Low Latency defaults reconnect_window to 0, which rejects any reconnect
+    // attempt. We need a non-zero window so a transient SRT drop (handled by
+    // the reconnect path in streamPacketFile) lands on the same livestream
+    // instead of being treated as an end-of-stream.
+    reconnect_window: MUX_RECONNECT_WINDOW_SEC,
     passthrough: roundFullId,
     meta: { title },
     new_asset_settings: { meta: { title } },
@@ -209,6 +227,49 @@ interface SrtControl {
   socket: number;
   /** Sticky-error reader; first libsrt error wins. */
   getError: () => Error | null;
+  /** Stops the periodic srt_bstats poller attached at openSrtCaller. */
+  stopStats: () => void;
+}
+
+/**
+ * Periodically poll `srt_bstats` and log the headline counters. Without this
+ * we have no ground truth on whether disconnects come from packet loss
+ * (rising retrans/loss), receiver silence (RTT spiking, ACKs stalling), or
+ * our own buffer pressure. Errors from `stats()` are swallowed because the
+ * call can fail in transitional socket states; we don't want a logger
+ * crashing the stream.
+ */
+function startStatsLogger(asyncSrt: AsyncSRTWithDispose, socket: number): () => void {
+  let stopped = false;
+  const interval = setInterval(async () => {
+    if (stopped) return;
+    try {
+      const s = await asyncSrt.stats(socket, true);
+      if (stopped) return;
+      logger.info(
+        {
+          socket,
+          msRTT: s.msRTT,
+          mbpsSendRate: s.mbpsSendRate,
+          mbpsBandwidth: s.mbpsBandwidth,
+          pktSent: s.pktSent,
+          pktSndLoss: s.pktSndLoss,
+          pktRetrans: s.pktRetrans,
+          pktSndDrop: s.pktSndDrop,
+          pktFlightSize: s.pktFlightSize,
+          pktSndBuf: s.pktSndBuf,
+          msSndBuf: s.msSndBuf,
+        },
+        '[mux/srt] stats',
+      );
+    } catch {
+      // ignore — stats can fail in transitional socket states
+    }
+  }, SRT_STATS_INTERVAL_MS);
+  return () => {
+    stopped = true;
+    clearInterval(interval);
+  };
 }
 
 async function openSrtCaller(creds: MuxLiveStream): Promise<SrtControl> {
@@ -264,11 +325,13 @@ async function openSrtCaller(creds: MuxLiveStream): Promise<SrtControl> {
     throw new Error(`SRT connect failed (result=${result})`);
   }
 
-  return { asyncSrt, socket, getError: () => stickyError };
+  const stopStats = startStatsLogger(asyncSrt, socket);
+  return { asyncSrt, socket, getError: () => stickyError, stopStats };
 }
 
 async function closeSrtCaller(control: SrtControl | null): Promise<void> {
   if (!control) return;
+  control.stopStats();
   // close() may hang if AsyncSRT's internal callback queue got desynced from
   // an error mid-stream. Race with a short timeout so we always reach
   // dispose(), which terminates the worker thread directly.
@@ -279,6 +342,31 @@ async function closeSrtCaller(control: SrtControl | null): Promise<void> {
     new Promise<void>((resolve) => setTimeout(resolve, 500)),
   ]);
   await control.asyncSrt.dispose();
+}
+
+function isConnectionBroken(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes('Connection was broken');
+}
+
+/**
+ * Replace the broken SRT caller in-place. Mux's `reconnect_window` keeps the
+ * livestream alive across the gap, so re-authenticating with the same
+ * stream key resumes the same Mux ingest. We mutate the SrtControl object
+ * (Object.assign) because machine context holds the same reference — after
+ * this returns, subsequent fromPromise inputs see the new socket/asyncSrt
+ * without an XState assign.
+ */
+async function reconnectSrt(control: SrtControl, liveStream: MuxLiveStream): Promise<void> {
+  debugWarn('[mux/srt] connection broken; reconnecting');
+  await closeSrtCaller(control).catch((err: unknown) => {
+    debugError(
+      `[mux/srt] error closing broken control: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  });
+  const fresh = await openSrtCaller(liveStream);
+  Object.assign(control, fresh);
+  debugInfo({ socket: control.socket }, '[mux/srt] reconnected after broken connection');
 }
 
 interface PacingState {
@@ -294,6 +382,7 @@ interface PacingState {
  */
 async function streamPacketFile({
   control,
+  liveStream,
   filePath,
   offsetSec,
   ctx,
@@ -301,6 +390,7 @@ async function streamPacketFile({
   signal,
 }: {
   control: SrtControl;
+  liveStream: MuxLiveStream;
   filePath: string;
   offsetSec: number;
   ctx: PacketContext;
@@ -313,20 +403,49 @@ async function streamPacketFile({
   // file.
   if (ctx.latestStreamTimeSec < offsetSec) ctx.latestStreamTimeSec = offsetSec;
 
-  const { asyncSrt, socket, getError } = control;
+  // Up to MAX_RECONNECTS_PER_FILE reconnect attempts per streamFile invocation.
+  // Resets every call so a multi-song party can recover from drops on multiple
+  // files; bounded per-call so a persistently bad path doesn't spin reconnects
+  // forever.
+  let reconnectsRemaining = MAX_RECONNECTS_PER_FILE;
 
   async function srtWrite(chunk: Buffer): Promise<number> {
-    const prior = getError();
-    if (prior) throw prior;
-    let listener: ((err: unknown) => void) | undefined;
-    const errorRace = new Promise<never>((_, reject) => {
-      listener = (err) => reject(err instanceof Error ? err : new Error(String(err)));
-      asyncSrt.once('error', listener);
-    });
-    try {
-      return await Promise.race([asyncSrt.write(socket, chunk), errorRace]);
-    } finally {
-      if (listener) asyncSrt.off('error', listener);
+    while (true) {
+      // Re-read asyncSrt/socket each iteration so we use the fresh handle
+      // after a reconnect (reconnectSrt mutates `control` in place).
+      const ae = control.asyncSrt;
+      const sock = control.socket;
+      const prior = control.getError();
+      if (prior) {
+        if (isConnectionBroken(prior) && reconnectsRemaining > 0) {
+          reconnectsRemaining--;
+          await reconnectSrt(control, liveStream);
+          continue;
+        }
+        throw prior;
+      }
+      let listener: ((err: unknown) => void) | undefined;
+      const errorRace = new Promise<never>((_, reject) => {
+        listener = (err) => reject(err instanceof Error ? err : new Error(String(err)));
+        ae.once('error', listener);
+      });
+      try {
+        return await Promise.race([ae.write(sock, chunk), errorRace]);
+      } catch (err) {
+        if (isConnectionBroken(err) && reconnectsRemaining > 0) {
+          reconnectsRemaining--;
+          // Remove the listener from the old (about-to-be-disposed) asyncSrt
+          // before reconnecting — finally would do the same, but explicit
+          // here keeps the order obvious.
+          if (listener) ae.off('error', listener);
+          listener = undefined;
+          await reconnectSrt(control, liveStream);
+          continue;
+        }
+        throw err;
+      } finally {
+        if (listener) ae.off('error', listener);
+      }
     }
   }
 
@@ -500,6 +619,7 @@ export const muxMachine = setup({
       { lastStreamTimeSec: number },
       {
         control: SrtControl;
+        liveStream: MuxLiveStream;
         filePath: string;
         ctx: PacketContext;
         pacing: PacingState;
@@ -508,6 +628,7 @@ export const muxMachine = setup({
     >(({ input }) =>
       streamPacketFile({
         control: input.control,
+        liveStream: input.liveStream,
         filePath: input.filePath,
         offsetSec: input.ctx.latestStreamTimeSec,
         ctx: input.ctx,
@@ -619,6 +740,7 @@ export const muxMachine = setup({
         src: 'streamFile',
         input: ({ context }) => ({
           control: context.srtControl!,
+          liveStream: context.liveStream!,
           filePath: INTRO_PATH,
           ctx: context.packetCtx,
           pacing: context.pacing,
@@ -657,6 +779,7 @@ export const muxMachine = setup({
             src: 'streamFile',
             input: ({ context }) => ({
               control: context.srtControl!,
+              liveStream: context.liveStream!,
               filePath: context.currentSong!.path(announcerFinal),
               ctx: context.packetCtx,
               pacing: context.pacing,
@@ -695,6 +818,7 @@ export const muxMachine = setup({
             src: 'streamFile',
             input: ({ context }) => ({
               control: context.srtControl!,
+              liveStream: context.liveStream!,
               filePath: context.currentSong!.path(transcodeFinal),
               ctx: context.packetCtx,
               pacing: context.pacing,
@@ -738,6 +862,7 @@ export const muxMachine = setup({
         src: 'streamFile',
         input: ({ context }) => ({
           control: context.srtControl!,
+          liveStream: context.liveStream!,
           filePath: context.outroAnnouncer!.path,
           ctx: context.packetCtx,
           pacing: context.pacing,

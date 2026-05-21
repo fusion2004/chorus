@@ -34,6 +34,7 @@ const fakeSrtControl = {
   asyncSrt: { close: vi.fn(), dispose: vi.fn(async () => 0) },
   socket: 1,
   getError: () => null,
+  stopStats: vi.fn(),
 };
 
 type MuxTestLogic = ReturnType<typeof muxMachine.provide>;

@@ -1,17 +1,16 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": ["config:best-practices", "group:allNonMajor"],
   "packageRules": [
-    {
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "all non-major dependencies",
-      "groupSlug": "non-major"
-    },
     {
       "matchManagers": ["npm"],
       "matchDepTypes": ["engines"],
       "matchDepNames": ["node"],
       "enabled": false
+    },
+    {
+      "matchPackageNames": ["*"],
+      "rangeStrategy": "bump"
     }
   ],
   "rangeStrategy": "bump"
