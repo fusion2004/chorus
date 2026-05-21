@@ -72,8 +72,10 @@ const TS_PACKETS_PER_SRT_CHUNK = 7;
 const SRT_CHUNK_SIZE = TS_PACKETS_PER_SRT_CHUNK * TS_PACKET_SIZE;
 
 // Sender-side pacing: never let the writer get more than this far ahead of
-// real-time. Pacing reads PTS/PCR from each packet directly.
-const PACING_LEAD_SEC = 15;
+// real-time. Pacing reads PTS/PCR from each packet directly. Must stay
+// comfortably under SRTO_LATENCY — packets older than the latency window get
+// TLPKTDROP'd by libsrt, so a large lead causes ~50% sender-side packet drops.
+const PACING_LEAD_MS = 900;
 // After the outro we hold the SRT connection open this long so trailing-edge
 // HLS segments fully publish to Mux before we tear down.
 const TAIL_HOLD_SEC = 30;
@@ -377,7 +379,7 @@ interface PacingState {
 /**
  * Stream one MPEG-TS file: read 188-byte packets, rewrite CC/PCR/PTS/DTS via
  * `processPacket`, send to SRT in 1316-byte chunks, throttle so the latest
- * stream-time stays within `PACING_LEAD_SEC` of wall-clock. Aborts early if
+ * stream-time stays within `PACING_LEAD_MS` of wall-clock. Aborts early if
  * `signal` fires (skip-song).
  */
 async function streamPacketFile({
@@ -409,7 +411,7 @@ async function streamPacketFile({
   // forever.
   let reconnectsRemaining = MAX_RECONNECTS_PER_FILE;
 
-  async function srtWrite(chunk: Buffer): Promise<number> {
+  async function srtWrite(source: Buffer, length: number): Promise<number> {
     while (true) {
       // Re-read asyncSrt/socket each iteration so we use the fresh handle
       // after a reconnect (reconnectSrt mutates `control` in place).
@@ -424,13 +426,21 @@ async function streamPacketFile({
         }
         throw prior;
       }
+      // Allocate a fresh standalone Buffer each iteration. @eyevinn/srt's
+      // postMessage transfers `out.buffer` to the worker, which detaches the
+      // ArrayBuffer in our process. If we kept the same `out` across retries,
+      // the second write would throw "Cannot transfer object of unsupported
+      // type." allocUnsafeSlow also bypasses Node's shared Buffer pool, which
+      // postMessage's transferList rejects entirely.
+      const out = Buffer.allocUnsafeSlow(length);
+      source.copy(out, 0, 0, length);
       let listener: ((err: unknown) => void) | undefined;
       const errorRace = new Promise<never>((_, reject) => {
         listener = (err) => reject(err instanceof Error ? err : new Error(String(err)));
         ae.once('error', listener);
       });
       try {
-        return await Promise.race([ae.write(sock, chunk), errorRace]);
+        return await Promise.race([ae.write(sock, out), errorRace]);
       } catch (err) {
         if (isConnectionBroken(err) && reconnectsRemaining > 0) {
           reconnectsRemaining--;
@@ -454,9 +464,9 @@ async function streamPacketFile({
       pacing.startMs = performance.now();
       return;
     }
-    const elapsedSec = (performance.now() - pacing.startMs) / 1000;
-    const lead = ctx.latestStreamTimeSec - elapsedSec;
-    if (lead > PACING_LEAD_SEC) await sleep((lead - PACING_LEAD_SEC) * 1000);
+    const elapsedMs = performance.now() - pacing.startMs;
+    const leadMs = ctx.latestStreamTimeSec * 1000 - elapsedMs;
+    if (leadMs > PACING_LEAD_MS) await sleep(leadMs - PACING_LEAD_MS);
   }
 
   const fileHandle = await fs.promises.open(filePath, 'r');
@@ -533,13 +543,7 @@ async function streamPacketFile({
 
       if (packetsInChunk === TS_PACKETS_PER_SRT_CHUNK) {
         await paceBeforeWrite();
-        // Each SRT write needs a Buffer whose underlying ArrayBuffer is
-        // standalone (not Node's shared Buffer pool) — @eyevinn/srt
-        // postMessages chunk.buffer in its transferList and pool-backed
-        // buffers can't be transferred. allocUnsafeSlow bypasses the pool.
-        const out = Buffer.allocUnsafeSlow(SRT_CHUNK_SIZE);
-        chunkBuf.copy(out);
-        const result = await srtWrite(out);
+        const result = await srtWrite(chunkBuf, SRT_CHUNK_SIZE);
         if (result === SRT_ERROR) {
           throw new Error(`SRT write returned SRT_ERROR after ${packetsSent} packets`);
         }
@@ -557,9 +561,7 @@ async function streamPacketFile({
     if (packetsInChunk > 0) {
       await paceBeforeWrite();
       const flushSize = packetsInChunk * TS_PACKET_SIZE;
-      const out = Buffer.allocUnsafeSlow(flushSize);
-      chunkBuf.copy(out, 0, 0, flushSize);
-      const result = await srtWrite(out);
+      const result = await srtWrite(chunkBuf, flushSize);
       if (result === SRT_ERROR) {
         throw new Error(`SRT write returned SRT_ERROR on flush after ${packetsSent} packets`);
       }
