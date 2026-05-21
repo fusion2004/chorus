@@ -403,10 +403,13 @@ async function openSrtCaller(creds: LiveStreamCreds): Promise<{
   await asyncSrt.setSockOpt(socket, SRTO_PBKEYLEN, 16);
   await asyncSrt.setSockOpt(socket, SRTO_LATENCY, MUX_SRT_LATENCY_MS);
 
-  const srtUrl =
-    `srt://${MUX_SRT_HOST}:${MUX_SRT_PORT}?streamid=${creds.streamKey}` +
-    `&passphrase=${creds.srtPassphrase}&pbkeylen=16&latency=${MUX_SRT_LATENCY_MS}`;
-  console.log(`[srt] url: ${srtUrl}`);
+  // Passphrase intentionally omitted from logs — streamid stays so we can
+  // cross-reference the Mux dashboard when something goes wrong.
+  console.log(
+    `[srt] url: srt://${MUX_SRT_HOST}:${MUX_SRT_PORT}` +
+      `?streamid=${creds.streamKey}&passphrase=<redacted>` +
+      `&pbkeylen=16&latency=${MUX_SRT_LATENCY_MS}`,
+  );
 
   // @eyevinn/srt's native binding uses inet_pton(AF_INET, host, ...) which only
   // parses IPv4 literals — it does NOT do DNS resolution. Resolve in JS first.
