@@ -32,7 +32,7 @@ import fs from 'node:fs';
 import { lookup } from 'node:dns/promises';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import Mux from '@mux/mux-node';
+import Mux from '@mux/ts';
 import { AsyncSRT } from '@eyevinn/srt';
 import { setup, assign, fromPromise, sendParent } from 'xstate';
 import { ulid } from 'ulid';

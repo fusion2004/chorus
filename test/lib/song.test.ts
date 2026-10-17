@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseFile } from 'music-metadata';
 import { Song, formatDuration } from '@src/lib/song.js';
 import {
   announcerAws,
@@ -75,6 +77,20 @@ describe('Song', () => {
       metadata: { format: { duration: 185 } } as any,
     });
     expect(song.formattedDuration).toBe('3:05');
+  });
+
+  // Runs the real music-metadata parser (as party.ts's parseMetadata does) so
+  // dependency upgrades that change MP3 duration parsing fail CI.
+  it('formattedDuration reflects metadata parsed from a real MP3', async () => {
+    const metadata = await parseFile(
+      fileURLToPath(new URL('../../audio/intro01.mp3', import.meta.url)),
+    );
+    expect(metadata.format.duration).toBeCloseTo(50.834, 2);
+
+    const song = fetchSong(new Song('/tmp/x'));
+    song.service.send({ type: 'SKIP_TRANSCODE' });
+    song.service.send({ type: 'UPDATE_METADATA', metadata });
+    expect(song.formattedDuration).toBe('0:50');
   });
 
   describe('filename', () => {

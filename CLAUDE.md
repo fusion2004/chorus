@@ -28,7 +28,7 @@ CI runs lint + test on push and PR via `.github/workflows/ci.yml` (uses `jdx/mis
 
 ## Architecture
 
-**Stack:** TypeScript (ESM, `nodenext`), @sapphire/framework v5, discord.js v14, XState v5, nodeshout (Icecast streaming), `@eyevinn/srt` + `@mux/mux-node` (Mux streaming), AWS Polly (TTS), Vitest (tests)
+**Stack:** TypeScript (ESM, `nodenext`), @sapphire/framework v5, discord.js v14, XState v5, nodeshout (Icecast streaming), `@eyevinn/srt` + `@mux/ts` (Mux streaming), AWS Polly (TTS), Vitest (tests)
 
 ### Sapphire Auto-Discovery
 
