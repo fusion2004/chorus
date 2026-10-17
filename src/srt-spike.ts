@@ -8,7 +8,7 @@
  * Run:           yarn spike:srt
  *
  * What it does:
- *   1. Creates an audio-only Mux livestream via @mux/mux-node.
+ *   1. Creates an audio-only Mux livestream via @mux/ts.
  *   2. Pre-transcodes the 3 MP3s in audio/ to AAC-in-MPEG-TS at audio/ts/*.ts
  *      using ffmpeg-static + the built-in `aac` encoder.
  *   3. Opens an SRT caller connection to global-live.mux.com:6001.
@@ -34,7 +34,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import Mux from '@mux/mux-node';
+import Mux from '@mux/ts';
 import { AsyncSRT, setSRTLoggingLevel } from '@eyevinn/srt';
 import { parseFile } from 'music-metadata';
 

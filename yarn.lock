@@ -790,12 +790,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mux/mux-node@npm:^14.1.1":
-  version: 14.1.1
-  resolution: "@mux/mux-node@npm:14.1.1"
-  bin:
-    mux-mux-node: bin/cli
-  checksum: 10/256c6a52a080efcf0dd423bb3fb7f5e32bd100b51b45f9fa12d9f512b925cfecc823e6d1d6e392360761b59266e743ac31b7e4de589f11b7c52cb5e96804d26d
+"@mux/ts@npm:^15.6.1":
+  version: 15.6.1
+  resolution: "@mux/ts@npm:15.6.1"
+  checksum: 10/d69a7501686e58cf8d135e2883b76482c95a196de6b9057a996d454a2a9a89a5332431370415fa754eb3d0cb260e06f0e714376dea78fba2078213850d67f336
   languageName: node
   linkType: hard
 
@@ -1917,7 +1915,7 @@ __metadata:
     "@aws-sdk/client-polly": "npm:^3.1151.0"
     "@eyevinn/srt": "npm:^0.8.3"
     "@fusion2004/nodeshout-koffi": "npm:^3.2.1"
-    "@mux/mux-node": "npm:^14.1.1"
+    "@mux/ts": "npm:^15.6.1"
     "@sapphire/framework": "npm:^5.5.1"
     "@types/lodash-es": "npm:^4.17.12"
     "@types/node": "npm:^24.19.2"
