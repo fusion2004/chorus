@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 
-// Mock @mux/mux-node so the SDK doesn't try to read MUX_TOKEN_* at import.
+// Mock @mux/ts so the SDK doesn't try to read MUX_TOKEN_* at import.
 // (The constructor reads env via fetchEnv inside the helpers, but importing
 // the module shouldn't require credentials.)
-vi.mock('@mux/mux-node', () => ({
+vi.mock('@mux/ts', () => ({
   default: vi.fn(),
 }));
 
