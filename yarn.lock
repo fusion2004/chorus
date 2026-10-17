@@ -1441,13 +1441,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tokenizer/inflate@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "@tokenizer/inflate@npm:0.4.1"
+"@tokenizer/inflate@npm:^0.5.1":
+  version: 0.5.1
+  resolution: "@tokenizer/inflate@npm:0.5.1"
   dependencies:
     debug: "npm:^4.4.3"
-    token-types: "npm:^6.1.1"
-  checksum: 10/27d58757e1a6c004e86f8a5f1a40fe47cb48aa6891864d03de6eab27d42fafc1456f396bc8bc300e16913b0a85f42034d011db0213d17e544ed201a7fc24244e
+    token-types: "npm:^6.1.2"
+  checksum: 10/66a3e708eeb1f088d1a6260ecad84ce463b1c876c6de600419ce09da24627ce483bd05cf80cc518f597d3500d78464641ef02730f31b96d3fdd9b83154843e83
   languageName: node
   linkType: hard
 
@@ -1927,7 +1927,7 @@ __metadata:
     ffmpeg-static: "npm:^5.3.0"
     got: "npm:^15.1.0"
     lodash-es: "npm:^4.18.1"
-    music-metadata: "npm:^11.12.3"
+    music-metadata: "npm:^12.2.0"
     oxfmt: "npm:^0.73.0"
     oxlint: "npm:^1.88.0"
     pino: "npm:^10.4.0"
@@ -2015,10 +2015,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"content-type@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "content-type@npm:2.1.0"
-  checksum: 10/8aac907922538f430d8bfab1d8fe2fbdc1eb890a0fa7a619f712db4bfefe24be951ba464f972007df64840c775bf2db284ca8223547ac5317ad9ab2ee8e6501b
+"content-type@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "content-type@npm:3.1.1"
+  checksum: 10/97d3f22c21475ab05ea3b4a46044d573d281db5706f6268b95adbccdf4d05ebcb34c9517a27e1e60588d04eaf43dc78e7a5ad8f2aae47241caf4fae2fa957eba
   languageName: node
   linkType: hard
 
@@ -2438,15 +2438,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-type@npm:^21.3.4":
-  version: 21.3.4
-  resolution: "file-type@npm:21.3.4"
+"file-type@npm:^22.2.0":
+  version: 22.2.0
+  resolution: "file-type@npm:22.2.0"
   dependencies:
-    "@tokenizer/inflate": "npm:^0.4.1"
-    strtok3: "npm:^10.3.4"
-    token-types: "npm:^6.1.1"
-    uint8array-extras: "npm:^1.4.0"
-  checksum: 10/42d5cf6aafb998fb2f0357e96ea7c48bcce5249f899523a3a5a4c297f4fe2346cc0aff9cf04243ada5c54b6457183550b2a04902b6533cd5e64aaa344d78e0eb
+    "@tokenizer/inflate": "npm:^0.5.1"
+    strtok3: "npm:^10.5.0"
+    token-types: "npm:^6.1.2"
+    uint8array-extras: "npm:^1.6.0"
+  checksum: 10/70fbf215c9db0fed4fa803a5824b81db915e2942c84a912389eba291a043179fe8db2703d67a32e90ec2acba76e8895694b421f5e63009b59988e23c09acdd4d
   languageName: node
   linkType: hard
 
@@ -3298,21 +3298,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"music-metadata@npm:^11.12.3":
-  version: 11.16.1
-  resolution: "music-metadata@npm:11.16.1"
+"music-metadata@npm:^12.2.0":
+  version: 12.2.1
+  resolution: "music-metadata@npm:12.2.1"
   dependencies:
     "@borewit/text-codec": "npm:^0.2.2"
     "@tokenizer/token": "npm:^0.3.0"
-    content-type: "npm:^2.1.0"
+    content-type: "npm:^3.1.1"
     debug: "npm:^4.4.3"
-    file-type: "npm:^21.3.4"
+    file-type: "npm:^22.2.0"
     media-typer: "npm:^2.0.0"
-    strtok3: "npm:^10.3.5"
+    strtok3: "npm:^10.5.0"
     token-types: "npm:^6.1.2"
-    uint8array-extras: "npm:^1.5.0"
+    uint8array-extras: "npm:^1.6.0"
     win-guid: "npm:^0.2.1"
-  checksum: 10/02a12356e843af7fabb3e033bb1738672c6967061a2ebb9029181ec9ca4b67642e8fec07c4bf443b4507e48babaf683d67c6beb4d06e2da09fe250567bdfa427
+  checksum: 10/d6c1ddba140623ca01340b5f25c4d1f08ab5d69c94e2604d1a0b5fef7cc96a296ae4730433d3c4e27eaac2afc1f64a55381773cefafb9a8d5da51c96c2aef7bc
   languageName: node
   linkType: hard
 
@@ -4176,7 +4176,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strtok3@npm:^10.3.4, strtok3@npm:^10.3.5":
+"strtok3@npm:^10.5.0":
   version: 10.5.0
   resolution: "strtok3@npm:10.5.0"
   dependencies:
@@ -4275,7 +4275,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"token-types@npm:^6.1.1, token-types@npm:^6.1.2":
+"token-types@npm:^6.1.2":
   version: 6.1.2
   resolution: "token-types@npm:6.1.2"
   dependencies:
@@ -4351,7 +4351,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uint8array-extras@npm:^1.4.0, uint8array-extras@npm:^1.5.0":
+"uint8array-extras@npm:^1.5.0, uint8array-extras@npm:^1.6.0":
   version: 1.6.0
   resolution: "uint8array-extras@npm:1.6.0"
   checksum: 10/485927269f68809fb9b37f17effcf9094b2f4c332d8468c7488d259e662ec0ad5c5bba66ca5500e1f5d8de8cf29c83db9148600b3633d444f1a1bc6b734145da
