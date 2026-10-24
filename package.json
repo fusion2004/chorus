@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "type": "module",
   "dependencies": {
-    "@aws-sdk/client-polly": "^3.1152.0",
+    "@aws-sdk/client-polly": "^3.1154.0",
     "@eyevinn/srt": "^0.8.3",
     "@fusion2004/nodeshout-koffi": "^3.2.1",
     "@mux/ts": "^15.6.1",
@@ -54,7 +54,7 @@
     "pino-pretty": "^13.2.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vite": "^8.3.4",
+    "vite": "^8.3.5",
     "vitest": "^5.0.5"
   },
   "resolutions": {
