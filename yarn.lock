@@ -1505,7 +1505,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*":
+"@types/node@npm:*, @types/node@npm:^26.6.5":
   version: 26.6.5
   resolution: "@types/node@npm:26.6.5"
   dependencies:
@@ -1518,15 +1518,6 @@ __metadata:
   version: 10.17.60
   resolution: "@types/node@npm:10.17.60"
   checksum: 10/f9161493b3284b1d41d5d594c2768625acdd9e33f992f71ccde47861916e662e2ae438d2cc5f1b285053391a31b52a7564ecedc22d485610d236bfad9c7e6a1c
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^24.19.2":
-  version: 24.19.2
-  resolution: "@types/node@npm:24.19.2"
-  dependencies:
-    undici-types: "npm:>=7.24.0 <7.24.7"
-  checksum: 10/5bc31df093f2866db0a2f9df0a1e99c2a46c3154ca2dc62ee14bde7af216d6361e4737e1023880921007ccb326b8559980e239e18a6fa927cda507da9383225c
   languageName: node
   linkType: hard
 
@@ -1959,7 +1950,7 @@ __metadata:
     "@mux/ts": "npm:^15.6.1"
     "@sapphire/framework": "npm:^5.5.1"
     "@types/lodash-es": "npm:^4.17.12"
-    "@types/node": "npm:^24.19.2"
+    "@types/node": "npm:^26.6.5"
     "@vitest/coverage-v8": "npm:^5.0.5"
     bottleneck: "npm:^2.19.5"
     bufferutil: "npm:^4.1.0"
@@ -4093,13 +4084,6 @@ __metadata:
   bin:
     ulid: dist/cli.js
   checksum: 10/1adf14f7c5a4f6e68311ebc631390d09430332509bb04f9938e7c7be52a98546a789c5dad05c9339da9a9f1e5ecf8df1286ce85f749e4b78c591809d976ac6b3
-  languageName: node
-  linkType: hard
-
-"undici-types@npm:>=7.24.0 <7.24.7":
-  version: 7.24.6
-  resolution: "undici-types@npm:7.24.6"
-  checksum: 10/defc9538b952e3c15b8526596c591f7c1f0c7605ad27a2b7feddbea7ef2e3003f3eda2cdb051a3cb1a2185e3893100fd9cb925c799db99d48131ea63b5233d10
   languageName: node
   linkType: hard
 
