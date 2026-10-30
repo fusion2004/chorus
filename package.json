@@ -10,7 +10,7 @@
     "@aws-sdk/client-polly": "^3.1152.0",
     "@eyevinn/srt": "^0.8.3",
     "@fusion2004/nodeshout-koffi": "^3.2.1",
-    "@mux/ts": "^15.6.1",
+    "@mux/ts": "^16.0.0",
     "@sapphire/framework": "^5.5.1",
     "bottleneck": "^2.19.5",
     "bufferutil": "^4.1.0",
