@@ -783,10 +783,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mux/ts@npm:^15.6.1":
-  version: 15.6.1
-  resolution: "@mux/ts@npm:15.6.1"
-  checksum: 10/d69a7501686e58cf8d135e2883b76482c95a196de6b9057a996d454a2a9a89a5332431370415fa754eb3d0cb260e06f0e714376dea78fba2078213850d67f336
+"@mux/ts@npm:^16.2.0":
+  version: 16.2.0
+  resolution: "@mux/ts@npm:16.2.0"
+  checksum: 10/5112ae215c90a431076064cf126e0af20652a007ba66bdb14f672a568e05dde455c63d1eb160935b64f1634a7cfda099d082bfc42ecd3269f1a594d65924939d
   languageName: node
   linkType: hard
 
@@ -1949,7 +1949,7 @@ __metadata:
     "@aws-sdk/client-polly": "npm:^3.1152.0"
     "@eyevinn/srt": "npm:^0.8.3"
     "@fusion2004/nodeshout-koffi": "npm:^3.2.1"
-    "@mux/ts": "npm:^15.6.1"
+    "@mux/ts": "npm:^16.2.0"
     "@sapphire/framework": "npm:^5.5.1"
     "@types/lodash-es": "npm:^4.17.12"
     "@types/node": "npm:^24.19.2"
