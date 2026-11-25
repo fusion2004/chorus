@@ -108,4 +108,6 @@ Path aliases: `@src/*` and `@test/*` are configured in both `tsconfig.json` (`co
 
 This means the same `PreconditionContainerArray` → `PreconditionContainerSingle` → store-lookup path that runs in production also runs in tests.
 
+**Encoding pipeline tests need real `ffmpeg` and `ffprobe` on `PATH`** (CI installs them via apt). `test/lib/encoding-pipeline.test.ts` pushes generated tones through `RoundTranscoder`, `RoundAnnouncer`, and `RoundExtraAnnouncer` for both backends and checks the output with ffprobe (`test/helpers/audio.ts`). It deliberately knows nothing about how `src/` spawns ffmpeg. The fixtures are multi-MB on purpose: the Node 26 / prism-media breakage only showed up once ffmpeg's stdin applied backpressure. Polly is mocked to copy a fixture file.
+
 `vi.mock('@src/lib/party.js', ...)` replaces the heavy module-level `partyService` singleton in command tests so we don't pull in nodeshout, AWS, etc. The logger module is left unmocked: pino is configured to be `silent` when `NODE_ENV=test`, and tests assert via `vi.spyOn(logger, 'info' | 'warn' | 'error')` and `vi.spyOn(debugChannelService, 'send')` — exercising the real code paths rather than stubbing out the integration.

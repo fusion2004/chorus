@@ -33,6 +33,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-berry-
 
+      # The encoding pipeline tests run real ffmpeg/ffprobe.
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -version | head -1
+
       - name: Install dependencies
         run: yarn install --immutable
 
