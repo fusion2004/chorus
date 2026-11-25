@@ -10,7 +10,7 @@
  * What it does:
  *   1. Creates an audio-only Mux livestream via @mux/ts.
  *   2. Pre-transcodes the 3 MP3s in audio/ to AAC-in-MPEG-TS at audio/ts/*.ts
- *      using ffmpeg-static + the built-in `aac` encoder.
+ *      using the ffmpeg on PATH + the built-in `aac` encoder.
  *   3. Opens an SRT caller connection to global-live.mux.com:6001.
  *   4. Streams the .ts files directly from disk, parsing and rewriting MPEG-TS
  *      packets in-flight. No phase-2 ffmpeg. For each 188-byte packet we:
@@ -30,7 +30,6 @@
 import { spawn } from 'node:child_process';
 import { lookup } from 'node:dns/promises';
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
@@ -42,13 +41,8 @@ import { parseFile } from 'music-metadata';
 // (it terminates the worker thread the binding spawns). Without it, the process hangs.
 type AsyncSRTWithDispose = AsyncSRT & { dispose(): Promise<number> };
 
-// ffmpeg-static is CJS and `module.exports` IS the path string, but its .d.ts
-// uses `export default` which TS 6 + NodeNext can't reconcile against the
-// runtime shape. createRequire sidesteps the type mismatch.
-const cjsRequire = createRequire(import.meta.url);
-const ffmpegPath = cjsRequire('ffmpeg-static') as string | null;
-if (!ffmpegPath) throw new Error('ffmpeg-static did not provide a binary path');
-const FFMPEG_BIN: string = ffmpegPath;
+// Our FFmpeg build (thasauce-apt) on PATH, same as the bot itself uses.
+const FFMPEG_BIN = 'ffmpeg';
 
 // SRTO_* values from libsrt's srt.h (also at node_modules/@eyevinn/srt/src/srt-api-enums.ts).
 // Pulled inline so we don't need to import .ts source from a JS package.
@@ -336,7 +330,7 @@ async function runFfmpeg(args: string[]): Promise<void> {
 }
 
 async function transcodeOne(mp3Path: string, tsPath: string): Promise<void> {
-  // AAC-LC (built-in `aac` encoder, ffmpeg-static includes it) CBR 160k in MPEG-TS.
+  // AAC-LC (built-in `aac` encoder) CBR 160k in MPEG-TS.
   await runFfmpeg([
     '-hide_banner',
     '-loglevel',

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# Installs packages from our apt repo for Railpack's thasauce-apt step, which runs on top of packages:apt:runtime.
+#
+# Railpack can't add an apt source before its own apt steps, and a step only reaches the final image by being copied
+# into it. Copying /usr whole would store it twice, so this deletes every file the install didn't touch, leaving the
+# step's deployOutputs with just the changes. That breaks the step's filesystem, so it has to be the step's last command.
+#
+# Usage:
+#   bin/install_from_thasauce_apt <package>...
+
+set -euo pipefail
+
+"$(dirname "$0")/add_thasauce_apt"
+apt-get update
+
+# dpkg keeps the mtimes from its packages, so only the ctime shows what it wrote
+marker="$(mktemp)"
+sleep 1
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@"
+
+# BuildKit mounts these into the step, so they can't be deleted
+find /usr /etc /var/lib/dpkg -xdev \( -type f -o -type l \) ! -cnewer "$marker" \
+  ! -path /etc/hosts ! -path /etc/hostname ! -path /etc/resolv.conf -delete

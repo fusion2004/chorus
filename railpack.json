@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.railpack.com",
+  // These and deploy.aptPackages used to be the RAILPACK_BUILD_APT_PACKAGES / RAILPACK_DEPLOY_APT_PACKAGES variables
+  "buildAptPackages": [
+    "...",
+    "libshout3",
+    "libshout3-dev",
+    "libsndfile1",
+    "libsndfile1-dev",
+    "libmad0",
+    "libmad0-dev",
+    "libmp3lame0",
+    "libmp3lame-dev",
+    "libsrt-openssl-dev"
+  ],
+  "steps": {
+    // Railpack can't add an apt source before its own apt steps, so packages from our repo are installed on top of them.
+    // The script leaves only what the install changed, so these outputs don't copy all of /usr into the image.
+    "thasauce-apt": {
+      "inputs": [{ "step": "packages:apt:runtime" }],
+      "commands": [
+        { "src": "bin/add_thasauce_apt", "dest": "/app/bin/add_thasauce_apt" },
+        { "src": "bin/install_from_thasauce_apt", "dest": "/app/bin/install_from_thasauce_apt" },
+        { "src": ".github/apt/thasauce-apt.asc", "dest": "/app/.github/apt/thasauce-apt.asc" },
+        "bin/install_from_thasauce_apt ffmpeg"
+      ],
+      "deployOutputs": [{ "include": ["/usr", "/etc", "/var/lib/dpkg"] }],
+      "secrets": []
+    }
+  },
+  "deploy": {
+    "aptPackages": [
+      "...",
+      // @fusion2004/nodeshout-koffi loads libshout with koffi at runtime
+      "libshout3",
+      "libshout3-dev",
+      "libsndfile1",
+      "libsndfile1-dev",
+      "libmad0",
+      "libmad0-dev",
+      "libmp3lame0",
+      "libmp3lame-dev",
+      "libsrt-openssl-dev",
+      "libatomic1"
+    ]
+  }
+}

@@ -69,7 +69,7 @@ async function parseMetadata(songs: Song[]): Promise<void> {
   // doesn't support (it bails with "Guessed MIME-type not supported:
   // video/mp2t"). Source MP3 has the same duration + ID3 tags for our
   // "Now Playing" embed purposes.
-  // TODO: switch to ffprobe (via ffmpeg-static or a similar binary) so we
+  // TODO: switch to ffprobe (installed alongside ffmpeg) so we
   // can read metadata directly off whatever container the streaming backend
   // produced — gives us the *played* duration including encoder padding.
   await Promise.all(

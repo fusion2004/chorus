@@ -1,0 +1,53 @@
+name: Railway config
+
+# Plans changes to .railway/railway.ts on pull requests, commenting the plan, and applies that plan when they merge
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    # Only main deploys, so a stacked pull request merging into another branch mustn't apply
+    branches:
+      - main
+    paths:
+      - ".railway/**"
+
+permissions:
+  contents: read
+
+# The plan step runs `npm install` at the repo root so the CLI can evaluate .railway/railway.ts. That ignores
+# yarn.lock, but the job only evaluates config; it never builds or ships the app. .npmrc skips install scripts, so
+# native modules like @eyevinn/srt aren't compiled for it.
+jobs:
+  plan:
+    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: railwayapp/config@9e17d413dbe219f19d62538d9c06b5dbb5e9abf8 # v1
+        with:
+          command: plan
+          railway-token: ${{ secrets.RAILWAY_TOKEN }}
+
+  apply:
+    if: github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - uses: railwayapp/config@9e17d413dbe219f19d62538d9c06b5dbb5e9abf8 # v1
+        with:
+          command: apply
+          railway-token: ${{ secrets.RAILWAY_TOKEN }}
