@@ -35,7 +35,8 @@ import { setTimeout as sleep } from 'node:timers/promises';
 
 import Mux from '@mux/ts';
 import { AsyncSRT, setSRTLoggingLevel } from '@eyevinn/srt';
-import { parseFile } from 'music-metadata';
+
+import { probeDuration } from './lib/ffmpeg.js';
 
 // @eyevinn/srt's .d.ts omits AsyncSRT#dispose() but the method exists at runtime
 // (it terminates the worker thread the binding spawns). Without it, the process hangs.
@@ -591,9 +592,7 @@ async function main(): Promise<void> {
     // purposes (a few tens of ms of AAC encoder priming/padding). The packet
     // rewriter shifts every PCR/PTS/DTS by `cumulativeOffsetSec * 90000` so
     // each repeat picks up where the prior one left off.
-    const meta = await parseFile(mp3Path);
-    const durationSec = meta.format.duration ?? 0;
-    if (durationSec <= 0) throw new Error(`music-metadata returned no duration for ${mp3Path}`);
+    const durationSec = await probeDuration(mp3Path);
     const totalDurationSec = durationSec * STREAM_REPEATS;
     console.log(
       `[srt] streaming ${tsPath} ${STREAM_REPEATS}× ` +

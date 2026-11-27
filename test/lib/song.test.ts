@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseFile } from 'music-metadata';
+import { probeDuration } from '@src/lib/ffmpeg.js';
 import { Song, formatDuration } from '@src/lib/song.js';
 import {
   announcerAws,
@@ -64,32 +64,29 @@ describe('Song', () => {
     expect(song.safeArtist).toBe('');
   });
 
-  it('formattedDuration returns null when no metadata is set', () => {
+  it('formattedDuration returns null when no duration is set', () => {
     const song = fetchSong(new Song('/tmp/x'));
     expect(song.formattedDuration).toBeNull();
   });
 
-  it('formattedDuration returns M:SS when metadata has a duration', () => {
+  it('formattedDuration returns M:SS once a duration is set', () => {
     const song = fetchSong(new Song('/tmp/x'));
     song.service.send({ type: 'SKIP_TRANSCODE' });
-    song.service.send({
-      type: 'UPDATE_METADATA',
-      metadata: { format: { duration: 185 } } as any,
-    });
+    song.service.send({ type: 'UPDATE_DURATION', duration: 185 });
     expect(song.formattedDuration).toBe('3:05');
   });
 
-  // Runs the real music-metadata parser (as party.ts's parseMetadata does) so
-  // dependency upgrades that change MP3 duration parsing fail CI.
-  it('formattedDuration reflects metadata parsed from a real MP3', async () => {
-    const metadata = await parseFile(
+  // Runs the real ffprobe (as party.ts's probeDurations does), so an FFmpeg
+  // upgrade that changes how MP3 durations are read fails CI.
+  it('formattedDuration reflects the duration probed from a real MP3', async () => {
+    const duration = await probeDuration(
       fileURLToPath(new URL('../../audio/intro01.mp3', import.meta.url)),
     );
-    expect(metadata.format.duration).toBeCloseTo(50.834, 2);
+    expect(duration).toBeCloseTo(50.79, 1);
 
     const song = fetchSong(new Song('/tmp/x'));
     song.service.send({ type: 'SKIP_TRANSCODE' });
-    song.service.send({ type: 'UPDATE_METADATA', metadata });
+    song.service.send({ type: 'UPDATE_DURATION', duration });
     expect(song.formattedDuration).toBe('0:50');
   });
 

@@ -18,7 +18,6 @@
     "discord.js": "14.27.0",
     "got": "^16.1.0",
     "lodash-es": "^4.18.1",
-    "music-metadata": "^12.2.3",
     "pino": "^10.4.0",
     "ulid": "^3.0.2",
     "utf-8-validate": "^6.0.6",

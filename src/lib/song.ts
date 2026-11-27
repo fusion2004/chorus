@@ -18,7 +18,6 @@ import {
   transcodeFinal,
   transcodeIntermediate,
 } from '../utils/symbols.js';
-import type { IAudioMetadata } from 'music-metadata';
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -78,16 +77,13 @@ export class Song {
     return this.service.getSnapshot().context.url;
   }
 
-  get metadata(): IAudioMetadata | undefined {
-    return this.service.getSnapshot().context.metadata;
+  get duration(): number | undefined {
+    return this.service.getSnapshot().context.duration;
   }
 
   get formattedDuration(): string | null {
-    const { metadata } = this.service.getSnapshot().context;
-    if (metadata?.format?.duration) {
-      return formatDuration(metadata.format.duration);
-    }
-    return null;
+    const { duration } = this;
+    return duration ? formatDuration(duration) : null;
   }
 
   path(type: symbol): string {

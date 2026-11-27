@@ -17,9 +17,9 @@ export function encodedExt(streamTo: StreamingMode): string {
 }
 
 /**
- * The codec/bitrate/container portion of an FFmpeg argv. Combine with
- * input-side flags (`-analyzeduration 0 -loglevel 0 -map_metadata -1 -ar
- * 44100 -ac 2` and any `-filter:a ...`) to form the full args list.
+ * The codec/bitrate/container portion of an FFmpeg argv. `encodeAudio` in
+ * src/lib/ffmpeg.ts combines it with the input, stream mapping, and
+ * resampling flags.
  */
 export function ffmpegOutputArgs(streamTo: StreamingMode): string[] {
   if (streamTo === 'mux') {
