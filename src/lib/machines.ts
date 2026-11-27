@@ -1,12 +1,12 @@
 import { createMachine, assign } from 'xstate';
-import type { IAudioMetadata } from 'music-metadata';
 
 export interface SongContext {
   id?: string;
   title?: string;
   artist?: string;
   url?: string;
-  metadata?: IAudioMetadata;
+  /** Seconds, probed from the transcoded file. */
+  duration?: number;
 }
 
 export type SongEvent =
@@ -19,7 +19,7 @@ export type SongEvent =
   | { type: 'SKIP_TRANSCODE' }
   | { type: 'START_ANNOUNCER_DL_AND_TRANSCODE' }
   | { type: 'FINISH_ANNOUNCER_DL_AND_TRANSCODE' }
-  | { type: 'UPDATE_METADATA'; metadata: IAudioMetadata };
+  | { type: 'UPDATE_DURATION'; duration: number };
 
 export const songMachine = createMachine({
   types: {} as { context: SongContext; events: SongEvent },
@@ -58,8 +58,8 @@ export const songMachine = createMachine({
     transcoded: {
       on: {
         START_ANNOUNCER_DL_AND_TRANSCODE: 'announcerProcessing',
-        UPDATE_METADATA: {
-          actions: assign(({ event }) => ({ metadata: event.metadata })),
+        UPDATE_DURATION: {
+          actions: assign(({ event }) => ({ duration: event.duration })),
         },
       },
     },

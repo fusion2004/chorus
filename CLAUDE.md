@@ -22,7 +22,11 @@ mise run lint:typecheck # Type-check only (tsc --noEmit)
 
 `yarn <script>` works too for the same commands (mise tasks just shell out to yarn). The `lint` and `lint:fix` orchestrators only exist as mise tasks — they use `depends` for parallelism, replacing the old `npm-run-all2`-driven scripts.
 
-Deployed via Heroku (`Procfile: bot: yarn start`). The Heroku Node buildpack runs `yarn build` automatically during the build phase, so `yarn start` just runs the already-compiled `dist/index.js` at dyno boot. There is no pre-built `dist/` committed.
+Deployed on Railway (the `chorus` service in the ThaSauce `main` project), built by Railpack from `railpack.json`. Railpack runs `yarn build` during the build, so `yarn start` just runs the already-compiled `dist/index.js`. There is no pre-built `dist/` committed. To try a build locally: start BuildKit (`docker run --rm --privileged -d --name buildkit moby/buildkit`), then `BUILDKIT_HOST=docker-container://buildkit mise exec github:railwayapp/railpack@latest -- railpack build . --platform linux/amd64`.
+
+- **FFmpeg comes from our apt repo** ([thasauce-apt](https://github.com/fusion2004/thasauce-apt), amd64 only), in production and CI, so both run the same build. Railpack can't add an apt source before its own apt steps, so `railpack.json` has a `thasauce-apt` step that runs `bin/install_from_thasauce_apt` on top of `packages:apt:runtime`. That script deletes every file the install didn't touch, so the step's outputs are only what it changed. CI runs `bin/install_ci_packages`. Both use `bin/add_thasauce_apt` and the key in `.github/apt/`. The bot runs whichever `ffmpeg` is on `PATH` (`src/lib/ffmpeg.ts`); don't add `ffmpeg-static` back.
+- **`.railway/railway.ts` declares the service and its variables as code.** It exports `partial = 'chorus'`, so it leaves the other services in the project (akatosh, nightly-restart, chorus-icecast) alone. **Any variable not declared there is deleted on the next apply**, so add new env vars there, not only in the dashboard. The repo is public, so secrets use `preserve()` and their values live only on Railway. `.github/workflows/railway-config.yml` comments the plan on PRs that touch `.railway/` and applies it when they merge. Preview locally with `railway config plan`.
+- **`.npmrc` sets `ignore-scripts=true` for npm only** (yarn ignores it). The Railway config action runs `npm install` just to evaluate `railway.ts`, and npm ignores yarn's `resolutions`, so without this it would try to build `@eyevinn/srt` with a node-gyp that's broken on Python 3.13.
 
 CI runs lint + test on push and PR via `.github/workflows/ci.yml` (uses `jdx/mise-action` to install Node and Yarn from `mise.toml`). The `mise run lint` task includes `tsc --noEmit`, so a separate build step isn't needed for typechecking.
 
@@ -53,9 +57,11 @@ The `Song` class (`src/lib/song.ts`) wraps a `songMachine` actor instance and ex
 
 ### Audio Pipeline
 
-For each song in a round: fetch metadata from ThaSauce → download MP3 → transcode via FFmpeg (prism-media) → generate TTS announcer (AWS Polly, via `src/lib/polly.ts`) → hand off to whichever streaming backend the party was started with.
+For each song in a round: fetch metadata from ThaSauce → download MP3 → transcode via FFmpeg → generate TTS announcer (AWS Polly, via `src/lib/polly.ts`) → hand off to whichever streaming backend the party was started with.
 
-Transcode output format depends on the chosen backend (`StreamingMode`): Icecast gets MP3 (libmp3lame 256k), Mux gets AAC-LC (160k) muxed into MPEG-TS with `.ts` file extensions. `RoundTranscoder`, `RoundAnnouncer`, and `RoundExtraAnnouncer` all take a `StreamingMode` constructor arg and pick FFmpeg flags + extensions via the helpers in `src/lib/streaming/format.ts`. `Song.path()` reads the same `streamTo` to resolve `transcodeFinal`/`announcerFinal` to the correct extension.
+Transcode output format depends on the chosen backend (`StreamingMode`): Icecast gets MP3 (libmp3lame 256k), Mux gets AAC-LC (160k) muxed into MPEG-TS with `.ts` file extensions. `RoundTranscoder`, `RoundAnnouncer`, and `RoundExtraAnnouncer` all take a `StreamingMode` constructor arg and pick FFmpeg flags + extensions via the helpers in `src/lib/streaming/format.ts`.
+
+All three encode through `encodeAudio` in `src/lib/ffmpeg.ts`, which spawns the `ffmpeg` CLI on file paths (no stdin/stdout piping) and rejects with the tail of ffmpeg's stderr on a non-zero exit. Each writes to an intermediate path and renames it to the final one, so a half-written file is never picked up. We used to use prism-media, until Node 26 broke its stream wrapper. Don't go back to piping audio through ffmpeg's stdio unless something actually needs streaming. After transcoding, `party.ts` reads each song's duration (shown in "Now Playing" and `/playlist`) with `probeDuration`, which runs ffprobe on the transcoded file, so it works for Mux's MPEG-TS too. `Song.path()` reads the same `streamTo` to resolve `transcodeFinal`/`announcerFinal` to the correct extension.
 
 `src/lib/polly.ts` is the single integration point for AWS Polly — it owns the shared `PollyClient`, the `SynthesizeSpeechCommand` settings (voice, engine, sample rate, format), the SSML envelope (`buildSsml`), and the synthesize-to-file helper. Both `RoundAnnouncer` and `RoundExtraAnnouncer` consume it; nothing else should touch `@aws-sdk/client-polly` directly.
 
@@ -82,7 +88,6 @@ Every `fromPromise` actor that touches an external system has an `onError` handl
 ### Key Patterns
 
 - **XState v5 syntax:** `createActor()`, `getSnapshot().matches()`, `assign(({ context, event }) => ...)`, `fromPromise()`, `fromCallback()`, `raise({ type: 'EVENT' })`
-- **Ambient type shims:** `src/types/shims.d.ts` provides declarations for untyped packages (currently just `prism-media` — `@fusion2004/nodeshout-koffi` and `@eyevinn/srt` ship their own types).
 - **Environment variables:** All required env vars are accessed via `fetchEnv()` from `src/utils/fetch-env.ts`, which throws if missing. `fetchEnvironment()` returns NODE_ENV with a 'development' fallback. Nothing in the codebase loads a `.env` file automatically (no dotenv); env vars must already be in `process.env` at startup. Local setup uses fnox: secrets are referenced from 1Password in `fnox.toml`, cached locally age-encrypted in `fnox.local.toml` (gitignored, populated by `mise run secrets:sync`), and loaded into the shell environment by fnox's own `activate zsh` hook (configured in `~/.zshrc`, not in `mise.toml`). Non-secret defaults still live in `mise.toml`'s `[env]` block. fnox uses interactive `op signin` auth — no service account token involved.
 
 ## Testing
@@ -107,5 +112,7 @@ Path aliases: `@src/*` and `@test/*` are configured in both `tsconfig.json` (`co
 3. `runCommand(command, interaction)` invokes the real `CorePreChatInputCommandRun` listener, reads the captured `Accepted`/`Denied` emit, and on success invokes the real `CoreChatInputCommandAccepted` listener (which calls `command.chatInputRun`). Returns `{ ran, blockedBy, deniedBy, emits }`.
 
 This means the same `PreconditionContainerArray` → `PreconditionContainerSingle` → store-lookup path that runs in production also runs in tests.
+
+**Encoding pipeline tests need real `ffmpeg` and `ffprobe` on `PATH`** (CI installs ours from thasauce-apt with `bin/install_ci_packages`; on a Mac, thasauce-apt's `bin/install_ffmpeg` puts the same build in `~/.local/bin`). `test/lib/encoding-pipeline.test.ts` pushes generated tones through `RoundTranscoder`, `RoundAnnouncer`, and `RoundExtraAnnouncer` for both backends and checks the output with ffprobe (`test/helpers/audio.ts`). It deliberately knows nothing about how `src/` spawns ffmpeg. The fixtures are multi-MB on purpose: the Node 26 / prism-media breakage only showed up once ffmpeg's stdin applied backpressure, so they'll catch it if anything goes back to streaming. Polly is mocked to copy a fixture file.
 
 `vi.mock('@src/lib/party.js', ...)` replaces the heavy module-level `partyService` singleton in command tests so we don't pull in nodeshout, AWS, etc. The logger module is left unmocked: pino is configured to be `silent` when `NODE_ENV=test`, and tests assert via `vi.spyOn(logger, 'info' | 'warn' | 'error')` and `vi.spyOn(debugChannelService, 'send')` — exercising the real code paths rather than stubbing out the integration.

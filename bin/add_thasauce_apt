@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# Adds our apt repo (https://github.com/fusion2004/thasauce-apt) to this machine, for FFmpeg, built with the codecs we
+# need. bin/install_ci_packages and bin/install_from_thasauce_apt run this, and whatever installs from the repo has to
+# run apt-get update afterwards.
+#
+# Usage:
+#   bin/add_thasauce_apt
+
+set -euo pipefail
+
+sudo_if_needed() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+key="$(dirname "$0")/../.github/apt/thasauce-apt.asc"
+codename="$(. /etc/os-release && echo "$VERSION_CODENAME")"
+
+sudo_if_needed install -D -m 644 "$key" /etc/apt/keyrings/thasauce-apt.asc
+sudo_if_needed tee /etc/apt/sources.list.d/thasauce.sources > /dev/null <<SOURCES
+Types: deb
+URIs: https://misc-cdn.thasauce.io/apt
+Suites: $codename
+Components: main
+Architectures: amd64
+Signed-By: /etc/apt/keyrings/thasauce-apt.asc
+SOURCES

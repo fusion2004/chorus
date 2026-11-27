@@ -1,10 +1,8 @@
 import fs from 'node:fs';
-import { pipeline } from 'node:stream/promises';
 
 import Bottleneck from 'bottleneck';
-import prism from 'prism-media';
 
-import { ffmpegOutputArgs } from './streaming/format.js';
+import { encodeAudio } from './ffmpeg.js';
 import type { StreamingMode } from './streaming/types.js';
 import { downloadFinal, transcodeFinal, transcodeIntermediate } from '../utils/symbols.js';
 import type { Song } from './song.js';
@@ -36,25 +34,7 @@ export class RoundTranscoder {
 
     song.service.send({ type: 'START_TRANSCODE' });
 
-    const readStream = fs.createReadStream(song.path(downloadFinal));
-    const encodeStream = new prism.FFmpeg({
-      args: [
-        '-analyzeduration',
-        '0',
-        '-loglevel',
-        '0',
-        '-map_metadata',
-        '-1',
-        '-ar',
-        '44100',
-        '-ac',
-        '2',
-        ...ffmpegOutputArgs(this.streamTo),
-      ],
-    });
-    const writeStream = fs.createWriteStream(intermediatePath);
-
-    await pipeline(readStream, encodeStream, writeStream);
+    await encodeAudio(song.path(downloadFinal), intermediatePath, this.streamTo);
     await fs.promises.rename(intermediatePath, finalPath);
 
     song.service.send({ type: 'FINISH_TRANSCODE' });

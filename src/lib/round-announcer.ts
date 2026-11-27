@@ -1,13 +1,11 @@
 import fs from 'node:fs';
-import { pipeline } from 'node:stream/promises';
 
 import Bottleneck from 'bottleneck';
-import prism from 'prism-media';
 import { sample } from 'lodash-es';
 
 import { announcerAws, announcerFinal, announcerIntermediate } from '../utils/symbols.js';
+import { ANNOUNCER_LOUDNORM, encodeAudio } from './ffmpeg.js';
 import { buildSsml, synthesizeToFile } from './polly.js';
-import { ffmpegOutputArgs } from './streaming/format.js';
 import type { StreamingMode } from './streaming/types.js';
 import type { Song } from './song.js';
 
@@ -63,27 +61,9 @@ export class RoundAnnouncer {
 
     await synthesizeToFile(this.speech(song, firstTrack), awsPath);
 
-    const pcmReadStream = fs.createReadStream(awsPath);
-    const encodeStream = new prism.FFmpeg({
-      args: [
-        '-analyzeduration',
-        '0',
-        '-loglevel',
-        '0',
-        '-map_metadata',
-        '-1',
-        '-filter:a',
-        'loudnorm=I=-16:TP=-1.5:LRA=11',
-        '-ar',
-        '44100',
-        '-ac',
-        '2',
-        ...ffmpegOutputArgs(this.streamTo),
-      ],
+    await encodeAudio(awsPath, intermediatePath, this.streamTo, {
+      audioFilter: ANNOUNCER_LOUDNORM,
     });
-    const writeStream = fs.createWriteStream(intermediatePath);
-
-    await pipeline(pcmReadStream, encodeStream, writeStream);
     await fs.promises.rename(intermediatePath, finalPath);
     await fs.promises.unlink(awsPath);
 

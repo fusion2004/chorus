@@ -1,12 +1,11 @@
 import fs from 'node:fs';
-import { pipeline } from 'node:stream/promises';
 import path from 'node:path';
 
 import Bottleneck from 'bottleneck';
-import prism from 'prism-media';
 
+import { ANNOUNCER_LOUDNORM, encodeAudio } from './ffmpeg.js';
 import { buildSsml, synthesizeToFile } from './polly.js';
-import { encodedExt, ffmpegOutputArgs } from './streaming/format.js';
+import { encodedExt } from './streaming/format.js';
 import type { StreamingMode } from './streaming/types.js';
 
 interface Announcer {
@@ -62,27 +61,9 @@ export class RoundExtraAnnouncer {
 
     await synthesizeToFile(this.speech(announcer), awsPath);
 
-    const pcmReadStream = fs.createReadStream(awsPath);
-    const encodeStream = new prism.FFmpeg({
-      args: [
-        '-analyzeduration',
-        '0',
-        '-loglevel',
-        '0',
-        '-map_metadata',
-        '-1',
-        '-filter:a',
-        'loudnorm=I=-16:TP=-1.5:LRA=11',
-        '-ar',
-        '44100',
-        '-ac',
-        '2',
-        ...ffmpegOutputArgs(this.streamTo),
-      ],
+    await encodeAudio(awsPath, intermediatePath, this.streamTo, {
+      audioFilter: ANNOUNCER_LOUDNORM,
     });
-    const writeStream = fs.createWriteStream(intermediatePath);
-
-    await pipeline(pcmReadStream, encodeStream, writeStream);
     await fs.promises.rename(intermediatePath, finalPath);
     await fs.promises.unlink(awsPath);
 

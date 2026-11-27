@@ -71,14 +71,13 @@ describe('songMachine', () => {
     expect(actor.getSnapshot().value).toBe('transcoded');
   });
 
-  it('UPDATE_METADATA in transcoded stays in transcoded and assigns metadata', () => {
+  it('UPDATE_DURATION in transcoded stays in transcoded and assigns the duration', () => {
     const actor = start();
     actor.send({ type: 'FETCH_FINISH', songId: 's', title: 't', artist: 'a', url: 'u' });
     actor.send({ type: 'SKIP_TRANSCODE' });
-    const metadata = { format: { duration: 42 } } as any;
-    actor.send({ type: 'UPDATE_METADATA', metadata });
+    actor.send({ type: 'UPDATE_DURATION', duration: 42 });
     expect(actor.getSnapshot().value).toBe('transcoded');
-    expect(actor.getSnapshot().context.metadata).toBe(metadata);
+    expect(actor.getSnapshot().context.duration).toBe(42);
   });
 
   it('ignores irrelevant events in init', () => {

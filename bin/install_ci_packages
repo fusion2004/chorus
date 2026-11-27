@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#
+# Installs the apt packages CI needs: FFmpeg (ffmpeg and ffprobe) from our apt repo, for the encoding pipeline tests.
+# Ours replaces any distro FFmpeg already on the runner, since its packages use a higher epoch.
+#
+# Usage:
+#   bin/install_ci_packages
+
+set -euo pipefail
+
+sudo_if_needed() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+"$(dirname "$0")/add_thasauce_apt"
+sudo_if_needed apt-get update -q
+sudo_if_needed env DEBIAN_FRONTEND=noninteractive apt-get install -qy --no-install-recommends ffmpeg

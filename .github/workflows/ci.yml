@@ -33,6 +33,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-berry-
 
+      # The encoding pipeline tests run real ffmpeg/ffprobe, the same build production uses
+      - name: Install system dependencies
+        run: |
+          bin/install_ci_packages
+          ffmpeg -version | head -1
+
       - name: Install dependencies
         run: yarn install --immutable
 
