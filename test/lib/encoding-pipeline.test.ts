@@ -5,12 +5,13 @@
 // only care about the contract — "this input file becomes a correctly encoded
 // output file at this path" — not how we spawn or stream to ffmpeg. That's
 // intentional: a Node upgrade (v26's Readable fast path) once broke
-// prism-media's FFmpeg Duplex in a way no unit test noticed.
+// prism-media's FFmpeg Duplex, which piped audio through ffmpeg's stdin, in a
+// way no unit test noticed.
 //
 // Fixture size matters. The Node 26 breakage only showed up once ffmpeg's
 // stdin applied backpressure and the source stream resumed — a ~180KB input
 // sailed through, a ~1.8MB one failed every time. Fixtures here are sized well
-// past that so the write path gets exercised under backpressure.
+// past that, so any streaming wiring gets exercised under backpressure.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -150,14 +151,13 @@ describe.each(MODES)('encoding pipeline (%s)', { timeout: 30_000 }, (streamTo) =
       }
     });
 
-    // The realistic bad download: an HTML error page saved as .mp3. It's small
-    // enough to be fully written to ffmpeg's stdin before ffmpeg gives up, and
-    // prism-media ignores ffmpeg's exit status, so today this becomes an empty
-    // "transcoded" file and the party carries on. (Multi-MB garbage happens to
-    // reject via EPIPE, which is why this case uses a small input.) Once the
-    // ffmpeg wiring checks the exit code, vitest will flag this as unexpectedly
-    // passing — drop the `.fails` then.
-    it.fails('rejects when the download is not audio', async () => {
+    // The realistic bad download: an HTML error page saved as .mp3. With
+    // prism-media this became an empty "transcoded" file and the party carried
+    // on, because prism ignored ffmpeg's exit status. It's small on purpose:
+    // when audio was piped through ffmpeg's stdin, multi-MB garbage happened to
+    // reject anyway (EPIPE), but a small file was fully written before ffmpeg
+    // gave up.
+    it('rejects when the download is not audio', async () => {
       const song = downloadedSong('bad', streamTo);
       await fs.promises.writeFile(
         song.path(downloadFinal),
@@ -166,6 +166,7 @@ describe.each(MODES)('encoding pipeline (%s)', { timeout: 30_000 }, (streamTo) =
 
       await expect(new RoundTranscoder(streamTo).transcodeSong(song)).rejects.toThrow();
       expect(fileExists(song.path(transcodeFinal))).toBe(false);
+      expect(fileExists(song.path(transcodeIntermediate))).toBe(false);
     });
   });
 
