@@ -256,10 +256,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-string-parser@npm:^7.29.7":
-  version: 7.29.7
-  resolution: "@babel/helper-string-parser@npm:7.29.7"
-  checksum: 10/4d8ef0ef7105f3d9fe4361137c8f42e5b4c7a52b5380b962762f2a528a1ba89064e2c6236090716ce34b63707b886ae0ebf36b2c2fcc2851f27e652febfc3648
+"@babel/helper-string-parser@npm:^7.29.15":
+  version: 7.29.15
+  resolution: "@babel/helper-string-parser@npm:7.29.15"
+  checksum: 10/f47627415e209bbfd83f9a4b2273eec30e9a30e087f65421055c6d5bf74ae30be5283d7ab340202a86022f266a5e48535748614491f6444e3248255829050052
   languageName: node
   linkType: hard
 
@@ -271,23 +271,23 @@ __metadata:
   linkType: hard
 
 "@babel/parser@npm:^7.29.7":
-  version: 7.29.9
-  resolution: "@babel/parser@npm:7.29.9"
+  version: 7.29.15
+  resolution: "@babel/parser@npm:7.29.15"
   dependencies:
-    "@babel/types": "npm:^7.29.8"
+    "@babel/types": "npm:^7.29.15"
   bin:
     parser: ./bin/babel-parser.js
-  checksum: 10/b8d6acda3fc7405c497b839b0b6d46cbd309d81bdb310c349e5760ecd689c3641925e1184574106161ce2c78cf5c09d22544a0b3e4d5f002e3b78c263c6f11e6
+  checksum: 10/5d3866c3baaa4f21cdbf3eca12a293bc0d0f6916f8180ca6a3109a7813f600bc97746101f7283d83329e8977ce269af5f501ac2b4e1df6acfffa640c578d77cd
   languageName: node
   linkType: hard
 
-"@babel/types@npm:^7.29.7, @babel/types@npm:^7.29.8":
-  version: 7.29.8
-  resolution: "@babel/types@npm:7.29.8"
+"@babel/types@npm:^7.29.15, @babel/types@npm:^7.29.7":
+  version: 7.29.15
+  resolution: "@babel/types@npm:7.29.15"
   dependencies:
-    "@babel/helper-string-parser": "npm:^7.29.7"
+    "@babel/helper-string-parser": "npm:^7.29.15"
     "@babel/helper-validator-identifier": "npm:^7.29.7"
-  checksum: 10/ff2becf0f8b432f0820f286fb9319d7f3819b2d0eb95bc26957fbc6250a3ca0ae3656feb98ecb5f171f9e04b34a4c08f5036447f17459ed7bfc32ff649d9b71e
+  checksum: 10/8500f1961da3139738b1d2dc41e1da0ac38be815f819be456b3fac2424c62c385b966751359d5971f9dfcccf9dc08166cfa0668c0d97f027d4b895b3dc7f3799
   languageName: node
   linkType: hard
 
@@ -298,22 +298,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@discordjs/builders@npm:^1.13.0":
-  version: 1.14.1
-  resolution: "@discordjs/builders@npm:1.14.1"
-  dependencies:
-    "@discordjs/formatters": "npm:^0.6.2"
-    "@discordjs/util": "npm:^1.2.0"
-    "@sapphire/shapeshift": "npm:^4.0.0"
-    discord-api-types: "npm:^0.38.40"
-    fast-deep-equal: "npm:^3.1.3"
-    ts-mixer: "npm:^6.0.4"
-    tslib: "npm:^2.6.3"
-  checksum: 10/7360871e1d699b37d3b37f25aaf09e9d63d403af0284ad422d9e5044e8a95165b0f4019ba3b180dc31338cde85654e2fa17c400df25d10bffdaafe85d83cbdfa
-  languageName: node
-  linkType: hard
-
-"@discordjs/builders@npm:^1.15.0":
+"@discordjs/builders@npm:^1.13.0, @discordjs/builders@npm:^1.15.0":
   version: 1.15.0
   resolution: "@discordjs/builders@npm:1.15.0"
   dependencies:
@@ -618,9 +603,9 @@ __metadata:
   linkType: hard
 
 "@jridgewell/resolve-uri@npm:^3.1.0":
-  version: 3.1.2
-  resolution: "@jridgewell/resolve-uri@npm:3.1.2"
-  checksum: 10/97106439d750a409c22c8bff822d648f6a71f3aa9bc8e5129efdc36343cd3096ddc4eeb1c62d2fe48e9bdd4db37b05d4646a17114ecebd3bbcacfa2de51c3c1d
+  version: 3.1.3
+  resolution: "@jridgewell/resolve-uri@npm:3.1.3"
+  checksum: 10/c854c2ad7e75c2e3e21d1d44ead336b8bedaf140e3a70ab189767e5c3dc9e6164ae2ca5234ab6c6d88732ae5de6341baa1fbc6a406d1d1d0df601ba9ae4349e6
   languageName: node
   linkType: hard
 
@@ -648,142 +633,142 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@koromix/koffi-android-arm64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-android-arm64@npm:3.3.3"
+"@koromix/koffi-android-arm64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-android-arm64@npm:3.3.8"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-android-x64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-android-x64@npm:3.3.3"
+"@koromix/koffi-android-x64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-android-x64@npm:3.3.8"
   conditions: os=android & cpu=x64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-darwin-arm64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-darwin-arm64@npm:3.3.3"
+"@koromix/koffi-darwin-arm64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-darwin-arm64@npm:3.3.8"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-darwin-x64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-darwin-x64@npm:3.3.3"
+"@koromix/koffi-darwin-x64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-darwin-x64@npm:3.3.8"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-freebsd-arm64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-freebsd-arm64@npm:3.3.3"
+"@koromix/koffi-freebsd-arm64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-freebsd-arm64@npm:3.3.8"
   conditions: os=freebsd & cpu=arm64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-freebsd-ia32@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-freebsd-ia32@npm:3.3.3"
+"@koromix/koffi-freebsd-ia32@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-freebsd-ia32@npm:3.3.8"
   conditions: os=freebsd & cpu=ia32
   languageName: node
   linkType: hard
 
-"@koromix/koffi-freebsd-x64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-freebsd-x64@npm:3.3.3"
+"@koromix/koffi-freebsd-x64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-freebsd-x64@npm:3.3.8"
   conditions: os=freebsd & cpu=x64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-linux-arm64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-linux-arm64@npm:3.3.3"
+"@koromix/koffi-linux-arm64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-linux-arm64@npm:3.3.8"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-linux-arm@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-linux-arm@npm:3.3.3"
+"@koromix/koffi-linux-arm@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-linux-arm@npm:3.3.8"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@koromix/koffi-linux-ia32@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-linux-ia32@npm:3.3.3"
+"@koromix/koffi-linux-ia32@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-linux-ia32@npm:3.3.8"
   conditions: os=linux & cpu=ia32
   languageName: node
   linkType: hard
 
-"@koromix/koffi-linux-loong64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-linux-loong64@npm:3.3.3"
+"@koromix/koffi-linux-loong64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-linux-loong64@npm:3.3.8"
   conditions: os=linux & cpu=loong64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-linux-ppc64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-linux-ppc64@npm:3.3.3"
+"@koromix/koffi-linux-ppc64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-linux-ppc64@npm:3.3.8"
   conditions: os=linux & cpu=ppc64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-linux-riscv64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-linux-riscv64@npm:3.3.3"
+"@koromix/koffi-linux-riscv64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-linux-riscv64@npm:3.3.8"
   conditions: os=linux & cpu=riscv64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-linux-x64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-linux-x64@npm:3.3.3"
+"@koromix/koffi-linux-x64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-linux-x64@npm:3.3.8"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-openbsd-arm64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-openbsd-arm64@npm:3.3.3"
+"@koromix/koffi-openbsd-arm64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-openbsd-arm64@npm:3.3.8"
   conditions: os=openbsd & cpu=arm64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-openbsd-ia32@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-openbsd-ia32@npm:3.3.3"
+"@koromix/koffi-openbsd-ia32@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-openbsd-ia32@npm:3.3.8"
   conditions: os=openbsd & cpu=ia32
   languageName: node
   linkType: hard
 
-"@koromix/koffi-openbsd-x64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-openbsd-x64@npm:3.3.3"
+"@koromix/koffi-openbsd-x64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-openbsd-x64@npm:3.3.8"
   conditions: os=openbsd & cpu=x64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-win32-arm64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-win32-arm64@npm:3.3.3"
+"@koromix/koffi-win32-arm64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-win32-arm64@npm:3.3.8"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@koromix/koffi-win32-ia32@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-win32-ia32@npm:3.3.3"
+"@koromix/koffi-win32-ia32@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-win32-ia32@npm:3.3.8"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@koromix/koffi-win32-x64@npm:3.3.3":
-  version: 3.3.3
-  resolution: "@koromix/koffi-win32-x64@npm:3.3.3"
+"@koromix/koffi-win32-x64@npm:3.3.8":
+  version: 3.3.8
+  resolution: "@koromix/koffi-win32-x64@npm:3.3.8"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -1217,9 +1202,9 @@ __metadata:
   linkType: hard
 
 "@rolldown/pluginutils@npm:^1.0.0":
-  version: 1.0.1
-  resolution: "@rolldown/pluginutils@npm:1.0.1"
-  checksum: 10/4e95cf9ce23d75e5aa03ea0249cd86f7d1e21f83fbf6f8520e4edd8a251ba1b82c4ba9bc13cd24b6c4661daec6225b06e6d35c64c604e731b230b2a49af47d05
+  version: 1.1.1
+  resolution: "@rolldown/pluginutils@npm:1.1.1"
+  checksum: 10/8c3466bec2a309e7c4bae957a8256c2fd2264746348d4404b23089bf289ea230fca5153a53c971d9c0a424b8c92d4ef1e20a67f428231714a8871f9be14eb03a
   languageName: node
   linkType: hard
 
@@ -1365,17 +1350,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@smithy/core@npm:^3.33.2":
-  version: 3.36.0
-  resolution: "@smithy/core@npm:3.36.0"
-  dependencies:
-    "@smithy/types": "npm:^4.19.0"
-    tslib: "npm:^2.6.2"
-  checksum: 10/f71ed52716b2278b5b5ce04667f0e460e5923e4ff72aeddbc9f1bed115914726b021ca342783ec69256a8d019ae77f32ac6f30adc5b802da82051a997b57c4d3
-  languageName: node
-  linkType: hard
-
-"@smithy/core@npm:^3.38.0, @smithy/core@npm:^3.39.0, @smithy/core@npm:^3.41.1":
+"@smithy/core@npm:^3.33.2, @smithy/core@npm:^3.38.0, @smithy/core@npm:^3.39.0, @smithy/core@npm:^3.41.1":
   version: 3.41.1
   resolution: "@smithy/core@npm:3.41.1"
   dependencies:
@@ -1429,16 +1404,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@smithy/types@npm:^4.17.2, @smithy/types@npm:^4.19.0":
-  version: 4.19.0
-  resolution: "@smithy/types@npm:4.19.0"
-  dependencies:
-    tslib: "npm:^2.6.2"
-  checksum: 10/495a4c66aa297f2e26d5ba368107ce7ddb9802dea35fd4e89cb00d80f86171b299bab6eaf0de520bd5d06e02d51e6ea560e29d2c6a8a008d071f293548ce40d9
-  languageName: node
-  linkType: hard
-
-"@smithy/types@npm:^4.20.0":
+"@smithy/types@npm:^4.17.2, @smithy/types@npm:^4.19.0, @smithy/types@npm:^4.20.0":
   version: 4.20.0
   resolution: "@smithy/types@npm:4.20.0"
   dependencies:
@@ -1465,9 +1431,9 @@ __metadata:
   linkType: hard
 
 "@types/estree@npm:^1.0.0":
-  version: 1.0.9
-  resolution: "@types/estree@npm:1.0.9"
-  checksum: 10/16aabfa703b5bdac83f719b07ce92a11b2d3c9b8628eacc92889d8af46cab2d78fc45c7b5378de383d0500585cea5c2f79125eeddfe5fbc6bd6a27eb0c8ccee5
+  version: 1.0.11
+  resolution: "@types/estree@npm:1.0.11"
+  checksum: 10/eebcef06c91f3e4e1c263c0018ef017a9a75a5ea0d8c3b4f201a305f7632834f50838d4683cc4c1f52b05610387ae3989ee4d7c516db96471f3ebf6e4e7b6ae5
   languageName: node
   linkType: hard
 
@@ -1498,9 +1464,9 @@ __metadata:
   linkType: hard
 
 "@types/lodash@npm:*":
-  version: 4.17.26
-  resolution: "@types/lodash@npm:4.17.26"
-  checksum: 10/49620ccc6e8c03e0f7589be3d21ead40409fb6a2c4808170e57f35cd4523d146ebf6ecbd97a266d767a71e98417fce215740690f4f131be060d1a534cac09b84
+  version: 4.17.27
+  resolution: "@types/lodash@npm:4.17.27"
+  checksum: 10/ae02ef86268664e5a024fd1a7d907b676fe7cd9b58b52bdddc7c42c7ffb3d05e869f6bd13e3e6cbb4001cac1d072f5e2a6e5deed2ef7dc62d7853fc735a077be
   languageName: node
   linkType: hard
 
@@ -1511,16 +1477,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*":
-  version: 26.6.5
-  resolution: "@types/node@npm:26.6.5"
-  dependencies:
-    undici-types: "npm:~8.9.0"
-  checksum: 10/03780cc68280b566af47c0f673318e665258dbdcc953737a83c11593424d55aecb8b2642a573da33f76cb4dd5457379548388b78ab284cb3b762030e5d58b252
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^26.6.7":
+"@types/node@npm:*, @types/node@npm:^26.6.7":
   version: 26.6.11
   resolution: "@types/node@npm:26.6.11"
   dependencies:
@@ -1821,19 +1778,19 @@ __metadata:
   linkType: hard
 
 "bowser@npm:^2.11.0":
-  version: 2.14.1
-  resolution: "bowser@npm:2.14.1"
-  checksum: 10/a002f0795ef360314c75552b94daa42f74473f38b34255cfa959779e875806ef8e41b24ec63a533717798c8ef70bb991aef3037a2bb5dd32e8f507b39a509163
+  version: 2.15.1
+  resolution: "bowser@npm:2.15.1"
+  checksum: 10/6689d9d3c01f2a141e4c243f05dce4250e02238a4332371cd6bf9244e8ab502803c98374e9f0e0c78c054a8e29eec1d5d0e68ad50b5c85bf2d582e24b4ad095e
   languageName: node
   linkType: hard
 
 "brace-expansion@npm:^1.1.7":
-  version: 1.1.21
-  resolution: "brace-expansion@npm:1.1.21"
+  version: 1.1.22
+  resolution: "brace-expansion@npm:1.1.22"
   dependencies:
     balanced-match: "npm:^1.0.0"
     concat-map: "npm:0.0.1"
-  checksum: 10/6c0ed34107cb3bd3f44c01d90ec8c01baa3ed75b7755617e2e5797b5908bbf20b313edf575612b200a783b84c7d1826aec2f7a2f03de9905bbfae5dc3dea6a95
+  checksum: 10/8d8705570ee95877a2e3e1e90904785f394bb415670b5ea4faac343ecc3e6e1a4d1b736b40c2dcc4774c5dcb04ac6afd456afc081686faf99c9dcf1d3f4b76ff
   languageName: node
   linkType: hard
 
@@ -2075,10 +2032,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"discord-api-types@npm:^0.38.1, discord-api-types@npm:^0.38.30, discord-api-types@npm:^0.38.33, discord-api-types@npm:^0.38.40, discord-api-types@npm:^0.38.50":
-  version: 0.38.56
-  resolution: "discord-api-types@npm:0.38.56"
-  checksum: 10/ab7560fe28a756b86e55a8e07181ee73f34327b0019c720a704c36335d4bdd495ec18a890b7bee011ac0f113846e1bb3fe6dc527a399cb3a16c09a9641174b01
+"discord-api-types@npm:^0.38.1, discord-api-types@npm:^0.38.30, discord-api-types@npm:^0.38.33, discord-api-types@npm:^0.38.50":
+  version: 0.38.60
+  resolution: "discord-api-types@npm:0.38.60"
+  checksum: 10/0554dab9a587349588b46708dda068138918ec76ae19e4f0acb8864ed0c995ae9e6db623906d9505d71e6f2f73f4e5afb0fd15402fe66aafaf716d380f76f0e4
   languageName: node
   linkType: hard
 
@@ -2308,9 +2265,9 @@ __metadata:
   linkType: hard
 
 "fast-copy@npm:^4.0.0":
-  version: 4.2.0
-  resolution: "fast-copy@npm:4.2.0"
-  checksum: 10/f5cd8a7006d51838369b8b6ecccfb1e2a1b1dda1bb1bf99c15c5601790b08518e4a0ef6adc7426d56836ac0d63822597c06ccac7fd7e0fcf7342a1e794853529
+  version: 4.3.4
+  resolution: "fast-copy@npm:4.3.4"
+  checksum: 10/0966407270231dc67078689d6f99fb3b60fdb6146744a7296bcb8872a0f58acc779c9fd07c1849d53ae77c90336830fc57cf9aa4339cfcb929b1c4e9621a1561
   languageName: node
   linkType: hard
 
@@ -2472,9 +2429,9 @@ __metadata:
   linkType: hard
 
 "graceful-fs@npm:^4.2.2, graceful-fs@npm:^4.2.6":
-  version: 4.2.11
-  resolution: "graceful-fs@npm:4.2.11"
-  checksum: 10/bf152d0ed1dc159239db1ba1f74fdbc40cb02f626770dcd5815c427ce0688c2635a06ed69af364396da4636d0408fcf7d4afdf7881724c3307e46aff30ca49e2
+  version: 4.2.12
+  resolution: "graceful-fs@npm:4.2.12"
+  checksum: 10/80fdd8384a2bbc94cc32dca8b7fdf011c6bc11bb96c296c8329a3c3515010956921c5080c4bd2f1a1becdf7655e5fcc691afc63ebb0c1d3da5d6afe4a17d471f
   languageName: node
   linkType: hard
 
@@ -2610,9 +2567,9 @@ __metadata:
   linkType: hard
 
 "js-tokens@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "js-tokens@npm:10.0.0"
-  checksum: 10/88f536ec89f076fc230d29df255b3c55531237669d746d1868fca716b1e3f5f2e4abf8e5b8701903216e3f00d2dc3918d078b35da87772d433ab6a513c3bf76d
+  version: 10.0.2
+  resolution: "js-tokens@npm:10.0.2"
+  checksum: 10/2a06e12d40e7ffb0ad5eccc6e52933c2df1c8c3cb2366c745c6170f0a6f049a14dfe355c1208a4ca81cc3d57aa9373ab21de53bcd302e31840dd53bc54d006fa
   languageName: node
   linkType: hard
 
@@ -2626,29 +2583,29 @@ __metadata:
   linkType: hard
 
 "koffi@npm:^3.3.0":
-  version: 3.3.3
-  resolution: "koffi@npm:3.3.3"
+  version: 3.3.8
+  resolution: "koffi@npm:3.3.8"
   dependencies:
-    "@koromix/koffi-android-arm64": "npm:3.3.3"
-    "@koromix/koffi-android-x64": "npm:3.3.3"
-    "@koromix/koffi-darwin-arm64": "npm:3.3.3"
-    "@koromix/koffi-darwin-x64": "npm:3.3.3"
-    "@koromix/koffi-freebsd-arm64": "npm:3.3.3"
-    "@koromix/koffi-freebsd-ia32": "npm:3.3.3"
-    "@koromix/koffi-freebsd-x64": "npm:3.3.3"
-    "@koromix/koffi-linux-arm": "npm:3.3.3"
-    "@koromix/koffi-linux-arm64": "npm:3.3.3"
-    "@koromix/koffi-linux-ia32": "npm:3.3.3"
-    "@koromix/koffi-linux-loong64": "npm:3.3.3"
-    "@koromix/koffi-linux-ppc64": "npm:3.3.3"
-    "@koromix/koffi-linux-riscv64": "npm:3.3.3"
-    "@koromix/koffi-linux-x64": "npm:3.3.3"
-    "@koromix/koffi-openbsd-arm64": "npm:3.3.3"
-    "@koromix/koffi-openbsd-ia32": "npm:3.3.3"
-    "@koromix/koffi-openbsd-x64": "npm:3.3.3"
-    "@koromix/koffi-win32-arm64": "npm:3.3.3"
-    "@koromix/koffi-win32-ia32": "npm:3.3.3"
-    "@koromix/koffi-win32-x64": "npm:3.3.3"
+    "@koromix/koffi-android-arm64": "npm:3.3.8"
+    "@koromix/koffi-android-x64": "npm:3.3.8"
+    "@koromix/koffi-darwin-arm64": "npm:3.3.8"
+    "@koromix/koffi-darwin-x64": "npm:3.3.8"
+    "@koromix/koffi-freebsd-arm64": "npm:3.3.8"
+    "@koromix/koffi-freebsd-ia32": "npm:3.3.8"
+    "@koromix/koffi-freebsd-x64": "npm:3.3.8"
+    "@koromix/koffi-linux-arm": "npm:3.3.8"
+    "@koromix/koffi-linux-arm64": "npm:3.3.8"
+    "@koromix/koffi-linux-ia32": "npm:3.3.8"
+    "@koromix/koffi-linux-loong64": "npm:3.3.8"
+    "@koromix/koffi-linux-ppc64": "npm:3.3.8"
+    "@koromix/koffi-linux-riscv64": "npm:3.3.8"
+    "@koromix/koffi-linux-x64": "npm:3.3.8"
+    "@koromix/koffi-openbsd-arm64": "npm:3.3.8"
+    "@koromix/koffi-openbsd-ia32": "npm:3.3.8"
+    "@koromix/koffi-openbsd-x64": "npm:3.3.8"
+    "@koromix/koffi-win32-arm64": "npm:3.3.8"
+    "@koromix/koffi-win32-ia32": "npm:3.3.8"
+    "@koromix/koffi-win32-x64": "npm:3.3.8"
   dependenciesMeta:
     "@koromix/koffi-android-arm64":
       optional: true
@@ -2690,7 +2647,7 @@ __metadata:
       optional: true
     "@koromix/koffi-win32-x64":
       optional: true
-  checksum: 10/e1c3cd8b10e50f9c7479d2c7ce2822e98db7ebf1e3e9928907ec4fef8b7191bc760459514a146409901cd522860d34f699b86c1f31d0099443b4940a4f36a7db
+  checksum: 10/1e9f442b2d23a84a5191ee9669a406fbd0d6634969b093eee668a2a6a45e0ce1eca59f1cce5390c7d3b7b6b210139764c1418fa7b22b816964ce2b6c7c16aaa9
   languageName: node
   linkType: hard
 
@@ -2940,11 +2897,11 @@ __metadata:
   linkType: hard
 
 "nan@npm:^2.18.0":
-  version: 2.29.0
-  resolution: "nan@npm:2.29.0"
+  version: 2.30.0
+  resolution: "nan@npm:2.30.0"
   dependencies:
     node-gyp: "npm:latest"
-  checksum: 10/feed70f1358b1c469745d27bfaa0e0d5d307471a8f929a2833822574fe944b3646fca09d36d90bb91eea0cc4a74e4a288e84847d945c8d77d5044378fed7f57e
+  checksum: 10/15f9fd9521a6093eb0719928044f8e4a9b2bdccb8eff17dd8f8d2c372c87f3d5303f07d11f501f833653b436cfc6a8b91a6984c282a1209f46c728b91253566b
   languageName: node
   linkType: hard
 
@@ -3392,14 +3349,14 @@ __metadata:
   linkType: hard
 
 "railway@npm:^3.17.0":
-  version: 3.17.0
-  resolution: "railway@npm:3.17.0"
+  version: 3.19.0
+  resolution: "railway@npm:3.19.0"
   dependencies:
     "@graphql-typed-document-node/core": "npm:^3.2.0"
     graphql: "npm:^16.10.0"
   bin:
     railway-iac-ts: dist/iac/bin.js
-  checksum: 10/d131c9e612fa010be5c26e6bd05918f3e86526c598f0b4f677de8a600a43d2fcf00038a7b9cc8d90b4eb71903c96dff7b20d71e9f16981676f4cecacf3fc1f07
+  checksum: 10/51640c0c2c7b0d419e8ef50b7bc900c4a5089f79388608ab5ab607858560647a94a163b3319bec0910871c64f1cab643e38cbab34af1069d83145554e624873d
   languageName: node
   linkType: hard
 
@@ -3529,11 +3486,11 @@ __metadata:
   linkType: hard
 
 "semver@npm:^7.3.5":
-  version: 7.8.5
-  resolution: "semver@npm:7.8.5"
+  version: 7.8.6
+  resolution: "semver@npm:7.8.6"
   bin:
     semver: bin/semver.js
-  checksum: 10/9b01d2ff11e6e4a4539b7ca3c5f280c8704cb397a28504469f2ed4f00ad2194748d756647362a9712fff30984d15772ab7f083108c2fb508e2096ae9e708f22c
+  checksum: 10/76fd62a781a9c58464e4d4b1b9c99c404063d8133fff8a0753e66b1bd826bfb720d843664e7ab1268c0fb7134d04df9f3b8788eb2f1000c509648e0eeac03921
   languageName: node
   linkType: hard
 
@@ -3563,9 +3520,9 @@ __metadata:
   linkType: hard
 
 "source-map-js@npm:^1.2.1, source-map-js@npm:^1.2.2":
-  version: 1.2.2
-  resolution: "source-map-js@npm:1.2.2"
-  checksum: 10/4807c894bb6280c8b84886159b96080e3996f42c6e8015e647881edfd4f955f6024ceebb8bb40d33ce8b106e24b2e29c133575e1c60c01c8aae57a05fdf17761
+  version: 1.2.4
+  resolution: "source-map-js@npm:1.2.4"
+  checksum: 10/65ac88fed07bc58f78203b5b0cbfa9ecc978f738423e83e8b8f035bb15a2efd949e1c6b6697bad8ed6dd38fe6cb624b2ce1ba3c550479980d4e77ec3b5cd028d
   languageName: node
   linkType: hard
 
@@ -3584,9 +3541,9 @@ __metadata:
   linkType: hard
 
 "strip-json-comments@npm:^5.0.3":
-  version: 5.0.3
-  resolution: "strip-json-comments@npm:5.0.3"
-  checksum: 10/3ccbf26f278220f785e4b71f8a719a6a063d72558cc63cb450924254af258a4f4c008b8c9b055373a680dc7bd525be9e543ad742c177f8a7667e0b726258e0e4
+  version: 5.1.0
+  resolution: "strip-json-comments@npm:5.1.0"
+  checksum: 10/a02e5f6ec015a34d9d177c68641ef68b7c7caa7fb516bc2443a488864cb8703dbb204e2e867d489d9080d9a937910c17110167469d280fe3cabaf031cac7e560
   languageName: node
   linkType: hard
 
@@ -3598,24 +3555,24 @@ __metadata:
   linkType: hard
 
 "tar@npm:^7.5.7":
-  version: 7.5.22
-  resolution: "tar@npm:7.5.22"
+  version: 7.5.24
+  resolution: "tar@npm:7.5.24"
   dependencies:
     "@isaacs/fs-minipass": "npm:^4.0.0"
     chownr: "npm:^3.0.0"
     minipass: "npm:^7.1.2"
     minizlib: "npm:^3.1.0"
     yallist: "npm:^5.0.0"
-  checksum: 10/129606384b3c895f422aaca48bf316357be6dc7aa35c1066c3f06c28acfff0be5b356e1b0a0be7c53a7a8945534ac06cec6d8e296d170d8a09c8bff67b29300e
+  checksum: 10/9156541c8e99f5bc491aa7fbf5fa778095c774353cc610c9caa65845b3b911000aa3d781a10e649dd57869b6a93270504cac26ec81e58b05b5b2ea828dd8d1db
   languageName: node
   linkType: hard
 
 "thread-stream@npm:^4.0.0":
-  version: 4.2.0
-  resolution: "thread-stream@npm:4.2.0"
+  version: 4.2.1
+  resolution: "thread-stream@npm:4.2.1"
   dependencies:
     real-require: "npm:^1.0.0"
-  checksum: 10/040d1f5284806a28d12ac83fc0a1f0b32547c6773b5fab9494c664798fa7fb14197bede695ec61221c5f93f64a32b0f1850408d0ad5730af03ee1d1efe6c1b05
+  checksum: 10/43150261b3a3a050f5828277c1ca53572bf9b5b31c2616ec6d2be70c7aacb3f7ac4fe78eb9470e4fbf710df5f10050af3a21b344947d582b396bb89d13bc93a8
   languageName: node
   linkType: hard
 
@@ -3627,9 +3584,9 @@ __metadata:
   linkType: hard
 
 "tinyexec@npm:^1.3.1":
-  version: 1.3.1
-  resolution: "tinyexec@npm:1.3.1"
-  checksum: 10/9c7a8ce2633f76c776d9ff663531c7b34d605f41909c2f97a27397e8c12bcaf721dae7680b6683232ffe7a6d465090be9926d5ffd00b5d7be9336a43b45289b1
+  version: 1.4.0
+  resolution: "tinyexec@npm:1.4.0"
+  checksum: 10/2b926427589e5587bf106e0822742915ff98b193e6369403837b270a3df5dfc1859bbf5b3f34f408312219cf0a14a2bc099fabbd5215fb84a34e79a71d5e3667
   languageName: node
   linkType: hard
 
@@ -3674,9 +3631,9 @@ __metadata:
   linkType: hard
 
 "tslib@npm:^2.6.2, tslib@npm:^2.6.3, tslib@npm:^2.8.1":
-  version: 2.8.1
-  resolution: "tslib@npm:2.8.1"
-  checksum: 10/3e2e043d5c2316461cb54e5c7fe02c30ef6dccb3384717ca22ae5c6b5bc95232a6241df19c622d9c73b809bea33b187f6dbc73030963e29950c2141bc32a79f7
+  version: 2.9.1
+  resolution: "tslib@npm:2.9.1"
+  checksum: 10/20aa8c3282c88f8dd1bf0a62c5b1aa03b35998cbc6db4780f6e84d593ba4ffe232bd967916c6e0f96b9e5d719dade9e329d1b2cfede31043481d8fd13f10ca5f
   languageName: node
   linkType: hard
 
@@ -3877,16 +3834,16 @@ __metadata:
   linkType: hard
 
 "undici@npm:^7.19.0":
-  version: 7.30.1
-  resolution: "undici@npm:7.30.1"
-  checksum: 10/306a28e4c715652a0e2cd59bcc98cf8b6083b989151054fafaac27bdab6f2bc7e0f33f5847f72f5ba257971226372d04705e0e984b26b42a03271d5a35eb99b1
+  version: 7.30.2
+  resolution: "undici@npm:7.30.2"
+  checksum: 10/9e88f3950386de4f99ee3255825eafb798ee92061a26aee66f40b78586b6d1508e8fd77dbe495d771626ef83ea1fa8b72444b05f071d418f48fff3a86dc9bfb1
   languageName: node
   linkType: hard
 
 "undici@npm:^8.4.1":
-  version: 8.12.2
-  resolution: "undici@npm:8.12.2"
-  checksum: 10/91d7979b94e23d3b7dc1a1ecdea5b62791bfa88209db9589659b0345c3ee8a00a481d447c4b4c337c3e9ab2abff7392a111faa616aaffafe834df7816fb6bf9e
+  version: 8.13.1
+  resolution: "undici@npm:8.13.1"
+  checksum: 10/6409e6a4ee7eae5f67f97b92232ab00417db4a0af1b4bc42a13d59ebac0775534b8e340c9dfbf7ce34d4cbde349b6fd52fc95dd92a1fdf00cf951119a5aa431f
   languageName: node
   linkType: hard
 
@@ -4065,8 +4022,8 @@ __metadata:
   linkType: hard
 
 "ws@npm:^8.17.0":
-  version: 8.22.0
-  resolution: "ws@npm:8.22.0"
+  version: 8.23.0
+  resolution: "ws@npm:8.23.0"
   peerDependencies:
     bufferutil: ^4.0.1
     utf-8-validate: ">=5.0.2"
@@ -4075,7 +4032,7 @@ __metadata:
       optional: true
     utf-8-validate:
       optional: true
-  checksum: 10/ed771c2766bdb5724a66872f60ffc1a39f06e1a5bc8849f453c273e97c91a40ed5a224f06dc0e22f44b4a9e03938bf746fc5938d6887433cc0f4c416237d3b10
+  checksum: 10/b9e8e16346288769bc945595e4dbb79e94f921e944e798ff7319e422efa05b10f670b2724b34729223689f4b9678e3089998392d236f10cbeccd5465a1b32c0a
   languageName: node
   linkType: hard
 
